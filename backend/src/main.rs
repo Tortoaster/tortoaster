@@ -1,24 +1,46 @@
+use std::env;
+
 use axum::routing::get;
-use axum::{Router, Server};
+use axum::{Extension, Router, Server};
 use tracing_subscriber::fmt;
 
-async fn index() -> &'static str {
-    "Hello, world!"
+use redis::{Client, Commands};
+
+use crate::database::{Redis, RedisError};
+
+mod database;
+
+const COUNT: &str = "count";
+
+async fn index(mut redis: Redis) -> Result<String, RedisError> {
+    let count: i32 = redis.get(COUNT)?;
+    redis.set(COUNT, count + 1)?;
+    Ok(format!("{count}"))
 }
 
 #[tokio::main]
 async fn main() {
     fmt::init();
 
-    let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_owned());
-    let port = std::env::var("PORT").unwrap_or("8000".to_owned());
+    let host = env::var("HOST").unwrap_or("0.0.0.0".to_owned());
+    let port = env::var("PORT").unwrap_or("8000".to_owned());
+    let redis = env::var("REDIS_SERVER").expect("no redis server specified");
+
     let addr = format!("{host}:{port}")
         .parse()
         .expect(&format!("invalid address: {host}:{port}"));
 
-    let app = Router::new().route("/", get(index));
+    let client = Client::open(redis).unwrap();
+    let mut con = client
+        .get_connection()
+        .expect("cannot connect to redis server");
+    let _: () = con.set(COUNT, 0).expect("cannot set value");
 
-    tracing::debug!("listening on {}", addr);
+    let app = Router::new()
+        .route("/", get(index))
+        .layer(Extension(client));
+
+    tracing::debug!("listening on http://{}", addr);
     Server::bind(&addr)
         .serve(app.into_make_service())
         .await
