@@ -2,20 +2,23 @@ use std::env;
 
 use axum::routing::get;
 use axum::{Extension, Router, Server};
+use axum_extra::extract::cookie::Key;
 use tracing_subscriber::fmt;
 
 use redis::{Client, Commands};
 
 use crate::database::{Redis, RedisError};
+use crate::session::UserId;
 
 mod database;
+mod session;
 
 const COUNT: &str = "count";
 
-async fn index(mut redis: Redis) -> Result<String, RedisError> {
+async fn index(mut redis: Redis, user_id: UserId) -> Result<String, RedisError> {
     let count: i32 = redis.get(COUNT)?;
     redis.set(COUNT, count + 1)?;
-    Ok(format!("{count}"))
+    Ok(format!("{:?}, {count}", user_id))
 }
 
 #[tokio::main]
@@ -36,9 +39,12 @@ async fn main() {
         .expect("cannot connect to redis server");
     let _: () = con.set(COUNT, 0).expect("cannot set value");
 
+    let key = Key::generate();
+
     let app = Router::new()
         .route("/", get(index))
-        .layer(Extension(client));
+        .layer(Extension(client))
+        .layer(Extension(key));
 
     tracing::debug!("listening on http://{}", addr);
     Server::bind(&addr)

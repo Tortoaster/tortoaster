@@ -8,8 +8,10 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.56"
 axum = "0.5.13"
+axum-extra = { version = "0.3.6", features = ["cookie-private"] }
 redis = { version = "0.21.5", features = ["tokio-comp"] }
 thiserror = "1.0.31"
 tokio = { version = "1.20.0", features = ["full"] }
 tracing = "0.1.35"
 tracing-subscriber = "0.3.14"
+uuid = { version = "1.1.2", features = ["v4"] }
