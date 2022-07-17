@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{Card, Error, Stack};
 
-#[derive(Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub struct Player {
     cards: Vec<Card>,
     stack: Option<Stack>,

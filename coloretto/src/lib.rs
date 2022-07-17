@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::action::Action;
+pub use crate::action::Action;
 use crate::deck::{Card, Deck};
 use crate::player::Player;
 use crate::stack::Stack;
@@ -10,7 +11,7 @@ mod deck;
 mod player;
 mod stack;
 
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub struct Coloretto {
     players: Vec<Player>,
     deck: Deck,
@@ -104,6 +105,10 @@ impl Coloretto {
                 Action::Take(_) => Err(Error::Flipped),
             }
         }
+    }
+
+    pub fn turn(&self) -> usize {
+        self.turn
     }
 }
 

@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::Card;
 
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub struct Stack {
     cards: Vec<Card>,
     capacity: usize,
