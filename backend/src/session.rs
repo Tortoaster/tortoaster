@@ -5,10 +5,11 @@ use axum::response::Redirect;
 use axum_extra::extract::cookie::Cookie;
 use axum_extra::extract::SignedCookieJar;
 use names::Generator;
+use serde::{Deserialize, Serialize};
 
 const SESSION: &str = "session";
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct User(String);
 
 impl User {
@@ -37,7 +38,7 @@ where
         match jar.get(SESSION) {
             None => Err(Ok((
                 jar.add(Cookie::new(SESSION, User::generate().to_string())),
-                Redirect::to(&req.uri().to_string()),
+                Redirect::to("#"),
             ))),
             Some(cookie) => Ok(User(cookie.value().to_owned())),
         }
