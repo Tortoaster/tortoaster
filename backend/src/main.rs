@@ -3,22 +3,21 @@ use std::env;
 use axum::routing::get;
 use axum::{Extension, Router, Server};
 use axum_extra::extract::cookie::Key;
+use redis::{Client, Commands};
 use tracing_subscriber::fmt;
 
-use redis::{Client, Commands};
-
 use crate::database::{Redis, RedisError};
-use crate::session::UserId;
+use crate::session::User;
 
 mod database;
 mod session;
 
 const COUNT: &str = "count";
 
-async fn index(mut redis: Redis, user_id: UserId) -> Result<String, RedisError> {
+async fn index(mut redis: Redis, user: User) -> Result<String, RedisError> {
     let count: i32 = redis.get(COUNT)?;
     redis.set(COUNT, count + 1)?;
-    Ok(format!("{:?}, {count}", user_id))
+    Ok(format!("Welcome, {user}!\n{count}"))
 }
 
 #[tokio::main]
