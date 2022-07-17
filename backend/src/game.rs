@@ -57,6 +57,7 @@ impl FromStr for RoomId {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Room {
     id: RoomId,
     players: Vec<User>,
@@ -147,6 +148,7 @@ impl Room {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum Status {
     Waiting,
     Playing(Coloretto),
