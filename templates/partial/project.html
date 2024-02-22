@@ -1,0 +1,13 @@
+<div class="basis-[calc(33.333333%_-_0.66666667rem)] rounded-lg bg-stone-100 shadow-md">
+    <a href="/projects/{{ project.id }}">
+        <img class="aspect-video rounded-t-lg" alt="beegone screenshot" src="/static/beegone.png"/>
+        <div class="aspect-video p-8">
+            <div class="flex justify-between">
+                <h3 class="text-stone-900 text-lg font-bold">{{ project.name }}</h3>
+                <span class="text-stone-700 text-sm text-stone-300">{{ project.date_posted|humantime }}</span>
+            </div>
+            <br/>
+            <p class="text-stone-900">{{ project.description|truncate(64) }}</p>
+        </div>
+    </a>
+</div>

@@ -1,0 +1,9 @@
+<form hx-post="/comments" hx-swap="outerHTML">
+    <input name="project_id" type="hidden" value="{{ project_id }}">
+    <label>Name: <input name="name" type="text"/></label>
+    <label>Email: <input name="email" type="email"/></label>
+    <label>
+        <textarea name="message"></textarea>
+    </label>
+    <button type="submit">Send</button>
+</form>

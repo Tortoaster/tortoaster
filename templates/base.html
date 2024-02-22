@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{% block title %}Tortoaster{% endblock %}</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="/static/style.css" rel="stylesheet"/>
+        <script src="/static/htmx.min.js"></script>
+        {% block head %}{% endblock %}
+    </head>
+    <body class="bg-stone-900 flex flex-col min-h-screen">
+        <div class="flex flex-col flex-1 w-full md:w-2/3 mx-auto">
+            <div class="flex flex-row">
+                <nav class="flex flex-col flex-1 items-end md:flex-row justify-start gap-1 pt-2 pr-2 text-center">
+                    <a href="/" class="flex-1 rounded-t-lg px-4 py-2 bg-stone-600 text-white font-bold">Home</a>
+                    <a href="/projects" class="flex-1 rounded-t-lg px-4 py-2 bg-stone-700 text-white font-bold">Projects</a>
+                </nav>
+                <header class="p-4 text-orange-500 font-bold text-6xl">{% block header %}Tortoaster{% endblock %}</header>
+            </div>
+            <main class="flex-1 rounded-lg rounded-tl-none p-4 bg-stone-600 text-stone-200">
+                {% block content %}{% endblock %}
+            </main>
+            <footer class="text-stone-200 text-sm p-4">
+                <a href="https://github.com/Tortoaster" class="text-blue-700">GitHub</a> | <a href="mailto:rick@tortoaster.com" class="text-blue-700">Email</a><br>
+                &copy; 2024 Rick van der Wal - All rights reserved
+            </footer>
+        </div>
+    </body>
+</html>
