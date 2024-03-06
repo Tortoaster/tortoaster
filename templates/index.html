@@ -7,7 +7,11 @@
     <h1 class="font-bold text-4xl text-center">Hello</h1>
     <p class="text-balance px-8">Hier komt een cringe introductiepraatje</p>
 </div>
-<div class="flex flex-wrap gap-8 p-8" hx-get="/v1/projects" hx-trigger="load">
-    <img alt="Loading" class="htmx-indicator" src="/static/tortoaster_loading.gif"/>
+<div class="flex flex-wrap gap-8 p-8">
+    {% let trigger = "load" %}
+    {% let url = list_projects_url %}
+    {% include "pagination/lazy_list.html" %}
+    <div class="mx-[-2rem]"></div>
+    {% include "partial/project_skeleton.html" %}
 </div>
 {% endblock %}

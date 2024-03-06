@@ -2,11 +2,12 @@ mod api;
 mod config;
 mod error;
 mod model;
-mod partial;
+mod pagination;
 mod state;
 mod template;
 
 use axum::{routing::get, Router};
+use axum_extra::routing::RouterExt;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing::info;
@@ -24,10 +25,7 @@ async fn main() {
     let state = AppState::new().await.expect("failed to initialize state");
     let app = Router::new()
         .route("/", get(api::index))
-        .nest(
-            "/v1",
-            Router::new().route("/projects", get(partial::projects)),
-        )
+        .typed_get(api::list_projects)
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
     let addr = config.socket_addr();

@@ -25,3 +25,15 @@
     font-weight: bold;
     font-size: 1.2rem;
 }
+
+.my-indicator{
+    display: none;
+}
+
+.htmx-request .my-indicator{
+    display: block;
+}
+
+.htmx-request.my-indicator{
+    display: block;
+}

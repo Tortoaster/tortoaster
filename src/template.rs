@@ -5,13 +5,16 @@ use axum::{
 };
 
 use crate::{
+    api::ListProjects,
     error::AppError,
     model::{Comment, Project},
 };
 
-#[derive(Template)]
+#[derive(Default, Template)]
 #[template(path = "index.html")]
-pub struct Index;
+pub struct Index {
+    list_projects_url: ListProjects,
+}
 
 #[derive(Template)]
 #[template(path = "partial/project.html")]
@@ -44,27 +47,6 @@ pub struct TemplateResponse<T>(pub T);
 impl<T: Template> IntoResponse for TemplateResponse<T> {
     fn into_response(self) -> Response {
         match self.0.render() {
-            Ok(html) => Html(html).into_response(),
-            Err(error) => AppError::from(error).into_response(),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Templates<T>(pub Vec<T>);
-
-impl<T> IntoResponse for Templates<T>
-where
-    T: Template,
-{
-    fn into_response(self) -> Response {
-        let templates: Result<String, askama::Error> = self
-            .0
-            .into_iter()
-            .map(|template| template.render())
-            .collect();
-
-        match templates {
             Ok(html) => Html(html).into_response(),
             Err(error) => AppError::from(error).into_response(),
         }

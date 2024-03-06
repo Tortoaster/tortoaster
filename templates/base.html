@@ -18,15 +18,15 @@
                 <nav class="flex justify-end px-12 pt-8">
                     <span class="text-4xl">By: <a href="/" class="font-bold underline underline-offset-4 decoration-stone-900 italic text-blue-500">Tortoaster</a></span>
                 </nav>
-                <main class="flex-1">
+                <main>
                     {% block content %}{% endblock %}
                 </main>
-                <footer class="text-stone-900 text-center text-sm">
-                    <a href="https://github.com/Tortoaster">GitHub</a> | <a href="mailto:contact@tortoaster.com">Email</a><br>
-                    &copy; 2024 Rick van der Wal
-                </footer>
-                <div class="absolute bottom-0 right-0 w-[5%] aspect-square bg-[linear-gradient(to_top_left,_#93c5fd_50%,_#1c1917_50%,_#1c1917_calc(50%_+_8px),_#d6d3d1_calc(50%_+_8px))] border-t-4 border-t-stone-900 border-l-stone-900 border-l-4 mr-[-8px] mb-[-8px] transition-all"></div>
+                <div class="absolute bottom-0 right-0 h-16 mt-16 aspect-square bg-[linear-gradient(to_top_left,_#93c5fd_50%,_#1c1917_50%,_#1c1917_calc(50%_+_8px),_#d6d3d1_calc(50%_+_8px))] border-t-4 border-t-stone-900 border-l-stone-900 border-l-4 mr-[-8px] mb-[-8px] transition-all"></div>
             </div>
+            <footer class="text-stone-900 text-right text-sm p-8">
+                <a href="https://github.com/Tortoaster">GitHub</a> | <a href="mailto:contact@tortoaster.com">Email</a><br>
+                &copy; 2024 Rick van der Wal
+            </footer>
         </div>
     </body>
 </html>
