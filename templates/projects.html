@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-
-{% block title %}Projects - Tortoaster{% endblock %}
-
-{% block content %}
-<div class="flex flex-wrap gap-4" hx-get="/v1/projects" hx-trigger="load">
-    <img alt="Loading" class="htmx-indicator" src="/static/tortoaster_loading.gif"/>
-</div>
-{% endblock %}

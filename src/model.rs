@@ -1,4 +1,3 @@
-use pulldown_cmark::{html, Parser};
 use serde::Serialize;
 use sqlx::types::time::OffsetDateTime;
 use validator::Validate;

@@ -24,7 +24,6 @@ async fn main() {
     let state = AppState::new().await.expect("failed to initialize state");
     let app = Router::new()
         .route("/", get(api::index))
-        .route("/projects", get(api::projects))
         .nest(
             "/v1",
             Router::new().route("/projects", get(partial::projects)),

@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+    font-family: 'Comic Relief';
+    src: url('/static/ComicRelief.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Comic Relief';
+    src: url('/static/ComicRelief-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+.markdown h2 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    display: block;
+    font-weight: bold;
+    font-size: 1.2rem;
+}

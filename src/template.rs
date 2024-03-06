@@ -14,10 +14,6 @@ use crate::{
 pub struct Index;
 
 #[derive(Template)]
-#[template(path = "projects.html")]
-pub struct Projects;
-
-#[derive(Template)]
 #[template(path = "partial/project.html")]
 pub struct ProjectPartial {
     pub project: Project,
@@ -77,7 +73,6 @@ where
 
 mod filters {
     use askama::Result;
-    use pulldown_cmark::{html, Parser};
     use sqlx::types::time::OffsetDateTime;
     use time_humanize::HumanTime;
 
@@ -86,12 +81,5 @@ mod filters {
             - HumanTime::now();
 
         Ok(human_time.to_string())
-    }
-
-    pub fn markdown(text: &str) -> Result<String> {
-        let parser = Parser::new(text);
-        let mut html = String::new();
-        html::push_html(&mut html, parser);
-        Ok(html)
     }
 }

@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Index - Tortoaster{% endblock %}
+{% block title %}Projects - Tortoaster{% endblock %}
 
 {% block content %}
-Hello, world!
+<div class="flex flex-col gap-4 bg-blue-500 text-stone-100 p-8 border-stone-900 border-4 shadow-comic mx-[calc(-1rem_-_4px)] md:mx-[calc(-2rem_-_4px)]">
+    <h1 class="font-bold text-4xl text-center">Hello</h1>
+    <p class="text-balance px-8">Hier komt een cringe introductiepraatje</p>
+</div>
+<div class="flex flex-wrap gap-8 p-8" hx-get="/v1/projects" hx-trigger="load">
+    <img alt="Loading" class="htmx-indicator" src="/static/tortoaster_loading.gif"/>
+</div>
 {% endblock %}

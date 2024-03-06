@@ -2,7 +2,13 @@
 module.exports = {
   content: ["./templates/**/*.html"],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        'comic': ['Comic Relief', 'cursive'],
+      },
+      boxShadow: {
+        'comic': '4px 4px #1c1917',
+      },
+    },
   },
-  plugins: [],
 }
