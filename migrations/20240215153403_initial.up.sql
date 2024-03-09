@@ -1,11 +1,12 @@
 CREATE TABLE projects
 (
-    id           SERIAL PRIMARY KEY,
-    name         VARCHAR(32)              NOT NULL,
-    description  TEXT                     NOT NULL,
-    url          VARCHAR,
-    date_posted  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    date_updated TIMESTAMP WITH TIME ZONE
+    id            SERIAL PRIMARY KEY,
+    name          VARCHAR(32)              NOT NULL,
+    description   TEXT                     NOT NULL,
+    thumbnail_url VARCHAR                  NOT NULL,
+    project_url   VARCHAR,
+    date_posted   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    date_updated  TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE comments

@@ -49,16 +49,16 @@ pub struct LazyList<U: Display> {
     pub trigger: Trigger,
 }
 
+#[non_exhaustive]
 pub enum Trigger {
-    Load,
     Revealed,
 }
 
 impl Display for Trigger {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Trigger::Load => write!(f, "load"),
             Trigger::Revealed => write!(f, "revealed"),
+            _ => panic!("unimplemented trigger"),
         }
     }
 }

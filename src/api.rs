@@ -4,8 +4,6 @@ pub async fn index() -> TemplateResponse<Index> {
     TemplateResponse(Index::default())
 }
 
-use std::time::Duration;
-
 use axum::extract::{Query, State};
 use axum_extra::routing::TypedPath;
 use sqlx::{query_as, PgPool};

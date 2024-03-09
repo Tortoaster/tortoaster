@@ -20,16 +20,21 @@
       },
       {
         "ordinal": 3,
-        "name": "url",
+        "name": "thumbnail_url",
         "type_info": "Varchar"
       },
       {
         "ordinal": 4,
+        "name": "project_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
         "name": "date_posted",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "date_updated",
         "type_info": "Timestamptz"
       }
@@ -40,6 +45,7 @@
       ]
     },
     "nullable": [
+      false,
       false,
       false,
       false,
