@@ -58,7 +58,6 @@ impl Display for Trigger {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Trigger::Revealed => write!(f, "revealed"),
-            _ => panic!("unimplemented trigger"),
         }
     }
 }

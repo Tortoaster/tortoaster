@@ -12,8 +12,14 @@ use crate::{
 
 #[derive(Default, Template)]
 #[template(path = "index.html")]
-pub struct Index {
+pub struct IndexTemplate {
     list_projects_url: ListProjects,
+}
+
+#[derive(Template)]
+#[template(path = "project.html")]
+pub struct ProjectTemplate {
+    pub project: Project,
 }
 
 #[derive(Template)]

@@ -1,6 +1,10 @@
 # Tortoaster
 
-## Install dependencies
+![](./static/turtle-back.png)
+
+## Set-up for Development
+
+### Install dependencies
 
 ```shell
 # Tailwind CLI
@@ -13,9 +17,21 @@ cargo install sqlx-cli --no-default-features --features rustls,postgres
 cargo install cargo-watch
 ```
 
-## Run locally
+### After any database changes
 
 ```shell
+sqlx migrate run
+```
+
+### After any database changes or creating new queries
+
+```shell
+export DATABASE_URL=postgres://tortoaster:password@localhost/tortoaster
 cargo sqlx prepare
+```
+
+### Run locally
+
+```shell
 docker compose up
 ```

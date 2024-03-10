@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM projects WHERE id = $1;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "thumbnail_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "project_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "date_posted",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "date_updated",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "7f4293cd6f915bd10f44bac4c10cb9332b555bb73a9b82aa076cdab71e230675"
+}
