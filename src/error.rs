@@ -4,8 +4,10 @@ use axum::{
 };
 use thiserror::Error;
 
-use crate::template::{ErrorPartial, TemplateResponse};
+use crate::template::{ErrorPartial, Render};
 
+// TODO: Returning AppError is not often useful when working with partials, only
+//  for unrecoverable errors, so a type alias may not be necessary
 pub type AppResult<T> = Result<T, AppError>;
 
 #[derive(Debug, Error)]
@@ -27,7 +29,7 @@ impl AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        TemplateResponse(ErrorPartial {
+        Render(ErrorPartial {
             status_code: self.status_code(),
             message: self.to_string(),
         })

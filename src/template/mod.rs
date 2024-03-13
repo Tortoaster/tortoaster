@@ -48,14 +48,20 @@ pub struct ErrorPartial {
 }
 
 #[derive(Debug)]
-pub struct TemplateResponse<T>(pub T);
+pub struct Render<T>(pub T);
 
-impl<T: Template> IntoResponse for TemplateResponse<T> {
+impl<T: Template> IntoResponse for Render<T> {
     fn into_response(self) -> Response {
         match self.0.render() {
             Ok(html) => Html(html).into_response(),
             Err(error) => AppError::from(error).into_response(),
         }
+    }
+}
+
+impl<T> From<T> for Render<T> {
+    fn from(value: T) -> Self {
+        Render(value)
     }
 }
 

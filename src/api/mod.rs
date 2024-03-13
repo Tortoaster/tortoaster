@@ -6,11 +6,13 @@ use crate::{
     error::AppResult,
     model::Project,
     pagination::{Pager, PaginatedResponse},
-    template::{IndexTemplate, ProjectTemplate, TemplateResponse},
+    template::{IndexTemplate, ProjectTemplate, Render},
 };
 
-pub async fn index() -> TemplateResponse<IndexTemplate> {
-    TemplateResponse(IndexTemplate::default())
+pub mod auth;
+
+pub async fn index() -> Render<IndexTemplate> {
+    Render(IndexTemplate::default())
 }
 
 #[derive(Copy, Clone, Default, TypedPath)]
@@ -37,12 +39,12 @@ pub async fn list_projects(
 pub async fn project(
     State(pool): State<PgPool>,
     Path(id): Path<i32>,
-) -> AppResult<TemplateResponse<ProjectTemplate>> {
+) -> AppResult<Render<ProjectTemplate>> {
     let project = query_as!(Project, "SELECT * FROM projects WHERE id = $1;", id)
         .fetch_one(&pool)
         .await?;
 
-    Ok(TemplateResponse(ProjectTemplate { project }))
+    Ok(Render(ProjectTemplate { project }))
 }
 
 // pub async fn get_project(

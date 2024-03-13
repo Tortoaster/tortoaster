@@ -3,6 +3,8 @@ use validator::Validate;
 
 use crate::{pagination::Paginatable, template::ProjectPartial};
 
+pub mod auth;
+
 #[derive(Debug, Validate)]
 pub struct NewProject {
     #[validate(length(min = 1, max = 32))]

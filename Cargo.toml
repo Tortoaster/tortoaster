@@ -11,7 +11,8 @@ axum = "0.7.4"
 axum-extra = { version = "0.9.2", features = ["typed-routing"] }
 axum-valid = "0.17.0"
 backoff = { version = "0.4.0", features = ["tokio"] }
-image = "0.24.9"
+image = "0.25.0"
+scrypt = "0.11.0"
 serde = { version = "1.0.196", features = ["derive"] }
 sqlx = { version = "0.7.3", features = ["runtime-tokio", "tls-rustls", "postgres", "time"] }
 thiserror = "1.0.56"

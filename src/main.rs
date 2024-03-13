@@ -1,11 +1,3 @@
-mod api;
-mod config;
-mod error;
-mod model;
-mod pagination;
-mod state;
-mod template;
-
 use axum::{routing::get, Router};
 use axum_extra::routing::RouterExt;
 use tokio::net::TcpListener;
@@ -13,6 +5,15 @@ use tower_http::services::ServeDir;
 use tracing::info;
 
 use crate::{config::AppConfig, state::AppState};
+
+mod api;
+mod config;
+mod error;
+mod model;
+mod pagination;
+mod repository;
+mod state;
+mod template;
 
 #[tokio::main]
 async fn main() {
@@ -23,6 +24,7 @@ async fn main() {
         .init();
 
     let state = AppState::new().await.expect("failed to initialize state");
+
     let app = Router::new()
         .route("/", get(api::index))
         .route("/projects/:id", get(api::project))

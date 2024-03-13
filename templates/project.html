@@ -7,7 +7,7 @@
     <h1>{{ project.name }}</h1>
     {% match project.project_url %}
     {% when Some with (project_url) %}
-    <a class="block py-4 px-8 bg-blue-500 hover:bg-blue-300 border-stone-900 border-4 shadow-comic text-stone-100 font-bold no-underline"
+    <a class="block py-4 px-8 bg-blue-500 hover:bg-blue-300 border-stone-900 border-4 shadow-comic text-stone-100 font-bold text-xl no-underline"
        href="{{ project_url }}">Visit project site</a>
     {% when None %}
     {% endmatch %}
