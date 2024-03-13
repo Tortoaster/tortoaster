@@ -2,6 +2,10 @@
 
 {% block title %}Oops - Tortoaster{% endblock %}
 
+{% block header %}
+{% include "header/turtle_concerned.html" %}
+{% endblock %}
+
 {% block content %}
 <div class="prose prose-stone mx-auto">
     <h1>{{ status_code|with_reason }}</h1>
