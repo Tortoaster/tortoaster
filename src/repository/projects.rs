@@ -10,11 +10,12 @@ impl ProjectsRepository {
         Self(pool)
     }
 
-    pub async fn list(&self, pager: &Pager) -> sqlx::Result<Vec<Project>> {
+    pub async fn list(&self, pager: &Pager<i32>) -> sqlx::Result<Vec<Project>> {
         query_as!(
             Project,
-            "SELECT * FROM projects WHERE id > $1 ORDER BY id LIMIT 10;",
-            pager.after_id.unwrap_or_default()
+            "SELECT * FROM projects WHERE id > $1 ORDER BY id LIMIT $2;",
+            pager.after.unwrap_or_default(),
+            pager.items.unwrap_or(10),
         )
         .fetch_all(&self.0)
         .await

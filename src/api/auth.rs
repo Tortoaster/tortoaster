@@ -50,7 +50,7 @@ struct RegisterData {
     username: String,
     #[validate(email)]
     email_address: String,
-    #[validate(length(min = 8), must_match = "confirm_password")]
+    #[validate(length(min = 8), must_match(other = "confirm_password"))]
     password: String,
     confirm_password: String,
 }

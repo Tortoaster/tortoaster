@@ -29,13 +29,14 @@ pub struct Project {
 }
 
 impl Paginatable for Project {
+    type Id = i32;
     type Template = ProjectCard;
 
     fn into_template(self) -> Self::Template {
         ProjectCard { project: self }
     }
 
-    fn id(&self) -> i32 {
+    fn id(&self) -> Self::Id {
         self.id
     }
 }

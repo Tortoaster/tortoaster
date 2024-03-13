@@ -1,9 +1,10 @@
 use askama::Template;
 use axum::extract::{Path, Query, State};
-use axum_extra::routing::TypedPath;
+use axum_extra::{extract::WithRejection, routing::TypedPath};
+use axum_valid::Valid;
 
 use crate::{
-    error::{FullPageError, FullPageResult},
+    error::{FullPageError, FullPageResult, WithFullPageRejection},
     model::Project,
     pagination::{Pager, PaginatedResponse},
     render::Render,
@@ -21,12 +22,12 @@ pub struct ProjectCard {
 pub struct ListProjectsUrl;
 
 pub async fn list_projects(
-    _: ListProjectsUrl,
-    Query(pager): Query<Pager>,
+    url: ListProjectsUrl,
+    WithRejection(Valid(Query(pager)), _): WithFullPageRejection<Valid<Query<Pager<i32>>>>,
     State(repo): State<ProjectsRepository>,
-) -> FullPageResult<PaginatedResponse<Project, ListProjectsUrl>> {
-    let projects = repo.list(&pager).await?;
-    Ok(PaginatedResponse(projects, ListProjectsUrl))
+) -> FullPageResult<PaginatedResponse<Project, ListProjectsUrl, i32>> {
+    let items = repo.list(&pager).await?;
+    Ok(PaginatedResponse { items, url, pager })
 }
 
 #[derive(Template)]

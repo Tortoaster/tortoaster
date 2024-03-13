@@ -1,13 +1,17 @@
 use askama::Template;
 use axum::{
+    extract::rejection::QueryRejection,
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use axum_extra::extract::WithRejection;
 use thiserror::Error;
 
 use crate::render::Render;
 
 pub type FullPageResult<T> = Result<T, FullPageError>;
+
+pub type WithFullPageRejection<E> = WithRejection<E, FullPageError>;
 
 // TODO: Maybe this shouldn't exist at all
 /// Global error type that represents common errors that can occur anywhere in
@@ -15,12 +19,14 @@ pub type FullPageResult<T> = Result<T, FullPageError>;
 /// generate full-page error responses.
 #[derive(Debug, Error)]
 pub enum FullPageError {
-    #[error("database error: {0}")]
+    #[error("I couldn't access the database! :(")]
     Database(#[from] sqlx::Error),
     // TODO: Probably shouldn't be here
     #[error("template error: {0}")]
     Template(#[from] askama::Error),
-    #[error("We couldn't find the page you're looking for!")]
+    #[error("I couldn't do what you asked! :(\n{0}")]
+    Validate(#[from] axum_valid::ValidRejection<QueryRejection>),
+    #[error("I couldn't find the page you're looking for! :(")]
     NotFound,
 }
 
@@ -29,6 +35,7 @@ impl FullPageError {
         match self {
             FullPageError::Database(_) => StatusCode::SERVICE_UNAVAILABLE,
             FullPageError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            FullPageError::Validate(_) => StatusCode::BAD_REQUEST,
             FullPageError::NotFound => StatusCode::NOT_FOUND,
         }
     }
