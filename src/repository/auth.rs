@@ -23,9 +23,9 @@ impl AuthRepository {
         Ok(())
     }
 
-    pub async fn get_user_by_username(&self, username: &str) -> sqlx::Result<User> {
+    pub async fn get_user_by_username(&self, username: &str) -> sqlx::Result<Option<User>> {
         query_as!(User, "SELECT * FROM users WHERE username = $1;", username)
-            .fetch_one(&self.0)
+            .fetch_optional(&self.0)
             .await
     }
 }

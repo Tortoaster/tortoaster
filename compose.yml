@@ -7,6 +7,9 @@ services:
     volumes: [ ".:/app" ]
     working_dir: "/app"
     ports: [ "8000:8000" ]
+    environment:
+      HOST: "0.0.0.0"
+      DATABASE_URL: "postgres://tortoaster:password@postgres/tortoaster"
 
   postgres:
     image: postgres:16.2

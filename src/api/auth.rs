@@ -98,7 +98,12 @@ impl LoginForm {
         Self { errors }
     }
 
-    fn username_not_found_error(_: sqlx::Error) -> Self {
+    fn database_error(_: sqlx::Error) -> Self {
+        let errors = todo!();
+        Self { errors }
+    }
+
+    fn username_not_found_error() -> Self {
         let errors = todo!();
         Self { errors }
     }
@@ -144,7 +149,8 @@ pub async fn login(
     let user = repo
         .get_user_by_username(&login_data.username)
         .await
-        .map_err(LoginForm::username_not_found_error)?;
+        .map_err(LoginForm::database_error)?
+        .ok_or(LoginForm::username_not_found_error())?;
 
     // Return error if the password is incorrect
     let hash = PasswordHash::new(&user.password_hash).expect("invalid PHC string");

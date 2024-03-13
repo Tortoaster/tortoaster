@@ -1,13 +1,13 @@
 use askama::Template;
 use axum::extract::{Path, Query, State};
 use axum_extra::routing::TypedPath;
-use sqlx::{query_as, PgPool};
 
 use crate::{
     error::{FullPageError, FullPageResult},
     model::Project,
     pagination::{Pager, PaginatedResponse},
     render::Render,
+    repository::projects::ProjectsRepository,
 };
 
 #[derive(Template)]
@@ -22,18 +22,10 @@ pub struct ListProjectsUrl;
 
 pub async fn list_projects(
     _: ListProjectsUrl,
-    State(pool): State<PgPool>,
-    pager: Option<Query<Pager>>,
+    Query(pager): Query<Pager>,
+    State(repo): State<ProjectsRepository>,
 ) -> FullPageResult<PaginatedResponse<Project, ListProjectsUrl>> {
-    let after_id = pager.map(|pager| pager.after_id).unwrap_or_default();
-    let projects = query_as!(
-        Project,
-        "SELECT * FROM projects WHERE id > $1 ORDER BY id LIMIT 10;",
-        after_id
-    )
-    .fetch_all(&pool)
-    .await?;
-
+    let projects = repo.list(&pager).await?;
     Ok(PaginatedResponse(projects, ListProjectsUrl))
 }
 
@@ -44,14 +36,10 @@ pub struct ProjectPage {
 }
 
 pub async fn project(
-    State(pool): State<PgPool>,
     Path(id): Path<i32>,
+    State(repo): State<ProjectsRepository>,
 ) -> FullPageResult<Render<ProjectPage>> {
-    let project = query_as!(Project, "SELECT * FROM projects WHERE id = $1;", id)
-        .fetch_one(&pool)
-        .await
-        .map_err(|_| FullPageError::NotFound)?;
-
+    let project = repo.get(id).await?.ok_or(FullPageError::NotFound)?;
     Ok(Render(ProjectPage { project }))
 }
 

@@ -9,7 +9,7 @@ use crate::error::FullPageError;
 
 #[derive(Serialize, Deserialize)]
 pub struct Pager {
-    pub after_id: i32,
+    pub after_id: Option<i32>,
 }
 
 #[derive(Debug)]
@@ -23,7 +23,9 @@ impl<T: Paginatable, U: TypedPath> IntoResponse for PaginatedResponse<T, U> {
         };
 
         let lazy_list = LazyList {
-            url: self.1.with_query_params(Pager { after_id: last_id }),
+            url: self.1.with_query_params(Pager {
+                after_id: Some(last_id),
+            }),
             trigger: Trigger::Revealed,
         };
 

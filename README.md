@@ -1,6 +1,6 @@
 # Tortoaster
 
-![](./static/turtle-back.png)
+![](./static/turtle-back-cool.png)
 
 My personal website!
 
@@ -48,6 +48,8 @@ Should be run when:
 
 * First deploying the project
 * New database migrations are created
+
+> The project performs this step automatically
 
 ```shell
 export DATABASE_URL=postgres://tortoaster:password@localhost/tortoaster
