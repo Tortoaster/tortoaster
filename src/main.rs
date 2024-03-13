@@ -11,9 +11,9 @@ mod config;
 mod error;
 mod model;
 mod pagination;
+mod render;
 mod repository;
 mod state;
-mod template;
 
 #[tokio::main]
 async fn main() {
@@ -27,8 +27,8 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(api::index))
-        .route("/projects/:id", get(api::project))
-        .typed_get(api::list_projects)
+        .route("/projects/:id", get(api::projects::project))
+        .typed_get(api::projects::list_projects)
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
     let addr = config.socket_addr();

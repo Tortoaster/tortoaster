@@ -1,7 +1,7 @@
 use sqlx::types::time::OffsetDateTime;
 use validator::Validate;
 
-use crate::{pagination::Paginatable, template::ProjectPartial};
+use crate::{api::projects::ProjectCard, pagination::Paginatable};
 
 pub mod auth;
 
@@ -29,10 +29,10 @@ pub struct Project {
 }
 
 impl Paginatable for Project {
-    type Template = ProjectPartial;
+    type Template = ProjectCard;
 
     fn into_template(self) -> Self::Template {
-        ProjectPartial { project: self }
+        ProjectCard { project: self }
     }
 
     fn id(&self) -> i32 {

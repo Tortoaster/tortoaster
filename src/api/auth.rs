@@ -11,8 +11,8 @@ use validator::{Validate, ValidationErrors};
 
 use crate::{
     model::auth::{NewUser, User},
+    render::Render,
     repository::auth::AuthRepository,
-    template::Render,
 };
 
 #[derive(Default, Template)]

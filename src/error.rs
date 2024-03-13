@@ -1,10 +1,11 @@
+use askama::Template;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
 use thiserror::Error;
 
-use crate::template::{ErrorPartial, Render};
+use crate::render::Render;
 
 // TODO: Returning AppError is not often useful when working with partials, only
 //  for unrecoverable errors, so a type alias may not be necessary
@@ -25,6 +26,13 @@ impl AppError {
             AppError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
+}
+
+#[derive(Template)]
+#[template(path = "error.html")]
+pub struct ErrorPartial {
+    pub status_code: StatusCode,
+    pub message: String,
 }
 
 impl IntoResponse for AppError {
