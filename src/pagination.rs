@@ -5,7 +5,7 @@ use axum::response::{Html, IntoResponse, Response};
 use axum_extra::routing::TypedPath;
 use serde::{Deserialize, Serialize};
 
-use crate::error::AppError;
+use crate::error::FullPageError;
 
 #[derive(Serialize, Deserialize)]
 pub struct Pager {
@@ -37,7 +37,7 @@ impl<T: Paginatable, U: TypedPath> IntoResponse for PaginatedResponse<T, U> {
 
         match templates {
             Ok(html) => Html(html).into_response(),
-            Err(error) => AppError::from(error).into_response(),
+            Err(error) => FullPageError::from(error).into_response(),
         }
     }
 }

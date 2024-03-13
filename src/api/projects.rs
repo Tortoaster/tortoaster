@@ -4,7 +4,7 @@ use axum_extra::routing::TypedPath;
 use sqlx::{query_as, PgPool};
 
 use crate::{
-    error::AppResult,
+    error::{FullPageError, FullPageResult},
     model::Project,
     pagination::{Pager, PaginatedResponse},
     render::Render,
@@ -24,7 +24,7 @@ pub async fn list_projects(
     _: ListProjectsUrl,
     State(pool): State<PgPool>,
     pager: Option<Query<Pager>>,
-) -> AppResult<PaginatedResponse<Project, ListProjectsUrl>> {
+) -> FullPageResult<PaginatedResponse<Project, ListProjectsUrl>> {
     let after_id = pager.map(|pager| pager.after_id).unwrap_or_default();
     let projects = query_as!(
         Project,
@@ -46,10 +46,11 @@ pub struct ProjectPage {
 pub async fn project(
     State(pool): State<PgPool>,
     Path(id): Path<i32>,
-) -> AppResult<Render<ProjectPage>> {
+) -> FullPageResult<Render<ProjectPage>> {
     let project = query_as!(Project, "SELECT * FROM projects WHERE id = $1;", id)
         .fetch_one(&pool)
-        .await?;
+        .await
+        .map_err(|_| FullPageError::NotFound)?;
 
     Ok(Render(ProjectPage { project }))
 }

@@ -7,40 +7,65 @@ use thiserror::Error;
 
 use crate::render::Render;
 
-// TODO: Returning AppError is not often useful when working with partials, only
-//  for unrecoverable errors, so a type alias may not be necessary
-pub type AppResult<T> = Result<T, AppError>;
+pub type FullPageResult<T> = Result<T, FullPageError>;
 
+// TODO: Maybe this shouldn't exist at all
+/// Global error type that represents common errors that can occur anywhere in
+/// the project. This type implements [`IntoResponse`] to make it easy to
+/// generate full-page error responses.
 #[derive(Debug, Error)]
-pub enum AppError {
+pub enum FullPageError {
     #[error("database error: {0}")]
     Database(#[from] sqlx::Error),
+    // TODO: Probably shouldn't be here
     #[error("template error: {0}")]
     Template(#[from] askama::Error),
+    #[error("We couldn't find the page you're looking for!")]
+    NotFound,
 }
 
-impl AppError {
+impl FullPageError {
     fn status_code(&self) -> StatusCode {
         match self {
-            AppError::Database(_) => StatusCode::SERVICE_UNAVAILABLE,
-            AppError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            FullPageError::Database(_) => StatusCode::SERVICE_UNAVAILABLE,
+            FullPageError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            FullPageError::NotFound => StatusCode::NOT_FOUND,
         }
     }
 }
 
 #[derive(Template)]
 #[template(path = "error.html")]
-pub struct ErrorPartial {
-    pub status_code: StatusCode,
-    pub message: String,
+struct Error {
+    status_code: StatusCode,
+    message: String,
 }
 
-impl IntoResponse for AppError {
+impl IntoResponse for FullPageError {
     fn into_response(self) -> Response {
-        Render(ErrorPartial {
-            status_code: self.status_code(),
-            message: self.to_string(),
-        })
-        .into_response()
+        let status_code = self.status_code();
+        let message = self.to_string();
+
+        let template = Error {
+            status_code,
+            message,
+        };
+
+        (status_code, Render(template)).into_response()
+    }
+}
+
+mod filters {
+    use askama::Result;
+    use axum::http::StatusCode;
+
+    pub fn with_reason(status_code: &StatusCode) -> Result<String> {
+        Ok(format!(
+            "{} {}",
+            status_code.as_u16(),
+            status_code
+                .canonical_reason()
+                .unwrap_or("No idea what went wrong")
+        ))
     }
 }

@@ -4,7 +4,7 @@ use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing::info;
 
-use crate::{config::AppConfig, state::AppState};
+use crate::{config::AppConfig, error::FullPageError, state::AppState};
 
 mod api;
 mod config;
@@ -30,6 +30,7 @@ async fn main() {
         .route("/projects/:id", get(api::projects::project))
         .typed_get(api::projects::list_projects)
         .nest_service("/static", ServeDir::new("static"))
+        .fallback(|| async { FullPageError::NotFound })
         .with_state(state);
     let addr = config.socket_addr();
     let listener = TcpListener::bind(addr).await.unwrap();
