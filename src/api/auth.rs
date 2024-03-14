@@ -1,6 +1,9 @@
 use askama::Template;
-use axum::{extract::State, Form};
-use axum_valid::Valid;
+use axum::{
+    extract::{rejection::FormRejection, State},
+    Form,
+};
+use axum_valid::{Valid, ValidRejection};
 use scrypt::{
     password_hash,
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -17,12 +20,13 @@ use crate::{
 
 #[derive(Default, Template)]
 #[template(path = "auth/register_form.html")]
-struct RegisterForm {
+pub struct RegisterForm {
     errors: ValidationErrors,
 }
 
 impl RegisterForm {
-    fn validation_errors(errors: ValidationErrors) -> Self {
+    fn validation_errors(_: ValidRejection<FormRejection>) -> Self {
+        let errors = todo!();
         Self { errors }
     }
 
@@ -42,10 +46,10 @@ impl RegisterForm {
 
 #[derive(Template)]
 #[template(path = "auth/register_confirmation.html")]
-struct RegisterConfirmation;
+pub struct RegisterConfirmation;
 
 #[derive(Deserialize, Validate)]
-struct RegisterData {
+pub struct RegisterData {
     #[validate(length(min = 1, max = 32))]
     username: String,
     #[validate(email)]
@@ -56,14 +60,14 @@ struct RegisterData {
 }
 
 pub async fn register(
-    form_data: Result<Valid<Form<Option<RegisterData>>>, ValidationErrors>,
     State(repo): State<AuthRepository>,
+    optional_form_data: Option<Result<Valid<Form<RegisterData>>, ValidRejection<FormRejection>>>,
 ) -> Result<Render<RegisterConfirmation>, Render<RegisterForm>> {
-    // Return simple validation errors if the structure of the data has problems
-    let Valid(Form(optional_register_data)) = form_data.map_err(RegisterForm::validation_errors)?;
-
     // Return empty form if no data is provided
-    let register_data = optional_register_data.ok_or(RegisterForm::default())?;
+    let form_data = optional_form_data.ok_or(RegisterForm::default())?;
+
+    // Return simple validation errors if the structure of the data has problems
+    let Valid(Form(register_data)) = form_data.map_err(RegisterForm::validation_errors)?;
 
     let salt = SaltString::generate(&mut OsRng);
     let password_hash = Scrypt
@@ -89,12 +93,13 @@ pub async fn register(
 
 #[derive(Default, Template)]
 #[template(path = "auth/login_form.html")]
-struct LoginForm {
+pub struct LoginForm {
     errors: ValidationErrors,
 }
 
 impl LoginForm {
-    fn validation_errors(errors: ValidationErrors) -> Self {
+    fn validation_errors(_: ValidRejection<FormRejection>) -> Self {
+        let errors = todo!();
         Self { errors }
     }
 
@@ -121,12 +126,12 @@ impl LoginForm {
 
 #[derive(Template)]
 #[template(path = "auth/login_confirmation.html")]
-struct LoginConfirmation {
+pub struct LoginConfirmation {
     user: User,
 }
 
 #[derive(Deserialize, Validate)]
-struct LoginData {
+pub struct LoginData {
     #[validate(length(min = 1, max = 32))]
     username: String,
     #[validate(length(min = 8))]
@@ -134,14 +139,14 @@ struct LoginData {
 }
 
 pub async fn login(
-    form_data: Result<Valid<Form<Option<LoginData>>>, ValidationErrors>,
     State(repo): State<AuthRepository>,
+    optional_form_data: Option<Result<Valid<Form<LoginData>>, ValidRejection<FormRejection>>>,
 ) -> Result<Render<LoginConfirmation>, Render<LoginForm>> {
-    // Return simple validation errors if the structure of the data has problems
-    let Valid(Form(optional_login_data)) = form_data.map_err(LoginForm::validation_errors)?;
-
     // Return empty form if no data is provided
-    let login_data = optional_login_data.ok_or(LoginForm::default())?;
+    let form_data = optional_form_data.ok_or(LoginForm::default())?;
+
+    // Return simple validation errors if the structure of the data has problems
+    let Valid(Form(login_data)) = form_data.map_err(LoginForm::validation_errors)?;
 
     // Return error if the user doesn't exist
     // TODO: If this returns the same error as an incorrect password, the next
