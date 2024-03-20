@@ -1,6 +1,5 @@
 use axum::{routing::get, Router};
 use axum_extra::routing::RouterExt;
-use sqlx::migrate;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing::info;
@@ -25,11 +24,6 @@ async fn main() {
         .init();
 
     let state = AppState::new().await.expect("failed to initialize state");
-
-    migrate!()
-        .run(&state.pool)
-        .await
-        .expect("failed to run database migrations");
 
     let app = Router::new()
         .route("/", get(api::index))

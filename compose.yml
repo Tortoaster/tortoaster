@@ -1,19 +1,38 @@
 version: '3.9'
 services:
   tortoaster:
-    image: dev
+    profiles: [ "full" ]
     build:
-      dockerfile: "dev.Dockerfile"
+      dockerfile: "watch_tailwind.Dockerfile"
     volumes: [ ".:/app" ]
     working_dir: "/app"
     ports: [ "8000:8000" ]
     environment:
       HOST: "0.0.0.0"
-      DATABASE_URL: "postgres://tortoaster:password@postgres/tortoaster"
+      DATABASE_URL: "postgres://tortoaster:password@db/tortoaster"
+    depends_on:
+      db_migrate:
+        condition: service_completed_successfully
 
-  postgres:
+  db:
     image: postgres:16.2
     environment:
       POSTGRES_USER: "tortoaster"
       POSTGRES_PASSWORD: "password"
     ports: [ "5432:5432" ]
+    healthcheck:
+      test: "pg_isready"
+      interval: 5s
+      retries: 5
+
+  db_migrate:
+    build:
+      dockerfile: "sqlx.Dockerfile"
+    volumes: [ "./migrations:/app/migrations" ]
+    working_dir: "/app"
+    command: [ "sqlx", "migrate", "run" ]
+    environment:
+      DATABASE_URL: "postgres://tortoaster:password@db/tortoaster"
+    depends_on:
+      db:
+        condition: service_healthy

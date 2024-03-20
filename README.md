@@ -7,7 +7,7 @@ My personal website!
 ## Launch Project
 
 ```shell
-docker compose up
+docker compose --profile full up
 ```
 
 ## Set-Up for Local Development or Debugging
@@ -36,10 +36,10 @@ cargo install cargo-watch
 
 ### Useful commands
 
-#### Run dependencies separately
+#### Run dependencies
 
 ```shell
-docker compose up -d postgres
+docker compose up
 ```
 
 #### Run database migrations
@@ -49,7 +49,7 @@ Should be run when:
 * First deploying the project
 * New database migrations are created
 
-> The project performs this step automatically
+> `compose.yml` performs this step automatically
 
 ```shell
 export DATABASE_URL=postgres://tortoaster:password@localhost/tortoaster
