@@ -4,16 +4,18 @@ use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing::info;
 
-use crate::{config::AppConfig, error::FullPageError, state::AppState};
+use crate::{config::AppConfig, error::PageError, state::AppState};
 
 mod api;
 mod config;
+mod dto;
 mod error;
 mod model;
 mod pagination;
 mod render;
 mod repository;
 mod state;
+mod template;
 
 #[tokio::main]
 async fn main() {
@@ -26,11 +28,11 @@ async fn main() {
     let state = AppState::new().await.expect("failed to initialize state");
 
     let app = Router::new()
-        .route("/", get(api::index))
-        .route("/projects/:id", get(api::projects::project))
-        .typed_get(api::projects::list_projects)
+        .route("/projects/:id", get(api::projects::get_project))
+        .typed_get(api::projects::list_projects_page)
+        .typed_get(api::projects::list_projects_partial)
         .nest_service("/static", ServeDir::new("static"))
-        .fallback(|| async { FullPageError::NotFound })
+        .fallback(|| async { PageError::NotFound })
         .with_state(state);
     let addr = config.socket_addr();
     let listener = TcpListener::bind(addr).await.unwrap();

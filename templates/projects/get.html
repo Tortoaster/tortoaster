@@ -17,4 +17,9 @@
 <div class="prose prose-stone mx-auto">
     {{ project.description|markdown }}
 </div>
+<div>
+    {% for comment in comments %}
+    {% include "../comments/comment.html" %}
+    {% endfor %}
+</div>
 {% endblock %}

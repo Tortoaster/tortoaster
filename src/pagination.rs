@@ -6,7 +6,7 @@ use axum_extra::routing::TypedPath;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::error::FullPageError;
+use crate::error::PageError;
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct Pager<Id> {
@@ -62,7 +62,7 @@ where
 
         match templates {
             Ok(html) => Html(html).into_response(),
-            Err(error) => FullPageError::from(error).into_response(),
+            Err(error) => PageError::from(error).into_response(),
         }
     }
 }
