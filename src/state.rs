@@ -5,11 +5,7 @@ use backoff::ExponentialBackoff;
 use sqlx::PgPool;
 use tracing::warn;
 
-use crate::{
-    config::AppConfig,
-    error::FullPageResult,
-    repository::{auth::AuthRepository, projects::ProjectsRepository},
-};
+use crate::{config::AppConfig, error::FullPageResult, repository::projects::ProjectsRepository};
 
 #[derive(Clone, Debug)]
 pub struct AppState {
@@ -40,12 +36,6 @@ impl AppState {
 impl FromRef<AppState> for PgPool {
     fn from_ref(input: &AppState) -> Self {
         input.pool.clone()
-    }
-}
-
-impl FromRef<AppState> for AuthRepository {
-    fn from_ref(input: &AppState) -> Self {
-        AuthRepository::new(input.pool.clone())
     }
 }
 

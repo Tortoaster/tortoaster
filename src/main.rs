@@ -28,8 +28,6 @@ async fn main() {
     let app = Router::new()
         .route("/", get(api::index))
         .route("/projects/:id", get(api::projects::project))
-        .route("/auth/login", get(api::auth::login))
-        .route("/auth/register", get(api::auth::register))
         .typed_get(api::projects::list_projects)
         .nest_service("/static", ServeDir::new("static"))
         .fallback(|| async { FullPageError::NotFound })

@@ -2,8 +2,7 @@ use askama::Template;
 
 use crate::{api::projects::ListProjectsUrl, render::Render};
 
-pub mod auth;
-mod comments;
+pub mod comments;
 pub mod projects;
 
 #[derive(Default, Template)]

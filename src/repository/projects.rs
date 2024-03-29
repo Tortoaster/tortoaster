@@ -1,6 +1,6 @@
 use sqlx::{query_as, PgPool};
 
-use crate::{model::Project, pagination::Pager};
+use crate::{model::projects::Project, pagination::Pager};
 
 #[derive(Debug)]
 pub struct ProjectsRepository(PgPool);

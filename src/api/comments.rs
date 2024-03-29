@@ -1,6 +1,6 @@
 use askama::Template;
 
-use crate::model::Comment;
+use crate::model::comments::Comment;
 
 #[derive(Template)]
 #[template(path = "comments/comment.html")]

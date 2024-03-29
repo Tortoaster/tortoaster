@@ -5,7 +5,7 @@ use axum_valid::Valid;
 
 use crate::{
     error::{FullPageError, FullPageResult, WithFullPageRejection},
-    model::Project,
+    model::projects::Project,
     pagination::{Pager, PaginatedResponse},
     render::Render,
     repository::projects::ProjectsRepository,
