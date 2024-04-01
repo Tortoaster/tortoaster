@@ -13,7 +13,7 @@ use validator::{Validate, ValidationErrors};
 
 use crate::{
     dto::projects::{NewProject, Project},
-    error::{PageError, PageResult, ToastResult, WithPageRejection, WithToastRejection},
+    error::{AppError, PageResult, ToastResult, WithPageRejection, WithToastRejection},
     pagination::{Pager, PaginatedResponse},
     render::Render,
     repository::projects::ProjectsRepository,
@@ -60,7 +60,7 @@ async fn get_project(
     let (project, comments) = repo
         .get_with_comments(id, &pager)
         .await?
-        .ok_or(PageError::NotFound)?;
+        .ok_or(AppError::NotFound)?;
 
     Ok(Render(GetProjectPage { project, comments }))
 }

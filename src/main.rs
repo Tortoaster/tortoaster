@@ -3,7 +3,12 @@ use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing::info;
 
-use crate::{api::projects::ListProjectsUrl, config::AppConfig, error::PageError, state::AppState};
+use crate::{
+    api::projects::ListProjectsUrl,
+    config::AppConfig,
+    error::{AppError, PageError},
+    state::AppState,
+};
 
 mod api;
 mod config;
@@ -33,7 +38,7 @@ async fn main() {
         )
         .merge(api::projects::router())
         .nest_service("/static", ServeDir::new("static"))
-        .fallback(|| async { PageError::NotFound })
+        .fallback(|| async { PageError(AppError::NotFound) })
         .with_state(state);
     let addr = config.socket_addr();
     let listener = TcpListener::bind(addr).await.unwrap();

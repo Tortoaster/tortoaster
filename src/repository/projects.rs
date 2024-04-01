@@ -1,6 +1,5 @@
 use sea_orm::{
-    ColumnTrait, DatabaseConnection, DbErr, EntityTrait, Order, QueryFilter, QueryOrder,
-    QuerySelect, SqlxPostgresConnector,
+    DatabaseConnection, DbErr, EntityTrait, Order, QueryOrder, QuerySelect, SqlxPostgresConnector,
 };
 use sqlx::{query_as, PgPool};
 
