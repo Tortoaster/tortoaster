@@ -1,10 +1,9 @@
-use axum::{routing::get, Router};
-use axum_extra::routing::RouterExt;
+use axum::{response::Redirect, routing::get, Router};
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing::info;
 
-use crate::{config::AppConfig, error::PageError, state::AppState};
+use crate::{api::projects::ListProjectsUrl, config::AppConfig, error::PageError, state::AppState};
 
 mod api;
 mod config;
@@ -28,9 +27,11 @@ async fn main() {
     let state = AppState::new().await.expect("failed to initialize state");
 
     let app = Router::new()
-        .route("/projects/:id", get(api::projects::get_project))
-        .typed_get(api::projects::list_projects_page)
-        .typed_get(api::projects::list_projects_partial)
+        .route(
+            "/",
+            get(|| async { Redirect::permanent(&ListProjectsUrl.to_string()) }),
+        )
+        .merge(api::projects::router())
         .nest_service("/static", ServeDir::new("static"))
         .fallback(|| async { PageError::NotFound })
         .with_state(state);

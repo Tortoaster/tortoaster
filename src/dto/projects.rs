@@ -1,10 +1,12 @@
 use sea_orm::ActiveValue::Set;
+use serde::Deserialize;
 use sqlx::types::time::OffsetDateTime;
 use validator::Validate;
 
 use crate::{model::projects, pagination::Paginatable, template::projects::ProjectComponent};
 
-#[derive(Debug, Validate)]
+#[derive(Debug, Deserialize, Validate)]
+#[serde(rename_all = "kebab-case")]
 pub struct NewProject {
     #[validate(length(min = 1, max = 32))]
     pub name: String,
@@ -12,6 +14,7 @@ pub struct NewProject {
     pub description: String,
     #[validate(url)]
     pub thumbnail_url: String,
+    #[serde(default)]
     #[validate(url)]
     pub project_url: Option<String>,
 }

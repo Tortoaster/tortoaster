@@ -2,6 +2,17 @@
 
 {% block title %}{{ project.name }} - Tortoaster{% endblock %}
 
+{% block nav %}
+<a href="/form/projects"
+   class="block size-16 p-4 pr-2 rounded-l-full hover:bg-blue-300 text-stone-300 hover:text-blue-500 transition-colors">
+    {% include "icons/pencil.svg" %}
+</a>
+<a href="/form/projects"
+   class="block size-16 p-4 pl-2 rounded-r-full hover:bg-red-300 text-stone-300 hover:text-red-500 transition-colors">
+    {% include "icons/trash-can.svg" %}
+</a>
+{% endblock %}
+
 {% block content %}
 <div class="flex justify-between items-baseline prose prose-stone mx-auto">
     <h1>{{ project.name }}</h1>
@@ -12,12 +23,11 @@
     {% when None %}
     {% endmatch %}
 </div>
-<img class="max-w-full mx-auto my-8 border-stone-900 border-4 shadow-comic" alt="thumbnail"
+<img class="max-w-full mx-auto my-8 border-stone-900 border-4 shadow-comic" alt="Thumbnail"
      src="{{ project.thumbnail_url }}">
 <div class="prose prose-stone mx-auto">
     {{ project.description|markdown }}
-</div>
-<div>
+    <h2>Comments</h2>
     {% for comment in comments %}
     {% include "../comments/comment.html" %}
     {% endfor %}

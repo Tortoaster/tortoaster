@@ -18,14 +18,14 @@
     font-display: swap;
 }
 
-.my-indicator{
+.my-indicator {
     display: none;
 }
 
-.htmx-request .my-indicator{
+.htmx-request .my-indicator {
     display: block;
 }
 
-.htmx-request.my-indicator{
+.htmx-request.my-indicator {
     display: block;
 }

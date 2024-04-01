@@ -1,0 +1,34 @@
+<form method="post" class="flex flex-col gap-8">
+    <div class="flex flex-col gap-4">
+        <label class="block font-bold text-lg" for="thumbnail-url">Thumbnail image URL</label>
+        <input class="bg-transparent w-full h-32 p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 selected outline-none border-dashed"
+               id="thumbnail-url"
+               name="thumbnail-url"
+               placeholder="Don't drag and drop an image here, that's not supported yet :3"
+               type="url"/>
+    </div>
+
+    <div class="flex flex-col gap-4">
+        <label class="block font-bold text-lg" for="name">Project name</label>
+        <input class="bg-transparent w-2/3 p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 selected shadow-comic outline-none"
+               id="name"
+               name="name"/>
+    </div>
+
+    <div class="flex flex-col gap-4">
+        <label class="block font-bold text-lg" for="description">Description</label>
+        <textarea
+                class="bg-transparent w-full h-64 p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 selected shadow-comic outline-none resize-none"
+                id="description" name="description"></textarea>
+    </div>
+
+    <div class="flex flex-col gap-4">
+        <label class="block font-bold text-lg" for="project-url">URL to the project page</label>
+        <input class="bg-transparent w-full p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 selected shadow-comic outline-none"
+               id="project-url" name="project-url" type="url"/>
+    </div>
+
+    <button class="py-4 px-8 bg-blue-500 hover:bg-blue-300 border-stone-900 border-4 shadow-comic text-stone-100 font-bold text-xl"
+            type="submit">Publish
+    </button>
+</form>
