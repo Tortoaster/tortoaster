@@ -1,4 +1,3 @@
-version: '3.9'
 services:
   tortoaster:
     profiles: [ "full" ]
@@ -28,9 +27,11 @@ services:
   db_migrate:
     build:
       dockerfile: "sqlx.Dockerfile"
-    volumes: [ "./migrations:/app/migrations" ]
+    volumes:
+      - "./migrations:/app/migrations"
+      - "./fixtures:/app/fixtures"
     working_dir: "/app"
-    command: [ "sqlx", "migrate", "run" ]
+    command: [ "sqlx", "migrate", "run", "--source", "migrations", "--source", "fixtures" ]
     environment:
       DATABASE_URL: "postgres://tortoaster:password@db/tortoaster"
     depends_on:

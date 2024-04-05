@@ -96,3 +96,15 @@ Should be run when:
 export DATABASE_URL=postgres://tortoaster:password@localhost/tortoaster
 cargo sqlx prepare
 ```
+
+#### Create a database dump
+
+Useful for creating fixtures. Run in the database container:
+
+```shell
+pg_dump \
+	-d tortoaster \
+	-U tortoaster \
+	--data-only \
+	--inserts
+```
