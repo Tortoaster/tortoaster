@@ -1,12 +1,12 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM projects WHERE id > $1 ORDER BY id LIMIT $2;",
+  "query": "INSERT INTO projects (id, name, description, thumbnail_url, project_url) VALUES ($1, $2, $3, $4, $5) RETURNING *;",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
         "name": "id",
-        "type_info": "Int4"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 1,
@@ -32,17 +32,15 @@
         "ordinal": 5,
         "name": "date_posted",
         "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 6,
-        "name": "date_updated",
-        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        "Int4",
-        "Int8"
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Varchar",
+        "Varchar"
       ]
     },
     "nullable": [
@@ -51,9 +49,8 @@
       false,
       false,
       true,
-      false,
-      true
+      false
     ]
   },
-  "hash": "40cd9027744fdb7c8c14847ab88addae1ca393ccc4412d919b9817b4a0535273"
+  "hash": "ec264f58f73e2ffbaf46eb75d795d9ad752b5d4d362322352f44cddec3558f5e"
 }

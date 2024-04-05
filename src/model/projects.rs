@@ -5,15 +5,14 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "projects")]
 pub struct Model {
-    #[sea_orm(primary_key)]
-    pub id: i32,
+    #[sea_orm(primary_key, auto_increment = false)]
+    pub id: String,
     pub name: String,
     #[sea_orm(column_type = "Text")]
     pub description: String,
     pub thumbnail_url: String,
     pub project_url: Option<String>,
     pub date_posted: TimeDateTimeWithTimeZone,
-    pub date_updated: Option<TimeDateTimeWithTimeZone>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

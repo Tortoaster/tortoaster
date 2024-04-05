@@ -9,6 +9,7 @@ use axum_extra::{
 };
 use axum_valid::Valid;
 use serde::Deserialize;
+use time::OffsetDateTime;
 use validator::{Validate, ValidationErrors};
 
 use crate::{
@@ -40,16 +41,18 @@ pub struct ListProjectsUrl;
 async fn list_projects(
     _: ListProjectsUrl,
     State(repo): State<ProjectsRepository>,
-    WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<i32>>>>,
+    WithRejection(Valid(Query(pager)), _): WithPageRejection<
+        Valid<Query<Pager<(OffsetDateTime, String)>>>,
+    >,
 ) -> PageResult<Render<ListProjectsPage>> {
     let projects = repo.list(&pager).await?;
     Ok(Render(ListProjectsPage::new(projects)))
 }
 
-#[derive(Copy, Clone, Deserialize, TypedPath)]
+#[derive(Clone, Deserialize, TypedPath)]
 #[typed_path("/projects/:id")]
 pub struct GetProjectUrl {
-    id: i32,
+    id: String,
 }
 
 async fn get_project(
@@ -58,7 +61,7 @@ async fn get_project(
     WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<i32>>>>,
 ) -> PageResult<Render<GetProjectPage>> {
     let (project, comments) = repo
-        .get_with_comments(id, &pager)
+        .get_with_comments(&id, &pager)
         .await?
         .ok_or(AppError::NotFound)?;
 
@@ -108,8 +111,10 @@ pub struct ListProjectsPartialUrl;
 async fn list_projects_partial(
     url: ListProjectsPartialUrl,
     State(repo): State<ProjectsRepository>,
-    WithRejection(Valid(Query(pager)), _): WithToastRejection<Valid<Query<Pager<i32>>>>,
-) -> ToastResult<PaginatedResponse<Project, ListProjectsPartialUrl, i32>> {
+    WithRejection(Valid(Query(pager)), _): WithToastRejection<
+        Valid<Query<Pager<(OffsetDateTime, String)>>>,
+    >,
+) -> ToastResult<PaginatedResponse<Project, ListProjectsPartialUrl, (OffsetDateTime, String)>> {
     let items = repo.list(&pager).await?;
     Ok(PaginatedResponse { items, url, pager })
 }

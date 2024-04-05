@@ -19,6 +19,18 @@ pub struct NewProject {
     pub project_url: Option<String>,
 }
 
+impl NewProject {
+    pub fn create_id(&self) -> String {
+        let mut id = self
+            .name
+            .replace(|c: char| !c.is_alphanumeric() && c != ' ', "")
+            .replace(' ', "-")
+            .to_lowercase();
+        id.truncate(128);
+        id
+    }
+}
+
 impl From<NewProject> for projects::ActiveModel {
     fn from(value: NewProject) -> Self {
         Self {
@@ -33,17 +45,16 @@ impl From<NewProject> for projects::ActiveModel {
 
 #[derive(Debug)]
 pub struct Project {
-    pub id: i32,
+    pub id: String,
     pub name: String,
     pub description: String,
     pub thumbnail_url: String,
     pub project_url: Option<String>,
     pub date_posted: OffsetDateTime,
-    pub date_updated: Option<OffsetDateTime>,
 }
 
 impl Paginatable for Project {
-    type Id = i32;
+    type Id = (OffsetDateTime, String);
     type Template = ProjectComponent;
 
     fn into_template(self) -> Self::Template {
@@ -51,7 +62,7 @@ impl Paginatable for Project {
     }
 
     fn id(&self) -> Self::Id {
-        self.id
+        (self.date_posted, self.id.clone())
     }
 }
 
@@ -64,7 +75,6 @@ impl From<projects::Model> for Project {
             thumbnail_url: value.thumbnail_url,
             project_url: value.project_url,
             date_posted: value.date_posted,
-            date_updated: value.date_updated,
         }
     }
 }

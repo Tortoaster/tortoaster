@@ -23,7 +23,8 @@ pub struct PaginatedResponse<T, U, Id> {
 }
 
 pub trait Paginatable {
-    /// The type the table column that is unique and can be ordered in SQL.
+    /// The type of the table column(s) that is/are unique and can be ordered in
+    /// SQL.
     type Id;
     type Template: Template;
 
@@ -32,7 +33,7 @@ pub trait Paginatable {
     fn id(&self) -> Self::Id;
 }
 
-impl<T, U> IntoResponse for PaginatedResponse<T, U, T::Id>
+impl<'a, T, U> IntoResponse for PaginatedResponse<T, U, T::Id>
 where
     T: Paginatable,
     T::Id: Serialize,

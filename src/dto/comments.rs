@@ -6,7 +6,7 @@ use crate::{model::comments, pagination::Paginatable, template::comments::Commen
 
 #[derive(Debug, Validate)]
 pub struct NewComment {
-    pub project_id: i32,
+    pub project_id: String,
     #[validate(length(min = 1, max = 32))]
     pub name: String,
     #[validate(email, length(max = 64))]
