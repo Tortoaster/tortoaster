@@ -10,14 +10,15 @@ use std::{
 };
 
 use serde::{de::DeserializeOwned, Deserialize};
+use toml::Value;
 use tracing_subscriber::EnvFilter;
 
 #[derive(Debug, Deserialize)]
 pub struct AppConfig {
     pub host: IpAddr,
     pub port: u16,
-    pub database_url: String,
     rust_log: String,
+    pub database_url: String,
 }
 
 impl AppConfig {
@@ -44,24 +45,9 @@ impl AppConfig {
                         _ => panic!("error reading Config.toml: {error}"),
                     },
                 })
-                .unwrap_or(toml::Value::Table(toml::Table::new()));
+                .unwrap_or(Value::Table(toml::Table::new()));
 
-            AppConfig {
-                host: retrieve(
-                    "host",
-                    "ip address",
-                    &config_toml,
-                    Some(IpAddr::V4(Ipv4Addr::LOCALHOST)),
-                ),
-                port: retrieve("port", "port number", &config_toml, Some(8000)),
-                database_url: retrieve("database_url", "url", &config_toml, None),
-                rust_log: retrieve(
-                    "rust_log",
-                    "log specification",
-                    &config_toml,
-                    Some(String::new()),
-                ),
-            }
+            Self::load_config(&[], &config_toml)
         })
     }
 
@@ -74,34 +60,90 @@ impl AppConfig {
     }
 }
 
+impl LoadConfig for AppConfig {
+    fn load_config(_prefixes: &[&'static str], config_toml: &Value) -> Self {
+        AppConfig {
+            host: retrieve(
+                &[],
+                "ip address",
+                "host",
+                config_toml,
+                Some(IpAddr::V4(Ipv4Addr::LOCALHOST)),
+            ),
+            port: retrieve(&[], "port number", "port", config_toml, Some(8000)),
+            rust_log: retrieve(
+                &[],
+                "log specification",
+                "rust_log",
+                config_toml,
+                Some(String::new()),
+            ),
+            database_url: retrieve(&[], "url", "database_url", config_toml, None),
+        }
+    }
+}
+
+// TODO: Derive or replace with library
+trait LoadConfig {
+    fn load_config(prefixes: &[&'static str], config_toml: &Value) -> Self;
+}
+
+fn try_retrieve<T>(
+    prefixes: &[&'static str],
+    field_name: &'static str,
+    type_name: &'static str,
+    config_toml: &Value,
+) -> Option<T>
+where
+    T: FromStr + DeserializeOwned,
+    T::Err: Debug,
+{
+    let env_var_name = &env_var_name(prefixes, field_name);
+
+    env::var(env_var_name)
+        .ok()
+        .map(|var| {
+            var.parse().unwrap_or_else(|_| {
+                panic!("environment variable {env_var_name} must be a valid {type_name}")
+            })
+        })
+        .or(config_toml.get(field_name).cloned().map(|value| {
+            value.try_into().unwrap_or_else(|_| {
+                panic!("Config.toml entry {field_name} must be a valid {type_name}")
+            })
+        }))
+}
+
 fn retrieve<T>(
-    field: &'static str,
-    ty: &'static str,
-    config_toml: &toml::Value,
+    prefixes: &[&'static str],
+    field_name: &'static str,
+    type_name: &'static str,
+    config_toml: &Value,
     default: Option<T>,
 ) -> T
 where
     T: FromStr + DeserializeOwned,
     T::Err: Debug,
 {
-    let field_uppercase = field.to_uppercase();
-    env::var(&field_uppercase)
-        .ok()
-        .map(|var| {
-            var.parse().unwrap_or_else(|_| {
-                panic!("environment variable {field_uppercase} must be a valid {ty}")
-            })
-        })
-        .or(config_toml.get(field).cloned().map(|value| {
-            value
-                .try_into()
-                .unwrap_or_else(|_| panic!("Config.toml entry {field} must be a valid {ty}"))
-        }))
+    try_retrieve(prefixes, type_name, field_name, config_toml)
         .or(default)
         .unwrap_or_else(|| {
+            let env_var_name = env_var_name(prefixes, field_name);
+
             panic!(
-                "config must contain {field}, add it to Config.toml or set the {field_uppercase} \
-                 environment variable"
+                "config must contain {field_name}, add it to `Config.toml` or set the \
+                 {env_var_name} environment variable"
             )
         })
+}
+
+fn env_var_name(prefixes: &[&'static str], field_name: &'static str) -> String {
+    let prefix: String = prefixes
+        .iter()
+        .copied()
+        .map(str::to_uppercase)
+        .map(|prefix| prefix + "_")
+        .collect();
+
+    format!("{}{}", prefix, field_name.to_uppercase())
 }

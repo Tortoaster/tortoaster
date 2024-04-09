@@ -5,7 +5,7 @@ use backoff::ExponentialBackoff;
 use sqlx::PgPool;
 use tracing::warn;
 
-use crate::{config::AppConfig, error::PageResult, repository::projects::ProjectsRepository};
+use crate::{config::AppConfig, repository::projects::ProjectsRepository};
 
 #[derive(Clone, Debug)]
 pub struct AppState {
@@ -13,7 +13,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new() -> PageResult<Self> {
+    pub async fn new() -> Self {
         let config = AppConfig::get();
 
         let pool = backoff::future::retry_notify(
@@ -27,9 +27,10 @@ impl AppState {
                 warn!("retrying in {} seconds", duration.as_secs());
             },
         )
-        .await?;
+        .await
+        .expect("failed to connect to database");
 
-        Ok(AppState { pool })
+        AppState { pool }
     }
 }
 

@@ -29,7 +29,7 @@ async fn main() {
         .with_env_filter(config.env_filter())
         .init();
 
-    let state = AppState::new().await.expect("failed to initialize state");
+    let state = AppState::new().await;
 
     let app = Router::new()
         .route(

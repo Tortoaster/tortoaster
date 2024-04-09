@@ -1,4 +1,4 @@
 host = "127.0.0.1"
 port = 8000
-database_url = "postgres://tortoaster:password@localhost/tortoaster"
 rust_log = "tortoaster=trace,warn"
+database_url = "postgres://tortoaster:password@localhost/tortoaster"
