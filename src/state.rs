@@ -63,9 +63,9 @@ impl AppState {
         assert!(
             buckets
                 .iter()
-                .any(|bucket| bucket.name() == Some(config.upload_bucket())),
+                .any(|bucket| bucket.name() == Some(config.thumbnail_bucket())),
             "{} bucket not found",
-            config.upload_bucket()
+            config.thumbnail_bucket()
         );
 
         AppState { pool, s3_client }

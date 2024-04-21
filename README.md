@@ -1,6 +1,6 @@
 # Tortoaster
 
-![](images/turtle-back-cool.png)
+![Logo](thumbnails/d410d185-f372-43e4-bc4b-888bada43d83)
 
 My personal website!
 

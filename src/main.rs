@@ -1,4 +1,4 @@
-use axum::{response::Redirect, routing::get, Router};
+use axum::{extract::DefaultBodyLimit, response::Redirect, routing::get, Router};
 use axum_s3::ServeBucket;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
@@ -40,10 +40,11 @@ async fn main() {
         .merge(api::projects::router())
         .nest_service("/static", ServeDir::new("static"))
         .nest_service(
-            "/uploads",
-            ServeBucket::new(state.s3_client.clone(), config.upload_bucket()),
+            "/thumbnails",
+            ServeBucket::new(state.s3_client.clone(), config.thumbnail_bucket()),
         )
         .fallback(|| async { PageError(AppError::NotFound) })
+        .layer(DefaultBodyLimit::max(1024 * 1024 * 5))
         .with_state(state);
     let addr = config.socket_addr();
     let listener = TcpListener::bind(addr).await.unwrap();

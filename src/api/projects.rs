@@ -93,6 +93,8 @@ async fn post_project_form(
     State(client): State<Arc<aws_sdk_s3::Client>>,
     WithRejection(mut parts, _): WithPageRejection<Multipart>,
 ) -> PageResult<Result<Redirect, Render<ProjectFormPage>>> {
+    const SUPPORTED_FILE_TYPES: [&str; 6] = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"];
+
     #[derive(Default)]
     struct IncompleteNewProject {
         name: Option<String>,
@@ -112,30 +114,33 @@ async fn post_project_form(
                 data.project_url = Some((!text.is_empty()).then_some(text))
             }
             Some("thumbnail") => {
-                thumbnail = Some((
-                    field.file_name().ok_or(AppError::MissingFile)?.to_owned(),
-                    field.bytes().await?,
-                ))
+                let file_name = field.file_name().ok_or(AppError::MissingFile)?;
+                if !SUPPORTED_FILE_TYPES
+                    .iter()
+                    .any(|extension| file_name.ends_with(extension))
+                {
+                    return Err(AppError::UnsupportedImageType.into());
+                }
+                thumbnail = Some(field.bytes().await?)
             }
             _ => continue,
         }
     }
 
-    let (filename, image) = thumbnail.ok_or(AppError::MissingFields)?;
+    let thumbnail = thumbnail.ok_or(AppError::MissingFields)?;
     let project = NewProject::new(
         data.name.ok_or(AppError::MissingFields)?,
         data.description.ok_or(AppError::MissingFields)?,
-        &filename,
         data.project_url.ok_or(AppError::MissingFields)?,
-    )?;
+    );
 
     match project.validate() {
         Ok(_) => {
             let response = client
                 .put_object()
-                .bucket(AppConfig::get().upload_bucket())
-                .key(&project.thumbnail_key)
-                .body(ByteStream::new(SdkBody::from(image)))
+                .bucket(AppConfig::get().thumbnail_bucket())
+                .key(project.thumbnail_id.to_string())
+                .body(ByteStream::new(SdkBody::from(thumbnail)))
                 .send()
                 .await?;
             let project = repo.create(&project).await?;

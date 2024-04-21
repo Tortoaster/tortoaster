@@ -10,7 +10,7 @@ pub struct Model {
     pub name: String,
     #[sea_orm(column_type = "Text")]
     pub description: String,
-    pub thumbnail_key: String,
+    pub thumbnail_id: Uuid,
     pub project_url: Option<String>,
     pub date_posted: TimeDateTimeWithTimeZone,
 }

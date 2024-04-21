@@ -20,8 +20,8 @@
       },
       {
         "ordinal": 3,
-        "name": "thumbnail_key",
-        "type_info": "Varchar"
+        "name": "thumbnail_id",
+        "type_info": "Uuid"
       },
       {
         "ordinal": 4,

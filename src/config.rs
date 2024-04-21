@@ -77,8 +77,8 @@ impl AppConfig {
             .await
     }
 
-    pub fn upload_bucket(&self) -> &str {
-        &self.object_storage.upload_bucket
+    pub fn thumbnail_bucket(&self) -> &str {
+        &self.object_storage.thumbnail_bucket
     }
 }
 
@@ -119,7 +119,7 @@ pub struct ObjectStorageConfig {
     pub access_key_id: String,
     pub secret_access_key: String,
     pub session_token: Option<String>,
-    pub upload_bucket: String,
+    pub thumbnail_bucket: String,
 }
 
 impl LoadConfig for ObjectStorageConfig {
@@ -129,7 +129,13 @@ impl LoadConfig for ObjectStorageConfig {
             access_key_id: retrieve(prefixes, "access_key_id", "id", config_toml, None),
             secret_access_key: retrieve(prefixes, "secret_access_key", "key", config_toml, None),
             session_token: try_retrieve(prefixes, "session_token", "token", config_toml),
-            upload_bucket: retrieve(prefixes, "upload_bucket", "bucket name", config_toml, None),
+            thumbnail_bucket: retrieve(
+                prefixes,
+                "thumbnail_bucket",
+                "bucket name",
+                config_toml,
+                None,
+            ),
         }
     }
 }

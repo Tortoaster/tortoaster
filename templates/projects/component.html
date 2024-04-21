@@ -1,7 +1,7 @@
 <div class="basis-full md:basis-[calc(50%_-_1rem)] lg:basis-[calc(33.333333%_-_1.3333333rem)] xl:basis-[calc(25%_-_1.5rem)] bg-stone-100 border-4 border-stone-900 relative shadow-comic">
     <a href="/projects/{{ project.id }}" class="group">
         <img class="aspect-[3/2] object-cover group-hover:object-contain w-full bg-stone-300"
-             alt="{{ project.name }} thumbnail" src="/uploads/{{ project.thumbnail_key }}"/>
+             alt="{{ project.name }} thumbnail" src="/thumbnails/{{ project.thumbnail_id }}"/>
         <div class="aspect-[3/2] p-8 overflow-hidden relative">
             <div class="flex justify-between items-baseline">
                 <h3 class="text-stone-900 text-xl font-bold">{{ project.name }}</h3>

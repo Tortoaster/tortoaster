@@ -13,8 +13,6 @@ mod toast;
 pub use page::{PageError, PageResult, WithPageRejection};
 pub use toast::{ToastError, ToastResult, WithToastRejection};
 
-pub type AppResult<T> = Result<T, AppError>;
-
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("I couldn't access the database! :(")]
@@ -29,10 +27,12 @@ pub enum AppError {
     ),
     #[error("I couldn't find the page you're looking for! :(")]
     NotFound,
-    #[error("Please upload a valid file!")]
-    MissingFile,
+    #[error("I only understand .png, .jpg, .jpeg, .gif, .webp or .svg :(")]
+    UnsupportedImageType,
     #[error("Please fill out all the fields!")]
     MissingFields,
+    #[error("Please upload a file!")]
+    MissingFile,
     #[error("Please fill out all the fields!")]
     Form(#[from] FormRejection),
     #[error("Something weird went wrong :(")]
@@ -50,7 +50,8 @@ impl AppError {
             AppError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::PutObject(_) => StatusCode::INSUFFICIENT_STORAGE,
             AppError::NotFound => StatusCode::NOT_FOUND,
-            AppError::MissingFile
+            AppError::UnsupportedImageType
+            | AppError::MissingFile
             | AppError::MissingFields
             | AppError::Form(_)
             | AppError::MultipartError(_)

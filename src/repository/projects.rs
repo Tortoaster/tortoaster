@@ -72,12 +72,12 @@ impl ProjectsRepository {
     pub async fn create(&self, project: &NewProject) -> sqlx::Result<Project> {
         query_as!(
             Project,
-            "INSERT INTO projects (id, name, description, thumbnail_key, project_url) VALUES ($1, \
+            "INSERT INTO projects (id, name, description, thumbnail_id, project_url) VALUES ($1, \
              $2, $3, $4, $5) RETURNING *;",
             project.id(),
             &project.name,
             &project.description,
-            &project.thumbnail_key,
+            &project.thumbnail_id,
             project.project_url.as_ref()
         )
         .fetch_one(&self.pool)

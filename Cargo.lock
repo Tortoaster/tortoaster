@@ -2361,6 +2361,7 @@ dependencies = [
  "time",
  "tracing",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -2387,6 +2388,7 @@ dependencies = [
  "inherent",
  "ordered-float",
  "time",
+ "uuid",
 ]
 
 [[package]]
@@ -2398,6 +2400,7 @@ dependencies = [
  "sea-query",
  "sqlx",
  "time",
+ "uuid",
 ]
 
 [[package]]
@@ -2713,6 +2716,7 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "url",
+ "uuid",
  "webpki-roots",
 ]
 
@@ -2796,6 +2800,7 @@ dependencies = [
  "thiserror",
  "time",
  "tracing",
+ "uuid",
  "whoami",
 ]
 
@@ -2836,6 +2841,7 @@ dependencies = [
  "thiserror",
  "time",
  "tracing",
+ "uuid",
  "whoami",
 ]
 
@@ -2861,6 +2867,7 @@ dependencies = [
  "tracing",
  "url",
  "urlencoding",
+ "uuid",
 ]
 
 [[package]]
@@ -3141,6 +3148,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "uuid",
  "validator",
 ]
 
@@ -3347,6 +3355,11 @@ name = "uuid"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a183cf7feeba97b4dd1c0d46788634f6221d87fa961b305bed08c851829efcc0"
+dependencies = [
+ "getrandom",
+ "rand",
+ "serde",
+]
 
 [[package]]
 name = "validator"
