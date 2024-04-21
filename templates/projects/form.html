@@ -1,30 +1,33 @@
-<form method="post" class="flex flex-col gap-8">
+<div class="text-red-500">
+    {{ errors }}
+</div>
+<form method="post" class="flex flex-col gap-8" enctype="multipart/form-data">
     <div class="flex flex-col gap-4">
-        <label class="block font-bold text-lg" for="thumbnail-url">Thumbnail image URL</label>
-        <input class="bg-transparent w-full h-32 p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 selected outline-none border-dashed"
-               id="thumbnail-url"
-               name="thumbnail-url"
-               placeholder="Don't drag and drop an image here, that's not supported yet :3"
-               type="url"/>
+        <label class="block font-bold text-lg text-stone-900" for="thumbnail">Thumbnail image URL</label>
+        <input class="bg-transparent w-full px-4 py-16 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 outline-none border-dashed text-center text-lg text-stone-900"
+               id="thumbnail"
+               name="thumbnail"
+               type="file"
+               accept=".png, .jpg, .jpeg, .gif, .webp, .svg"/>
     </div>
 
     <div class="flex flex-col gap-4">
-        <label class="block font-bold text-lg" for="name">Project name</label>
-        <input class="bg-transparent w-2/3 p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 selected shadow-comic outline-none"
+        <label class="block font-bold text-lg text-stone-900" for="name">Project name</label>
+        <input class="bg-transparent w-2/3 p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 shadow-comic outline-none text-stone-900"
                id="name"
                name="name"/>
     </div>
 
     <div class="flex flex-col gap-4">
-        <label class="block font-bold text-lg" for="description">Description</label>
+        <label class="block font-bold text-lg text-stone-900" for="description">Description</label>
         <textarea
-                class="bg-transparent w-full h-64 p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 selected shadow-comic outline-none resize-none"
+                class="bg-transparent w-full h-64 p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 shadow-comic outline-none text-stone-900 resize-none"
                 id="description" name="description"></textarea>
     </div>
 
     <div class="flex flex-col gap-4">
-        <label class="block font-bold text-lg" for="project-url">URL to the project page</label>
-        <input class="bg-transparent w-full p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 selected shadow-comic outline-none"
+        <label class="block font-bold text-lg text-stone-900" for="project-url">URL to the project page</label>
+        <input class="bg-transparent w-full p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 shadow-comic outline-none text-stone-900"
                id="project-url" name="project-url" type="url"/>
     </div>
 

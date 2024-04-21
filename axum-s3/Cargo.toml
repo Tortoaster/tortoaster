@@ -1,0 +1,17 @@
+[package]
+name = "axum-s3"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aws-sdk-s3 = "1.23.0"
+aws-smithy-types = { version = "1.1.8", features = ["byte-stream-poll-next"] }
+axum-core = "0.4.3"
+bytes = "1.6.0"
+futures-core = "0.3.30"
+http = "1.1.0"
+percent-encoding = "2.3.1"
+tower-service = "0.3.2"
+tracing = "0.1.40"

@@ -3,8 +3,8 @@ CREATE TABLE projects
     id            VARCHAR(128) PRIMARY KEY,
     name          VARCHAR(32)              NOT NULL,
     description   TEXT                     NOT NULL,
-    thumbnail_url VARCHAR                  NOT NULL,
-    project_url   VARCHAR,
+    thumbnail_key VARCHAR(128)             NOT NULL,
+    project_url   VARCHAR(2000),
     date_posted   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 

@@ -20,7 +20,7 @@
       },
       {
         "ordinal": 3,
-        "name": "thumbnail_url",
+        "name": "thumbnail_key",
         "type_info": "Varchar"
       },
       {

@@ -2,3 +2,10 @@ host = "127.0.0.1"
 port = 8000
 rust_log = "tortoaster=trace,warn"
 database_url = "postgres://tortoaster:password@localhost/tortoaster"
+
+[object_storage]
+endpoint_url = "http://127.0.0.1:9000"
+access_key_id = "tortoaster"
+secret_access_key = "password"
+# session_token = "..."
+upload_bucket = "tortoaster-file-uploads"

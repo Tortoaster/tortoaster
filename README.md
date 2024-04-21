@@ -1,6 +1,6 @@
 # Tortoaster
 
-![](./static/turtle-back-cool.png)
+![](images/turtle-back-cool.png)
 
 My personal website!
 
@@ -26,6 +26,12 @@ sudo mv tailwindcss-linux-x64 /usr/local/bin/tailwind
 
 ```shell
 cargo install sqlx-cli --no-default-features --features rustls,postgres
+```
+
+#### SeaORM
+
+```shell
+cargo install sea-orm-cli
 ```
 
 #### cargo-watch
@@ -95,6 +101,16 @@ Should be run when:
 ```shell
 export DATABASE_URL=postgres://tortoaster:password@localhost/tortoaster
 cargo sqlx prepare
+```
+
+#### Generate entities
+
+Should be run when:
+
+* New database migrations are created
+
+```shell
+sea-orm-cli generate entity -o src/model --date-time-crate time
 ```
 
 #### Create a database dump

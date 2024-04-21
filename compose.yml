@@ -3,37 +3,69 @@ services:
     profiles: [ "full" ]
     build:
       dockerfile: "watch_tailwind.Dockerfile"
-    volumes: [ ".:/app" ]
     working_dir: "/app"
+    volumes: [ ".:/app" ]
     ports: [ "8000:8000" ]
     environment:
       HOST: "0.0.0.0"
       DATABASE_URL: "postgres://tortoaster:password@db/tortoaster"
+      OBJECT_STORAGE_ENDPOINT_URL: "http://object-store:9000/"
     depends_on:
-      db_migrate:
+      db-migrate:
+        condition: service_completed_successfully
+      object-store-migrate:
         condition: service_completed_successfully
 
   db:
     image: postgres:16.2
+    ports: [ "5432:5432" ]
     environment:
       POSTGRES_USER: "tortoaster"
       POSTGRES_PASSWORD: "password"
-    ports: [ "5432:5432" ]
     healthcheck:
       test: "pg_isready"
-      interval: 5s
-      retries: 5
+      interval: 1s
+      retries: 10
 
-  db_migrate:
+  db-migrate:
     build:
       dockerfile: "sqlx.Dockerfile"
+    working_dir: "/app"
+    command: [ "sqlx", "migrate", "run", "--source", "migrations", "--source", "fixtures" ]
     volumes:
       - "./migrations:/app/migrations"
       - "./fixtures:/app/fixtures"
-    working_dir: "/app"
-    command: [ "sqlx", "migrate", "run", "--source", "migrations", "--source", "fixtures" ]
     environment:
       DATABASE_URL: "postgres://tortoaster:password@db/tortoaster"
     depends_on:
       db:
         condition: service_healthy
+
+  object-store:
+    image: quay.io/minio/minio
+    command: "server /data --address 0.0.0.0:9000 --console-address 0.0.0.0:9001"
+    environment:
+      MINIO_HOST: "0.0.0.0"
+      MINIO_ROOT_USER: "tortoaster"
+      MINIO_ROOT_PASSWORD: "password"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: "curl -I http://localhost:9000/minio/health/live"
+      interval: 1s
+      retries: 10
+
+  object-store-migrate:
+    image: quay.io/minio/mc
+    volumes: [ "./images:/app/images" ]
+    depends_on:
+      object-store:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c " \
+        /usr/bin/mc alias set myminio http://object-store:9000 tortoaster password && \
+        /usr/bin/mc mb --ignore-existing --region "eu-central-1" myminio/tortoaster-file-uploads && \
+        /usr/bin/mc anonymous set public myminio/tortoaster-file-uploads && \
+        /usr/bin/mc cp --recursive /app/images myminio/tortoaster-file-uploads \
+      "

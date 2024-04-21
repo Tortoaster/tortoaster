@@ -49,6 +49,7 @@ pub struct ProjectComponent {
 #[derive(Default, Template)]
 #[template(path = "projects/form.html")]
 pub struct ProjectForm {
+    pub errors: ValidationErrors,
     pub project: Option<Project>,
 }
 

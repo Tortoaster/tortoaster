@@ -1,7 +1,10 @@
+use std::sync::Arc;
+
+use aws_sdk_s3::primitives::{ByteStream, SdkBody};
 use axum::{
-    extract::{Query, State},
+    extract::{Multipart, Query, State},
     response::Redirect,
-    Form, Router,
+    Router,
 };
 use axum_extra::{
     extract::WithRejection,
@@ -13,6 +16,7 @@ use time::OffsetDateTime;
 use validator::{Validate, ValidationErrors};
 
 use crate::{
+    config::AppConfig,
     dto::projects::{NewProject, Project},
     error::{AppError, PageResult, ToastResult, WithPageRejection, WithToastRejection},
     pagination::{Pager, PaginatedResponse},
@@ -86,11 +90,56 @@ pub struct PostProjectFormUrl;
 async fn post_project_form(
     _: PostProjectFormUrl,
     State(repo): State<ProjectsRepository>,
-    WithRejection(Form(project), _): WithPageRejection<Form<NewProject>>,
+    State(client): State<Arc<aws_sdk_s3::Client>>,
+    WithRejection(mut parts, _): WithPageRejection<Multipart>,
 ) -> PageResult<Result<Redirect, Render<ProjectFormPage>>> {
+    #[derive(Default)]
+    struct IncompleteNewProject {
+        name: Option<String>,
+        description: Option<String>,
+        project_url: Option<Option<String>>,
+    }
+    let mut thumbnail = None;
+
+    let mut data = IncompleteNewProject::default();
+
+    while let Some(field) = parts.next_field().await? {
+        match field.name() {
+            Some("name") => data.name = Some(field.text().await?),
+            Some("description") => data.description = Some(field.text().await?),
+            Some("project-url") => {
+                let text = field.text().await?;
+                data.project_url = Some((!text.is_empty()).then_some(text))
+            }
+            Some("thumbnail") => {
+                thumbnail = Some((
+                    field.file_name().ok_or(AppError::MissingFile)?.to_owned(),
+                    field.bytes().await?,
+                ))
+            }
+            _ => continue,
+        }
+    }
+
+    let (filename, image) = thumbnail.ok_or(AppError::MissingFields)?;
+    let project = NewProject::new(
+        data.name.ok_or(AppError::MissingFields)?,
+        data.description.ok_or(AppError::MissingFields)?,
+        &filename,
+        data.project_url.ok_or(AppError::MissingFields)?,
+    )?;
+
     match project.validate() {
         Ok(_) => {
+            let response = client
+                .put_object()
+                .bucket(AppConfig::get().upload_bucket())
+                .key(&project.thumbnail_key)
+                .body(ByteStream::new(SdkBody::from(image)))
+                .send()
+                .await?;
             let project = repo.create(&project).await?;
+
             Ok(Ok(Redirect::to(
                 &GetProjectUrl { id: project.id }.to_string(),
             )))
@@ -124,5 +173,8 @@ async fn list_projects_partial(
 pub struct ProjectFormPartialUrl;
 
 async fn project_form_partial(_: ProjectFormPartialUrl) -> Render<ProjectForm> {
-    Render(ProjectForm { project: None })
+    Render(ProjectForm {
+        errors: ValidationErrors::new(),
+        project: None,
+    })
 }

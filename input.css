@@ -29,3 +29,7 @@
 .htmx-request.my-indicator {
     display: block;
 }
+
+input[type="file"]::file-selector-button {
+    display: none;
+}

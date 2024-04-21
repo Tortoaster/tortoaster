@@ -1,15 +1,16 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use axum::extract::FromRef;
 use backoff::ExponentialBackoff;
 use sqlx::PgPool;
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::{config::AppConfig, repository::projects::ProjectsRepository};
 
 #[derive(Clone, Debug)]
 pub struct AppState {
     pub pool: PgPool,
+    pub s3_client: Arc<aws_sdk_s3::Client>,
 }
 
 impl AppState {
@@ -30,7 +31,44 @@ impl AppState {
         .await
         .expect("failed to connect to database");
 
-        AppState { pool }
+        info!("connected to database");
+
+        let s3_client = Arc::new(aws_sdk_s3::Client::new(&config.s3_config().await));
+
+        let output = backoff::future::retry_notify(
+            ExponentialBackoff::default(),
+            || async {
+                let exists = s3_client.list_buckets().send().await?;
+                Ok(exists)
+            },
+            |error, duration: Duration| {
+                warn!("failed to find s3 instance: {error}");
+                warn!("retrying in {} seconds", duration.as_secs());
+            },
+        )
+        .await
+        .expect("failed to find s3 instance");
+        let buckets = output.buckets();
+
+        info!(
+            "found s3 instance with {} bucket(s): {}",
+            buckets.len(),
+            buckets
+                .iter()
+                .map(|bucket| bucket.name.as_deref().unwrap_or("<unnamed>"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+
+        assert!(
+            buckets
+                .iter()
+                .any(|bucket| bucket.name() == Some(config.upload_bucket())),
+            "{} bucket not found",
+            config.upload_bucket()
+        );
+
+        AppState { pool, s3_client }
     }
 }
 
@@ -43,5 +81,11 @@ impl FromRef<AppState> for PgPool {
 impl FromRef<AppState> for ProjectsRepository {
     fn from_ref(input: &AppState) -> Self {
         ProjectsRepository::new(input.pool.clone())
+    }
+}
+
+impl FromRef<AppState> for Arc<aws_sdk_s3::Client> {
+    fn from_ref(input: &AppState) -> Self {
+        input.s3_client.clone()
     }
 }

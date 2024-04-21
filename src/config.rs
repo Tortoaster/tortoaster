@@ -9,6 +9,8 @@ use std::{
     sync::OnceLock,
 };
 
+use aws_config::{BehaviorVersion, SdkConfig};
+use aws_sdk_s3::config::Credentials;
 use serde::{de::DeserializeOwned, Deserialize};
 use toml::Value;
 use tracing_subscriber::EnvFilter;
@@ -19,6 +21,7 @@ pub struct AppConfig {
     pub port: u16,
     rust_log: String,
     pub database_url: String,
+    object_storage: ObjectStorageConfig,
 }
 
 impl AppConfig {
@@ -58,27 +61,75 @@ impl AppConfig {
     pub fn env_filter(&self) -> EnvFilter {
         EnvFilter::new(&self.rust_log)
     }
+
+    pub async fn s3_config(&self) -> SdkConfig {
+        aws_config::defaults(BehaviorVersion::v2023_11_09())
+            .region("eu-central-1")
+            .endpoint_url(&self.object_storage.endpoint_url)
+            .credentials_provider(Credentials::new(
+                &self.object_storage.access_key_id,
+                &self.object_storage.secret_access_key,
+                self.object_storage.session_token.clone(),
+                None,
+                "tortoaster-credential-provider",
+            ))
+            .load()
+            .await
+    }
+
+    pub fn upload_bucket(&self) -> &str {
+        &self.object_storage.upload_bucket
+    }
 }
 
 impl LoadConfig for AppConfig {
-    fn load_config(_prefixes: &[&'static str], config_toml: &Value) -> Self {
+    fn load_config(prefixes: &[&'static str], config_toml: &Value) -> Self {
         AppConfig {
             host: retrieve(
                 &[],
-                "ip address",
                 "host",
+                "ip address",
                 config_toml,
                 Some(IpAddr::V4(Ipv4Addr::LOCALHOST)),
             ),
-            port: retrieve(&[], "port number", "port", config_toml, Some(8000)),
+            port: retrieve(&[], "port", "port number", config_toml, Some(8000)),
             rust_log: retrieve(
                 &[],
-                "log specification",
                 "rust_log",
+                "log specification",
                 config_toml,
                 Some(String::new()),
             ),
-            database_url: retrieve(&[], "url", "database_url", config_toml, None),
+            database_url: retrieve(&[], "database_url", "url", config_toml, None),
+            object_storage: ObjectStorageConfig::load_config(
+                &prefixes
+                    .iter()
+                    .copied()
+                    .chain(Some("object_storage"))
+                    .collect::<Vec<_>>(),
+                &config_toml["object_storage"],
+            ),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ObjectStorageConfig {
+    pub endpoint_url: String,
+    pub access_key_id: String,
+    pub secret_access_key: String,
+    pub session_token: Option<String>,
+    pub upload_bucket: String,
+}
+
+impl LoadConfig for ObjectStorageConfig {
+    fn load_config(prefixes: &[&'static str], config_toml: &Value) -> Self {
+        ObjectStorageConfig {
+            endpoint_url: retrieve(prefixes, "endpoint_url", "url", config_toml, None),
+            access_key_id: retrieve(prefixes, "access_key_id", "id", config_toml, None),
+            secret_access_key: retrieve(prefixes, "secret_access_key", "key", config_toml, None),
+            session_token: try_retrieve(prefixes, "session_token", "token", config_toml),
+            upload_bucket: retrieve(prefixes, "upload_bucket", "bucket name", config_toml, None),
         }
     }
 }
@@ -125,7 +176,7 @@ where
     T: FromStr + DeserializeOwned,
     T::Err: Debug,
 {
-    try_retrieve(prefixes, type_name, field_name, config_toml)
+    try_retrieve(prefixes, field_name, type_name, config_toml)
         .or(default)
         .unwrap_or_else(|| {
             let env_var_name = env_var_name(prefixes, field_name);

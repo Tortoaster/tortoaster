@@ -1,4 +1,5 @@
 use axum::{response::Redirect, routing::get, Router};
+use axum_s3::ServeBucket;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing::info;
@@ -38,6 +39,10 @@ async fn main() {
         )
         .merge(api::projects::router())
         .nest_service("/static", ServeDir::new("static"))
+        .nest_service(
+            "/uploads",
+            ServeBucket::new(state.s3_client.clone(), config.upload_bucket()),
+        )
         .fallback(|| async { PageError(AppError::NotFound) })
         .with_state(state);
     let addr = config.socket_addr();
