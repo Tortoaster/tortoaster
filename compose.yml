@@ -2,19 +2,34 @@ services:
   tortoaster:
     profiles: [ "full" ]
     build:
-      dockerfile: "watch_tailwind.Dockerfile"
-    working_dir: "/app"
-    volumes: [ ".:/app" ]
+      dockerfile: "Dockerfile"
     ports: [ "8000:8000" ]
     environment:
       HOST: "0.0.0.0"
+      PORT: "8000"
+      RUST_LOG: "tortoaster=info,warn"
       DATABASE_URL: "postgres://tortoaster:password@db/tortoaster"
       OBJECT_STORAGE_ENDPOINT_URL: "http://object-store:9000/"
+      OBJECT_STORAGE_ACCESS_KEY_ID: "tortoaster"
+      OBJECT_STORAGE_SECRET_ACCESS_KEY: "password"
+      OBJECT_STORAGE_BUCKET_THUMBNAILS: "tortoaster-thumbnails"
+      OBJECT_STORAGE_BUCKET_CONTENT: "tortoaster-content"
     depends_on:
+      tailwindcss:
+        condition: service_completed_successfully
       db-migrate:
         condition: service_completed_successfully
       object-store-migrate:
         condition: service_completed_successfully
+
+  tailwindcss:
+    build:
+      dockerfile: "Dockerfile"
+      target: "tailwindcss"
+    working_dir: "/app"
+    command: [ "-i", "./input.css", "-o", "./static/style.css", "-m" ]
+    volumes: [ ".:/app" ]
+    user: "1000:1000"
 
   db:
     image: postgres:16.2
@@ -31,7 +46,7 @@ services:
     build:
       dockerfile: "sqlx.Dockerfile"
     working_dir: "/app"
-    command: [ "sqlx", "migrate", "run", "--source", "migrations", "--source", "fixtures" ]
+    command: [ "migrate", "run", "--source", "migrations", "--source", "fixtures" ]
     volumes:
       - "./migrations:/app/migrations"
       - "./fixtures:/app/fixtures"
@@ -44,13 +59,13 @@ services:
   object-store:
     image: quay.io/minio/minio
     command: "server /data --address 0.0.0.0:9000 --console-address 0.0.0.0:9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_HOST: "0.0.0.0"
       MINIO_ROOT_USER: "tortoaster"
       MINIO_ROOT_PASSWORD: "password"
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     healthcheck:
       test: "curl -I http://localhost:9000/minio/health/live"
       interval: 1s

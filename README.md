@@ -1,6 +1,6 @@
 # Tortoaster
 
-![Logo](thumbnails/d410d185-f372-43e4-bc4b-888bada43d83)
+![Logo](bucket_data/thumbnails/d410d185-f372-43e4-bc4b-888bada43d83)
 
 My personal website!
 
@@ -19,7 +19,7 @@ docker compose --profile full up
 ```shell
 curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64
 sudo chmod +x tailwindcss-linux-x64
-sudo mv tailwindcss-linux-x64 /usr/local/bin/tailwind
+sudo mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
 ```
 
 #### sqlx
@@ -35,6 +35,8 @@ cargo install sea-orm-cli
 ```
 
 #### cargo-watch
+
+(Optional)
 
 ```shell
 cargo install cargo-watch
@@ -71,10 +73,16 @@ Should be run when:
 * `input.css` is updated
 * `tailwind.config.js` is updated
 
-> `build.rs` performs this step automatically
+> `compose.yml` performs this step automatically
 
 ```shell
-tailwind -i ./input.css -o ./static/style.css --minify
+tailwindcss -i ./input.css -o ./static/style.css -m
+```
+
+Alternatively, to regenerate CSS automatically on change:
+
+```shell
+tailwindcss -i ./input.css -o ./static/style.css -m -w
 ```
 
 #### Run the project
@@ -88,7 +96,7 @@ cargo run
 Alternatively, to re-run automatically on change:
 
 ```shell
-cargo watch -x run -w templates -w input.css -w tailwind.config.js
+cargo watch -x run -w templates
 ```
 
 #### Prepare compile-time checked queries

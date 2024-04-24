@@ -107,7 +107,10 @@ impl LoadConfig for AppConfig {
                     .copied()
                     .chain(Some("object_storage"))
                     .collect::<Vec<_>>(),
-                &config_toml["object_storage"],
+                &config_toml
+                    .get("object_storage")
+                    .cloned()
+                    .unwrap_or_else(|| Value::Array(Vec::new())),
             ),
         }
     }
@@ -135,7 +138,10 @@ impl LoadConfig for ObjectStorageConfig {
                     .copied()
                     .chain(Some("bucket"))
                     .collect::<Vec<_>>(),
-                &config_toml["bucket"],
+                &config_toml
+                    .get("bucket")
+                    .cloned()
+                    .unwrap_or_else(|| Value::Array(Vec::new())),
             ),
         }
     }
