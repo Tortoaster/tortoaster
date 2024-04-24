@@ -77,8 +77,8 @@ impl AppConfig {
             .await
     }
 
-    pub fn thumbnail_bucket(&self) -> &str {
-        &self.object_storage.thumbnail_bucket
+    pub fn buckets(&self) -> &BucketConfig {
+        &self.object_storage.bucket
     }
 }
 
@@ -113,13 +113,13 @@ impl LoadConfig for AppConfig {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct ObjectStorageConfig {
     pub endpoint_url: String,
     pub access_key_id: String,
     pub secret_access_key: String,
     pub session_token: Option<String>,
-    pub thumbnail_bucket: String,
+    pub bucket: BucketConfig,
 }
 
 impl LoadConfig for ObjectStorageConfig {
@@ -129,13 +129,29 @@ impl LoadConfig for ObjectStorageConfig {
             access_key_id: retrieve(prefixes, "access_key_id", "id", config_toml, None),
             secret_access_key: retrieve(prefixes, "secret_access_key", "key", config_toml, None),
             session_token: try_retrieve(prefixes, "session_token", "token", config_toml),
-            thumbnail_bucket: retrieve(
-                prefixes,
-                "thumbnail_bucket",
-                "bucket name",
-                config_toml,
-                None,
+            bucket: BucketConfig::load_config(
+                &prefixes
+                    .iter()
+                    .copied()
+                    .chain(Some("bucket"))
+                    .collect::<Vec<_>>(),
+                &config_toml["bucket"],
             ),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BucketConfig {
+    pub thumbnails: String,
+    pub content: String,
+}
+
+impl LoadConfig for BucketConfig {
+    fn load_config(prefixes: &[&'static str], config_toml: &Value) -> Self {
+        BucketConfig {
+            thumbnails: retrieve(prefixes, "thumbnails", "bucket id", config_toml, None),
+            content: retrieve(prefixes, "content", "bucket id", config_toml, None),
         }
     }
 }

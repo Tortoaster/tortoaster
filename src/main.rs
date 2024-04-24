@@ -41,7 +41,7 @@ async fn main() {
         .nest_service("/static", ServeDir::new("static"))
         .nest_service(
             "/thumbnails",
-            ServeBucket::new(state.s3_client.clone(), config.thumbnail_bucket()),
+            ServeBucket::new(state.s3_client.clone(), &config.buckets().thumbnails),
         )
         .fallback(|| async { PageError(AppError::NotFound) })
         .layer(DefaultBodyLimit::max(1024 * 1024 * 5))

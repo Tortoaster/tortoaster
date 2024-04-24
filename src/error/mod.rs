@@ -11,7 +11,7 @@ mod page;
 mod toast;
 
 pub use page::{PageError, PageResult, WithPageRejection};
-pub use toast::{ToastError, ToastResult, WithToastRejection};
+pub use toast::{ToastResult, WithToastRejection};
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -21,18 +21,18 @@ pub enum AppError {
     Orm(#[from] sea_orm::DbErr),
     #[error("I couldn't display this page :(")]
     Template(#[from] askama::Error),
-    #[error("Something went wrong while uploading your image :(")]
+    #[error("Something went wrong while uploading your file :(")]
     PutObject(
         #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::put_object::PutObjectError>,
     ),
+    #[error("Something went wrong while retrieving your file :(")]
+    GetObject(
+        #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::get_object::GetObjectError>,
+    ),
+    #[error("Something went wrong while retrieving your file :(")]
+    ObjectEncoding,
     #[error("I couldn't find the page you're looking for! :(")]
     NotFound,
-    #[error("I only understand .png, .jpg, .jpeg, .gif, .webp or .svg :(")]
-    UnsupportedImageType,
-    #[error("Please fill out all the fields!")]
-    MissingFields,
-    #[error("Please upload a file!")]
-    MissingFile,
     #[error("Please fill out all the fields!")]
     Form(#[from] FormRejection),
     #[error("Something weird went wrong :(")]
@@ -49,11 +49,10 @@ impl AppError {
             AppError::Database(_) | AppError::Orm(_) => StatusCode::SERVICE_UNAVAILABLE,
             AppError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::PutObject(_) => StatusCode::INSUFFICIENT_STORAGE,
-            AppError::NotFound => StatusCode::NOT_FOUND,
-            AppError::UnsupportedImageType
-            | AppError::MissingFile
-            | AppError::MissingFields
-            | AppError::Form(_)
+            AppError::GetObject(_) | AppError::ObjectEncoding | AppError::NotFound => {
+                StatusCode::NOT_FOUND
+            }
+            AppError::Form(_)
             | AppError::MultipartError(_)
             | AppError::MultipartRejection(_)
             | AppError::Validate(_) => StatusCode::BAD_REQUEST,

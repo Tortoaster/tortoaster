@@ -8,7 +8,7 @@
                 <span class="text-stone-500 text-sm">{{ project.date_posted|humantime }}</span>
             </div>
             <br/>
-            <div class="text-stone-900 text-balance markdown">{{ project.description|truncate(256)|markdown }}</div>
+            <div class="text-stone-900 text-balance markdown">{{ project.preview }}</div>
             <div class="absolute w-full h-16 bottom-0 left-0 bg-gradient-to-t from-stone-100 from-50%"></div>
         </div>
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-1/6 aspect-[2/1] rounded-b-full bg-stone-100 border-4 border-l-8 border-stone-900 border-t-stone-100 mt-[-4px]"></div>

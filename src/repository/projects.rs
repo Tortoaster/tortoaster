@@ -1,7 +1,7 @@
 use sea_orm::{
     DatabaseConnection, DbErr, EntityTrait, Order, QueryOrder, QuerySelect, SqlxPostgresConnector,
 };
-use sqlx::{query_as, types::time::OffsetDateTime, PgPool};
+use sqlx::{query_as, types::time::OffsetDateTime, PgPool, Postgres, Transaction};
 
 use crate::{
     dto::{
@@ -69,18 +69,27 @@ impl ProjectsRepository {
         }
     }
 
-    pub async fn create(&self, project: &NewProject) -> sqlx::Result<Project> {
-        query_as!(
+    pub async fn create(
+        &self,
+        project: &NewProject,
+        preview: &str,
+    ) -> sqlx::Result<(Project, Transaction<Postgres>)> {
+        let mut transaction = self.pool.begin().await?;
+
+        let project = query_as!(
             Project,
-            "INSERT INTO projects (id, name, description, thumbnail_id, project_url) VALUES ($1, \
-             $2, $3, $4, $5) RETURNING *;",
+            "INSERT INTO projects (id, name, preview, content_id, thumbnail_id, project_url) \
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;",
             project.id(),
             &project.name,
-            &project.description,
+            preview,
+            &project.content_id,
             &project.thumbnail_id,
             project.project_url.as_ref()
         )
-        .fetch_one(&self.pool)
-        .await
+        .fetch_one(&mut *transaction)
+        .await?;
+
+        Ok((project, transaction))
     }
 }

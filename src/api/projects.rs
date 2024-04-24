@@ -1,8 +1,11 @@
-use std::sync::Arc;
+use std::{
+    mem::MaybeUninit,
+    sync::{Arc, OnceLock},
+};
 
 use aws_sdk_s3::primitives::{ByteStream, SdkBody};
 use axum::{
-    extract::{Multipart, Query, State},
+    extract::{multipart::MultipartError, Multipart, Query, State},
     response::Redirect,
     Router,
 };
@@ -11,9 +14,12 @@ use axum_extra::{
     routing::{RouterExt, TypedPath},
 };
 use axum_valid::Valid;
+use bytes::Bytes;
+use comrak::Options;
+use regex::Regex;
 use serde::Deserialize;
 use time::OffsetDateTime;
-use validator::{Validate, ValidationErrors};
+use validator::{Validate, ValidationError, ValidationErrors};
 
 use crate::{
     config::AppConfig,
@@ -62,6 +68,7 @@ pub struct GetProjectUrl {
 async fn get_project(
     GetProjectUrl { id }: GetProjectUrl,
     State(repo): State<ProjectsRepository>,
+    State(client): State<Arc<aws_sdk_s3::Client>>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<i32>>>>,
 ) -> PageResult<Render<GetProjectPage>> {
     let (project, comments) = repo
@@ -69,7 +76,26 @@ async fn get_project(
         .await?
         .ok_or(AppError::NotFound)?;
 
-    Ok(Render(GetProjectPage { project, comments }))
+    let content = String::from_utf8(
+        client
+            .get_object()
+            .bucket(&AppConfig::get().buckets().content)
+            .key(project.content_id.to_string())
+            .send()
+            .await?
+            .body
+            .collect()
+            .await
+            .map_err(|_| AppError::ObjectEncoding)?
+            .to_vec(),
+    )
+    .map_err(|_| AppError::ObjectEncoding)?;
+
+    Ok(Render(GetProjectPage {
+        project,
+        content,
+        comments,
+    }))
 }
 
 #[derive(Copy, Clone, TypedPath)]
@@ -91,59 +117,164 @@ async fn post_project_form(
     _: PostProjectFormUrl,
     State(repo): State<ProjectsRepository>,
     State(client): State<Arc<aws_sdk_s3::Client>>,
-    WithRejection(mut parts, _): WithPageRejection<Multipart>,
+    WithRejection(parts, _): WithPageRejection<Multipart>,
 ) -> PageResult<Result<Redirect, Render<ProjectFormPage>>> {
-    const SUPPORTED_FILE_TYPES: [&str; 6] = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"];
-
-    #[derive(Default)]
-    struct IncompleteNewProject {
-        name: Option<String>,
-        description: Option<String>,
-        project_url: Option<Option<String>>,
+    #[derive(Validate)]
+    struct FormData {
+        name: String,
+        #[validate(length(min = 1))]
+        content: String,
+        thumbnail: Bytes,
+        project_url: Option<String>,
     }
-    let mut thumbnail = None;
 
-    let mut data = IncompleteNewProject::default();
+    impl TryFrom<IncompleteFormData> for FormData {
+        type Error = ValidationErrors;
 
-    while let Some(field) = parts.next_field().await? {
-        match field.name() {
-            Some("name") => data.name = Some(field.text().await?),
-            Some("description") => data.description = Some(field.text().await?),
-            Some("project-url") => {
-                let text = field.text().await?;
-                data.project_url = Some((!text.is_empty()).then_some(text))
-            }
-            Some("thumbnail") => {
-                let file_name = field.file_name().ok_or(AppError::MissingFile)?;
-                if !SUPPORTED_FILE_TYPES
-                    .iter()
-                    .any(|extension| file_name.ends_with(extension))
-                {
-                    return Err(AppError::UnsupportedImageType.into());
+        fn try_from(value: IncompleteFormData) -> Result<Self, Self::Error> {
+            let mut errors = ValidationErrors::new();
+
+            let name = match value.name {
+                None => {
+                    errors.add("name", ValidationError::new("Please fill out this field"));
+                    MaybeUninit::uninit()
                 }
-                thumbnail = Some(field.bytes().await?)
+                Some(name) => MaybeUninit::new(name),
+            };
+            let content = match value.content {
+                None => {
+                    errors.add(
+                        "content",
+                        ValidationError::new("Please fill out this field"),
+                    );
+                    MaybeUninit::uninit()
+                }
+                Some(content) => MaybeUninit::new(content),
+            };
+            let thumbnail = match value.thumbnail {
+                None => {
+                    errors.add(
+                        "thumbnail",
+                        ValidationError::new("Please fill out this field"),
+                    );
+                    MaybeUninit::uninit()
+                }
+                Some(thumbnail) => MaybeUninit::new(thumbnail),
+            };
+            let project_url = match value.project_url {
+                None => {
+                    errors.add(
+                        "project_url",
+                        ValidationError::new("Please fill out this field"),
+                    );
+                    MaybeUninit::uninit()
+                }
+                Some(project_url) => MaybeUninit::new(project_url),
+            };
+
+            if !errors.is_empty() {
+                return Err(errors);
             }
-            _ => continue,
+
+            let data = unsafe {
+                FormData {
+                    name: name.assume_init(),
+                    content: content.assume_init(),
+                    thumbnail: thumbnail.assume_init(),
+                    project_url: project_url.assume_init(),
+                }
+            };
+
+            Ok(data)
         }
     }
 
-    let thumbnail = thumbnail.ok_or(AppError::MissingFields)?;
-    let project = NewProject::new(
-        data.name.ok_or(AppError::MissingFields)?,
-        data.description.ok_or(AppError::MissingFields)?,
-        data.project_url.ok_or(AppError::MissingFields)?,
-    );
+    #[derive(Default)]
+    struct IncompleteFormData {
+        name: Option<String>,
+        content: Option<String>,
+        thumbnail: Option<Bytes>,
+        project_url: Option<Option<String>>,
+    }
+
+    impl IncompleteFormData {
+        async fn from_multipart(mut parts: Multipart) -> Result<Self, MultipartError> {
+            let mut data = IncompleteFormData::default();
+
+            while let Some(field) = parts.next_field().await? {
+                match field.name() {
+                    Some("name") => data.name = Some(field.text().await?),
+                    Some("description") => data.content = Some(field.text().await?),
+                    Some("thumbnail") => data.thumbnail = Some(field.bytes().await?),
+                    Some("project-url") => {
+                        let text = field.text().await?;
+                        data.project_url = Some((!text.is_empty()).then_some(text))
+                    }
+                    _ => continue,
+                }
+            }
+
+            Ok(data)
+        }
+    }
+
+    fn generate_preview(content: &str) -> String {
+        const PREVIEW_LENGTH: usize = 300;
+        static RE: OnceLock<Regex> = OnceLock::new();
+
+        let html = comrak::markdown_to_html(content, &Options::default());
+        let re = RE.get_or_init(|| Regex::new(r"<[^>]*>").unwrap());
+        let mut preview = re.replace_all(&html, "").to_string();
+
+        if preview.len() >= PREVIEW_LENGTH {
+            preview.truncate(PREVIEW_LENGTH - 3);
+            preview += "...";
+        }
+
+        preview
+    }
+
+    let result: Result<FormData, _> = IncompleteFormData::from_multipart(parts).await?.try_into();
+    let data = match result {
+        Ok(data) => data,
+        Err(errors) => {
+            return Ok(Err(Render(ProjectFormPage {
+                errors,
+                project: None,
+            })))
+        }
+    };
+    if let Err(errors) = data.validate() {
+        return Ok(Err(Render(ProjectFormPage {
+            errors,
+            project: None,
+        })));
+    }
+    let project = NewProject::new(data.name, data.project_url);
 
     match project.validate() {
         Ok(_) => {
-            let response = client
+            let (project, transaction) = repo
+                .create(&project, &generate_preview(&data.content))
+                .await?;
+
+            client
                 .put_object()
-                .bucket(AppConfig::get().thumbnail_bucket())
+                .bucket(&AppConfig::get().buckets().thumbnails)
                 .key(project.thumbnail_id.to_string())
-                .body(ByteStream::new(SdkBody::from(thumbnail)))
+                .body(ByteStream::new(SdkBody::from(data.thumbnail)))
                 .send()
                 .await?;
-            let project = repo.create(&project).await?;
+
+            client
+                .put_object()
+                .bucket(&AppConfig::get().buckets().content)
+                .key(project.content_id.to_string())
+                .body(ByteStream::new(SdkBody::from(data.content)))
+                .send()
+                .await?;
+
+            transaction.commit().await?;
 
             Ok(Ok(Redirect::to(
                 &GetProjectUrl { id: project.id }.to_string(),

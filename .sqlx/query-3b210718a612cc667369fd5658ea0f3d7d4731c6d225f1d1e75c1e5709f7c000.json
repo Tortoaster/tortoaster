@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO projects (id, name, description, thumbnail_id, project_url) VALUES ($1, $2, $3, $4, $5) RETURNING *;",
+  "query": "INSERT INTO projects (id, name, preview, content_id, thumbnail_id, project_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;",
   "describe": {
     "columns": [
       {
@@ -15,21 +15,26 @@
       },
       {
         "ordinal": 2,
-        "name": "description",
-        "type_info": "Text"
+        "name": "preview",
+        "type_info": "Varchar"
       },
       {
         "ordinal": 3,
-        "name": "thumbnail_id",
+        "name": "content_id",
         "type_info": "Uuid"
       },
       {
         "ordinal": 4,
+        "name": "thumbnail_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
         "name": "project_url",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "date_posted",
         "type_info": "Timestamptz"
       }
@@ -38,7 +43,8 @@
       "Left": [
         "Varchar",
         "Varchar",
-        "Text",
+        "Varchar",
+        "Uuid",
         "Uuid",
         "Varchar"
       ]
@@ -48,9 +54,10 @@
       false,
       false,
       false,
+      false,
       true,
       false
     ]
   },
-  "hash": "c23cff61fec3e90de50fe682807066fefd8330c943d21f8cc07f1576a65176fe"
+  "hash": "3b210718a612cc667369fd5658ea0f3d7d4731c6d225f1d1e75c1e5709f7c000"
 }

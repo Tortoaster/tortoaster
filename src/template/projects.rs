@@ -28,6 +28,7 @@ impl ListProjectsPage {
 #[template(path = "projects/page_get.html")]
 pub struct GetProjectPage {
     pub project: Project,
+    pub content: String,
     pub comments: Vec<Comment>,
 }
 

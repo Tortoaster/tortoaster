@@ -58,14 +58,19 @@ services:
 
   object-store-migrate:
     image: quay.io/minio/mc
-    volumes: [ "./thumbnails:/app/thumbnails" ]
+    volumes:
+      - "./bucket_data/content:/app/content"
+      - "./bucket_data/thumbnails:/app/thumbnails"
     depends_on:
       object-store:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c " \
         /usr/bin/mc alias set myminio http://object-store:9000 tortoaster password && \
+        /usr/bin/mc mb --ignore-existing --region "eu-central-1" --with-versioning myminio/tortoaster-content && \
         /usr/bin/mc mb --ignore-existing --region "eu-central-1" myminio/tortoaster-thumbnails && \
+        /usr/bin/mc anonymous set public myminio/tortoaster-content && \
         /usr/bin/mc anonymous set public myminio/tortoaster-thumbnails && \
+        /usr/bin/mc mirror /app/content myminio/tortoaster-content && \
         /usr/bin/mc mirror /app/thumbnails myminio/tortoaster-thumbnails \
       "

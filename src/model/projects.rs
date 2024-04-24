@@ -8,8 +8,8 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
     pub name: String,
-    #[sea_orm(column_type = "Text")]
-    pub description: String,
+    pub preview: String,
+    pub content_id: Uuid,
     pub thumbnail_id: Uuid,
     pub project_url: Option<String>,
     pub date_posted: TimeDateTimeWithTimeZone,

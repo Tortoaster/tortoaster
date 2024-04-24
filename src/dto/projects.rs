@@ -11,8 +11,7 @@ use crate::{model::projects, pagination::Paginatable, template::projects::Projec
 pub struct NewProject {
     #[validate(length(min = 1, max = 128))]
     pub name: String,
-    #[validate(length(min = 1))]
-    pub description: String,
+    pub content_id: Uuid,
     pub thumbnail_id: Uuid,
     #[serde(default)]
     #[validate(length(min = 1, max = 2000), url)]
@@ -20,10 +19,10 @@ pub struct NewProject {
 }
 
 impl NewProject {
-    pub fn new(name: String, description: String, project_url: Option<String>) -> Self {
+    pub fn new(name: String, project_url: Option<String>) -> Self {
         NewProject {
             name,
-            description,
+            content_id: Uuid::new_v4(),
             thumbnail_id: Uuid::new_v4(),
             project_url,
         }
@@ -54,7 +53,7 @@ impl From<NewProject> for projects::ActiveModel {
     fn from(value: NewProject) -> Self {
         Self {
             name: Set(value.name),
-            description: Set(value.description),
+            content_id: Set(value.content_id),
             thumbnail_id: Set(value.thumbnail_id),
             project_url: Set(value.project_url),
             ..Default::default()
@@ -66,7 +65,8 @@ impl From<NewProject> for projects::ActiveModel {
 pub struct Project {
     pub id: String,
     pub name: String,
-    pub description: String,
+    pub preview: String,
+    pub content_id: Uuid,
     pub thumbnail_id: Uuid,
     pub project_url: Option<String>,
     pub date_posted: OffsetDateTime,
@@ -90,7 +90,8 @@ impl From<projects::Model> for Project {
         Self {
             id: value.id,
             name: value.name,
-            description: value.description,
+            preview: value.preview,
+            content_id: value.content_id,
             thumbnail_id: value.thumbnail_id,
             project_url: value.project_url,
             date_posted: value.date_posted,

@@ -15,21 +15,26 @@
       },
       {
         "ordinal": 2,
-        "name": "description",
-        "type_info": "Text"
+        "name": "preview",
+        "type_info": "Varchar"
       },
       {
         "ordinal": 3,
-        "name": "thumbnail_id",
+        "name": "content_id",
         "type_info": "Uuid"
       },
       {
         "ordinal": 4,
+        "name": "thumbnail_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
         "name": "project_url",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "date_posted",
         "type_info": "Timestamptz"
       }
@@ -42,6 +47,7 @@
       ]
     },
     "nullable": [
+      false,
       false,
       false,
       false,
