@@ -14,6 +14,7 @@ services:
       OBJECT_STORAGE_SECRET_ACCESS_KEY: "password"
       OBJECT_STORAGE_BUCKET_THUMBNAILS: "tortoaster-thumbnails"
       OBJECT_STORAGE_BUCKET_CONTENT: "tortoaster-content"
+      OBJECT_STORAGE_BUCKET_SYSTEM: "tortoaster-system"
     depends_on:
       tailwindcss:
         condition: service_completed_successfully
@@ -76,6 +77,7 @@ services:
     volumes:
       - "./bucket_data/content:/app/content"
       - "./bucket_data/thumbnails:/app/thumbnails"
+      - "./bucket_data/system:/app/system"
     depends_on:
       object-store:
         condition: service_healthy
@@ -84,8 +86,11 @@ services:
         /usr/bin/mc alias set myminio http://object-store:9000 tortoaster password && \
         /usr/bin/mc mb --ignore-existing --region "eu-central-1" --with-versioning myminio/tortoaster-content && \
         /usr/bin/mc mb --ignore-existing --region "eu-central-1" myminio/tortoaster-thumbnails && \
+        /usr/bin/mc mb --ignore-existing --region "eu-central-1" --with-versioning myminio/tortoaster-system && \
         /usr/bin/mc anonymous set public myminio/tortoaster-content && \
         /usr/bin/mc anonymous set public myminio/tortoaster-thumbnails && \
-        /usr/bin/mc mirror /app/content myminio/tortoaster-content && \
-        /usr/bin/mc mirror /app/thumbnails myminio/tortoaster-thumbnails \
+        /usr/bin/mc anonymous set public myminio/tortoaster-system && \
+        /usr/bin/mc mirror --overwrite /app/content myminio/tortoaster-content && \
+        /usr/bin/mc mirror --overwrite /app/thumbnails myminio/tortoaster-thumbnails && \
+        /usr/bin/mc mirror --overwrite /app/system myminio/tortoaster-system \
       "

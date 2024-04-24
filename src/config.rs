@@ -151,6 +151,7 @@ impl LoadConfig for ObjectStorageConfig {
 pub struct BucketConfig {
     pub thumbnails: String,
     pub content: String,
+    pub system: String,
 }
 
 impl LoadConfig for BucketConfig {
@@ -158,6 +159,7 @@ impl LoadConfig for BucketConfig {
         BucketConfig {
             thumbnails: retrieve(prefixes, "thumbnails", "bucket id", config_toml, None),
             content: retrieve(prefixes, "content", "bucket id", config_toml, None),
+            system: retrieve(prefixes, "system", "bucket id", config_toml, None),
         }
     }
 }

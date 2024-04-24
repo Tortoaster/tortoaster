@@ -12,13 +12,15 @@ use crate::{
 #[template(path = "projects/page_list.html")]
 pub struct ListProjectsPage {
     new_project_url: GetProjectFormUrl,
+    pub about: String,
     pub projects: Vec<Project>,
 }
 
 impl ListProjectsPage {
-    pub fn new(projects: Vec<Project>) -> Self {
+    pub fn new(about: String, projects: Vec<Project>) -> Self {
         ListProjectsPage {
             new_project_url: GetProjectFormUrl,
+            about,
             projects,
         }
     }

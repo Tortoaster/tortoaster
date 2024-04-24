@@ -51,12 +51,31 @@ pub struct ListProjectsUrl;
 async fn list_projects(
     _: ListProjectsUrl,
     State(repo): State<ProjectsRepository>,
+    State(client): State<Arc<aws_sdk_s3::Client>>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<
         Valid<Query<Pager<(OffsetDateTime, String)>>>,
     >,
 ) -> PageResult<Render<ListProjectsPage>> {
+    const ABOUT_KEY: &str = "projects";
+
     let projects = repo.list(&pager).await?;
-    Ok(Render(ListProjectsPage::new(projects)))
+
+    let about = String::from_utf8(
+        client
+            .get_object()
+            .bucket(&AppConfig::get().buckets().system)
+            .key(ABOUT_KEY)
+            .send()
+            .await?
+            .body
+            .collect()
+            .await
+            .map_err(|_| AppError::ObjectEncoding)?
+            .to_vec(),
+    )
+    .map_err(|_| AppError::ObjectEncoding)?;
+
+    Ok(Render(ListProjectsPage::new(about, projects)))
 }
 
 #[derive(Clone, Deserialize, TypedPath)]
