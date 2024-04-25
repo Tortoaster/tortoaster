@@ -9,6 +9,7 @@ use std::{
 };
 
 use aws_sdk_s3::{primitives::ByteStream, Client};
+use aws_smithy_types::date_time::Format;
 use axum_core::{
     body::Body,
     extract::Request,
@@ -16,7 +17,13 @@ use axum_core::{
 };
 use bytes::Bytes;
 use futures_core::Stream;
-use http::Method;
+use http::{
+    header::{
+        CACHE_CONTROL, CONTENT_DISPOSITION, CONTENT_ENCODING, CONTENT_LANGUAGE, CONTENT_LENGTH,
+        CONTENT_RANGE, CONTENT_TYPE, ETAG, EXPIRES, LAST_MODIFIED,
+    },
+    Method,
+};
 use tower_service::Service;
 use tracing::error;
 
@@ -89,6 +96,56 @@ async fn try_retrieve_from_bucket(
     let output = client.get_object().bucket(bucket).key(&key).send().await?;
 
     let mut builder = Response::builder();
+
+    if let Some(cache_control) = output.cache_control {
+        builder = builder.header(CACHE_CONTROL, cache_control);
+    }
+
+    if let Some(content_disposition) = output.content_disposition {
+        builder = builder.header(CONTENT_DISPOSITION, content_disposition);
+    }
+
+    if let Some(content_encoding) = output.content_encoding {
+        builder = builder.header(CONTENT_ENCODING, content_encoding);
+    }
+
+    if let Some(content_language) = output.content_language {
+        builder = builder.header(CONTENT_LANGUAGE, content_language);
+    }
+
+    if let Some(content_length) = output.content_length {
+        builder = builder.header(CONTENT_LENGTH, content_length);
+    }
+
+    if let Some(content_range) = output.content_range {
+        builder = builder.header(CONTENT_RANGE, content_range);
+    }
+
+    if let Some(content_type) = output.content_type {
+        builder = builder.header(CONTENT_TYPE, content_type);
+    }
+
+    if let Some(e_tag) = output.e_tag {
+        builder = builder.header(ETAG, e_tag);
+    }
+
+    if let Some(expires) = output.expires {
+        builder = builder.header(
+            EXPIRES,
+            expires
+                .fmt(Format::HttpDate)
+                .unwrap_or_else(|_| "0".to_owned()),
+        );
+    }
+
+    if let Some(last_modified) = output.last_modified {
+        builder = builder.header(
+            LAST_MODIFIED,
+            last_modified
+                .fmt(Format::HttpDate)
+                .unwrap_or_else(|_| "0".to_owned()),
+        );
+    }
 
     if let Some(metadata) = output.metadata {
         for (key, value) in metadata {

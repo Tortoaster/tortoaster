@@ -143,7 +143,7 @@ async fn post_project_form(
         name: String,
         #[validate(length(min = 1))]
         content: String,
-        thumbnail: Bytes,
+        thumbnail: (Option<String>, Option<String>, Bytes),
         project_url: Option<String>,
     }
 
@@ -212,7 +212,7 @@ async fn post_project_form(
     struct IncompleteFormData {
         name: Option<String>,
         content: Option<String>,
-        thumbnail: Option<Bytes>,
+        thumbnail: Option<(Option<String>, Option<String>, Bytes)>,
         project_url: Option<Option<String>>,
     }
 
@@ -224,7 +224,13 @@ async fn post_project_form(
                 match field.name() {
                     Some("name") => data.name = Some(field.text().await?),
                     Some("description") => data.content = Some(field.text().await?),
-                    Some("thumbnail") => data.thumbnail = Some(field.bytes().await?),
+                    Some("thumbnail") => {
+                        data.thumbnail = Some((
+                            field.content_type().map(ToOwned::to_owned),
+                            field.file_name().map(ToOwned::to_owned),
+                            field.bytes().await?,
+                        ))
+                    }
                     Some("project-url") => {
                         let text = field.text().await?;
                         data.project_url = Some((!text.is_empty()).then_some(text))
@@ -277,11 +283,21 @@ async fn post_project_form(
                 .create(&project, &generate_preview(&data.content))
                 .await?;
 
-            client
+            let mut builder = client
                 .put_object()
                 .bucket(&AppConfig::get().buckets().thumbnails)
-                .key(project.thumbnail_id.to_string())
-                .body(ByteStream::new(SdkBody::from(data.thumbnail)))
+                .key(project.thumbnail_id.to_string());
+
+            if let Some(content_type) = data.thumbnail.0 {
+                builder = builder.content_type(content_type);
+            }
+
+            if let Some(file_name) = data.thumbnail.1 {
+                builder = builder.content_disposition(format!(r#"filename="{file_name}""#))
+            }
+
+            builder
+                .body(ByteStream::new(SdkBody::from(data.thumbnail.2)))
                 .send()
                 .await?;
 
@@ -289,6 +305,9 @@ async fn post_project_form(
                 .put_object()
                 .bucket(&AppConfig::get().buckets().content)
                 .key(project.content_id.to_string())
+                .content_disposition(r#"filename="content.md""#)
+                .content_length(data.content.len() as i64)
+                .content_type("text/markdown")
                 .body(ByteStream::new(SdkBody::from(data.content)))
                 .send()
                 .await?;
