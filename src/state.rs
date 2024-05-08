@@ -33,7 +33,11 @@ impl AppState {
 
         info!("connected to database");
 
-        let s3_client = Arc::new(aws_sdk_s3::Client::new(&config.s3_config().await));
+        let s3_client = Arc::new(aws_sdk_s3::Client::from_conf(
+            aws_sdk_s3::config::Builder::from(&config.s3_config().await)
+                .force_path_style(true)
+                .build(),
+        ));
 
         let output = backoff::future::retry_notify(
             ExponentialBackoff::default(),
