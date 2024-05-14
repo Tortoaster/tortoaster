@@ -32,14 +32,16 @@ use crate::{
     template::projects::{GetProjectPage, ListProjectsPage, ProjectForm, ProjectFormPage},
 };
 
-pub fn router() -> Router<AppState> {
+pub fn public_router() -> Router<AppState> {
     Router::new()
         .typed_get(list_projects)
-        .typed_get(list_projects_partial)
         .typed_get(get_project)
+}
+
+pub fn protected_router() -> Router<AppState> {
+    Router::new()
         .typed_get(get_project_form)
         .typed_post(post_project_form)
-        .typed_get(project_form_partial)
 }
 
 // Pages

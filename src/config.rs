@@ -17,6 +17,7 @@ pub struct AppConfig {
     rust_log: String,
     pub database_url: String,
     object_storage: ObjectStorageConfig,
+    pub oidc: OidcConfig,
 }
 
 impl AppConfig {
@@ -78,4 +79,12 @@ pub struct BucketConfig {
     pub thumbnails: String,
     pub content: String,
     pub system: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct OidcConfig {
+    pub application_base_url: String,
+    pub issuer: String,
+    pub client_id: String,
+    pub client_secret: Option<String>,
 }

@@ -9,3 +9,9 @@ access_key_id = "tortoaster"
 secret_access_key = "password"
 # session_token = "..."
 bucket = { thumbnails = "tortoaster-thumbnails", content = "tortoaster-content", system = "tortoaster-system" }
+
+[oidc]
+application_base_url = "http://127.0.0.1:8000"
+issuer = ""
+client_id = ""
+# client_secret = "..."
