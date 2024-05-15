@@ -1,0 +1,27 @@
+{
+  "realm" : "tortoaster",
+  "users" : [ {
+    "id" : "ea3b14ba-6521-4938-b66f-63c0994ad500",
+    "username" : "tortoaster",
+    "email" : "rick@tortoaster.com",
+    "emailVerified" : true,
+    "createdTimestamp" : 1715778500273,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "6bc429c7-6363-49f7-a630-4a1bdaf9dc27",
+      "type" : "password",
+      "createdDate" : 1715778500435,
+      "secretData" : "{\"value\":\"9NRYQ027SfZRJfoc5tGP12kVqycgnz/fkSYRn1Mm01nDUw8I/Oy/gJoNJ3jTNXBQ1vsUU2Jw2JiQsfD9yKqySQ==\",\"salt\":\"nJwjdv+XSDU8gN4aWV31LA==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-tortoaster" ],
+    "clientRoles" : {
+      "tortoaster" : [ "admin" ]
+    },
+    "notBefore" : 0,
+    "groups" : [ ]
+  } ]
+}

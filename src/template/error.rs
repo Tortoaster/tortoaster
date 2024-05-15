@@ -1,11 +1,31 @@
 use askama::Template;
 use axum::http::StatusCode;
 
+use crate::{
+    api::auth::{LoginUrl, LogoutUrl},
+    user::User,
+};
+
 #[derive(Template)]
 #[template(path = "error.html")]
 pub struct ErrorPage {
-    pub status_code: StatusCode,
-    pub message: String,
+    user: Option<User>,
+    login_url: LoginUrl,
+    logout_url: LogoutUrl,
+    status_code: StatusCode,
+    message: String,
+}
+
+impl ErrorPage {
+    pub fn new(user: Option<User>, status_code: StatusCode, message: String) -> Self {
+        Self {
+            user,
+            login_url: LoginUrl,
+            logout_url: LogoutUrl,
+            status_code,
+            message,
+        }
+    }
 }
 
 #[derive(Template)]

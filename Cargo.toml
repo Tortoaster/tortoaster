@@ -21,6 +21,7 @@ backoff = { version = "0.4.0", features = ["tokio"] }
 bytes = "1.6.0"
 comrak = "0.22.0"
 config = "0.14.0"
+openidconnect = { version = "3.5.0", default-features = false }
 regex = "1.10.4"
 sea-orm = { version = "0.12.15", default-features = false, features = ["macros", "runtime-tokio-rustls", "sqlx-postgres", "with-time", "with-uuid"] }
 serde = { version = "1.0.196", features = ["derive"] }

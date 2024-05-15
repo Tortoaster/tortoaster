@@ -31,7 +31,7 @@ pub enum AppError {
     ),
     #[error("Something weird went wrong :(")]
     MultipartError(#[from] axum::extract::multipart::MultipartError),
-    #[error("Something seems to be wrong with your session, please try logging in again")]
+    #[error("Something seems to be wrong with your session, please try logging in again!")]
     Session(#[from] axum_oidc::error::MiddlewareError),
     #[error("Something went wrong while retrieving your file :(")]
     ObjectEncoding,
@@ -43,6 +43,8 @@ pub enum AppError {
     MultipartRejection(#[from] MultipartRejection),
     #[error("Something went wrong logging you out :(")]
     Logout(#[from] axum_oidc::error::ExtractorError),
+    #[error("Something seems to be wrong with your session, please try logging in again!")]
+    User(#[from] crate::user::UserRejection),
     #[error("Please change the following fields :3\n{0}")]
     Validate(#[from] axum_valid::ValidRejection<QueryRejection>),
 }
@@ -60,7 +62,9 @@ impl AppError {
             | AppError::MultipartError(_)
             | AppError::MultipartRejection(_)
             | AppError::Validate(_) => StatusCode::BAD_REQUEST,
-            AppError::Session(_) | AppError::Logout(_) => StatusCode::UNAUTHORIZED,
+            AppError::Session(_) | AppError::Logout(_) | AppError::User(_) => {
+                StatusCode::UNAUTHORIZED
+            }
         }
     }
 }

@@ -22,9 +22,9 @@
             <nav class="flex">
                 {%- block nav %} {% endblock -%}
             </nav>
-            <div class="text-stone-300 h-32">
+            <a href="/" class="block text-stone-300 h-32">
                 {% include "icons/logo.svg" %}
-            </div>
+            </a>
         </div>
         <main>
             {% block content %}{% endblock %}
@@ -34,6 +34,12 @@
     <footer class="w-2/3 relative">
         <img alt="Tortoaster logo" src="/static/turtle-feet.svg" class="w-full object-cover">
         <div class="absolute right-0 top-0 text-stone-900 text-sm text-right p-8">
+            {% match user %}
+            {% when Some with (user) %}
+            Logged in as {{ user.name }} | <a href="{{ logout_url }}">Log out</a>
+            {% when None %}
+            Viewing as guest | <a href="{{ login_url }}">Log in</a>
+            {% endmatch %}<br/>
             <a href="https://github.com/Tortoaster">GitHub</a> | <a href="mailto:rick@tortoaster.com">Email</a><br>
             &copy; 2024 Rick van der Wal
         </div>

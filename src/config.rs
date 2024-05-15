@@ -83,8 +83,8 @@ pub struct BucketConfig {
 
 #[derive(Debug, Deserialize)]
 pub struct OidcConfig {
-    pub application_base_url: String,
-    pub issuer: String,
     pub client_id: String,
     pub client_secret: Option<String>,
+    pub issuer_url: String,
+    pub redirect_url: String,
 }

@@ -4196,6 +4196,7 @@ dependencies = [
  "bytes",
  "comrak 0.22.0",
  "config",
+ "openidconnect",
  "regex",
  "sea-orm",
  "serde",

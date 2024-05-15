@@ -2,8 +2,12 @@ use askama::Template;
 use validator::ValidationErrors;
 
 use crate::{
-    api::projects::GetProjectFormUrl,
+    api::{
+        auth::{LoginUrl, LogoutUrl},
+        projects::GetProjectFormUrl,
+    },
     dto::{comments::Comment, projects::Project},
+    user::User,
 };
 
 // Pages
@@ -11,14 +15,20 @@ use crate::{
 #[derive(Template)]
 #[template(path = "projects/page_list.html")]
 pub struct ListProjectsPage {
+    user: Option<User>,
+    login_url: LoginUrl,
+    logout_url: LogoutUrl,
     new_project_url: GetProjectFormUrl,
-    pub about: String,
-    pub projects: Vec<Project>,
+    about: String,
+    projects: Vec<Project>,
 }
 
 impl ListProjectsPage {
-    pub fn new(about: String, projects: Vec<Project>) -> Self {
-        ListProjectsPage {
+    pub fn new(user: Option<User>, about: String, projects: Vec<Project>) -> Self {
+        Self {
+            user,
+            login_url: LoginUrl,
+            logout_url: LogoutUrl,
             new_project_url: GetProjectFormUrl,
             about,
             projects,
@@ -29,16 +39,52 @@ impl ListProjectsPage {
 #[derive(Template)]
 #[template(path = "projects/page_get.html")]
 pub struct GetProjectPage {
-    pub project: Project,
-    pub content: String,
-    pub comments: Vec<Comment>,
+    user: Option<User>,
+    login_url: LoginUrl,
+    logout_url: LogoutUrl,
+    project: Project,
+    content: String,
+    comments: Vec<Comment>,
+}
+
+impl GetProjectPage {
+    pub fn new(
+        user: Option<User>,
+        project: Project,
+        content: String,
+        comments: Vec<Comment>,
+    ) -> Self {
+        Self {
+            user,
+            login_url: LoginUrl,
+            logout_url: LogoutUrl,
+            project,
+            content,
+            comments,
+        }
+    }
 }
 
 #[derive(Default, Template)]
 #[template(path = "projects/page_form.html")]
 pub struct ProjectFormPage {
-    pub errors: ValidationErrors,
-    pub project: Option<Project>,
+    user: Option<User>,
+    login_url: LoginUrl,
+    logout_url: LogoutUrl,
+    errors: ValidationErrors,
+    project: Option<Project>,
+}
+
+impl ProjectFormPage {
+    pub fn new(user: Option<User>, errors: ValidationErrors, project: Option<Project>) -> Self {
+        Self {
+            user,
+            login_url: LoginUrl,
+            logout_url: LogoutUrl,
+            errors,
+            project,
+        }
+    }
 }
 
 // Partials

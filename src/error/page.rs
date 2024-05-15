@@ -32,10 +32,8 @@ impl IntoResponse for PageError {
             _ => error!("user encountered {status_code}:\n{:#?}", self.0),
         }
 
-        let template = ErrorPage {
-            status_code,
-            message,
-        };
+        // TODO: Don't supply user at all
+        let template = ErrorPage::new(None, status_code, message);
 
         (status_code, Render(template)).into_response()
     }

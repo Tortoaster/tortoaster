@@ -11,7 +11,7 @@ secret_access_key = "password"
 bucket = { thumbnails = "tortoaster-thumbnails", content = "tortoaster-content", system = "tortoaster-system" }
 
 [oidc]
-application_base_url = "http://127.0.0.1:8000"
-issuer = ""
-client_id = ""
-# client_secret = "..."
+client_id = "tortoaster"
+client_secret = "UzuoAuMFtHuf4USSl2CVGmgXockttxxh"
+issuer_url = "http://127.0.0.1:8003/realms/tortoaster"
+redirect_url = "http://127.0.0.1:8000/projects"

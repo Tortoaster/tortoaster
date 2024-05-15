@@ -30,6 +30,7 @@ use crate::{
     repository::projects::ProjectsRepository,
     state::AppState,
     template::projects::{GetProjectPage, ListProjectsPage, ProjectForm, ProjectFormPage},
+    user::User,
 };
 
 pub fn public_router() -> Router<AppState> {
@@ -54,6 +55,7 @@ async fn list_projects(
     _: ListProjectsUrl,
     State(repo): State<ProjectsRepository>,
     State(client): State<Arc<aws_sdk_s3::Client>>,
+    user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<
         Valid<Query<Pager<(OffsetDateTime, String)>>>,
     >,
@@ -77,7 +79,7 @@ async fn list_projects(
     )
     .map_err(|_| AppError::ObjectEncoding)?;
 
-    Ok(Render(ListProjectsPage::new(about, projects)))
+    Ok(Render(ListProjectsPage::new(user, about, projects)))
 }
 
 #[derive(Clone, Deserialize, TypedPath)]
@@ -90,6 +92,7 @@ async fn get_project(
     GetProjectUrl { id }: GetProjectUrl,
     State(repo): State<ProjectsRepository>,
     State(client): State<Arc<aws_sdk_s3::Client>>,
+    user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<i32>>>>,
 ) -> PageResult<Render<GetProjectPage>> {
     let (project, comments) = repo
@@ -112,22 +115,17 @@ async fn get_project(
     )
     .map_err(|_| AppError::ObjectEncoding)?;
 
-    Ok(Render(GetProjectPage {
-        project,
-        content,
-        comments,
-    }))
+    Ok(Render(GetProjectPage::new(
+        user, project, content, comments,
+    )))
 }
 
 #[derive(Copy, Clone, TypedPath)]
 #[typed_path("/projects/form")]
 pub struct GetProjectFormUrl;
 
-async fn get_project_form(_: GetProjectFormUrl) -> Render<ProjectFormPage> {
-    Render(ProjectFormPage {
-        errors: ValidationErrors::new(),
-        project: None,
-    })
+async fn get_project_form(_: GetProjectFormUrl, user: Option<User>) -> Render<ProjectFormPage> {
+    Render(ProjectFormPage::new(user, ValidationErrors::new(), None))
 }
 
 #[derive(Copy, Clone, TypedPath)]
@@ -138,6 +136,7 @@ async fn post_project_form(
     _: PostProjectFormUrl,
     State(repo): State<ProjectsRepository>,
     State(client): State<Arc<aws_sdk_s3::Client>>,
+    user: Option<User>,
     WithRejection(parts, _): WithPageRejection<Multipart>,
 ) -> PageResult<Result<Redirect, Render<ProjectFormPage>>> {
     #[derive(Validate)]
@@ -264,18 +263,10 @@ async fn post_project_form(
     let result: Result<FormData, _> = IncompleteFormData::from_multipart(parts).await?.try_into();
     let data = match result {
         Ok(data) => data,
-        Err(errors) => {
-            return Ok(Err(Render(ProjectFormPage {
-                errors,
-                project: None,
-            })))
-        }
+        Err(errors) => return Ok(Err(Render(ProjectFormPage::new(user, errors, None)))),
     };
     if let Err(errors) = data.validate() {
-        return Ok(Err(Render(ProjectFormPage {
-            errors,
-            project: None,
-        })));
+        return Ok(Err(Render(ProjectFormPage::new(user, errors, None))));
     }
     let project = NewProject::new(data.name, data.project_url);
 
@@ -320,10 +311,7 @@ async fn post_project_form(
                 &GetProjectUrl { id: project.id }.to_string(),
             )))
         }
-        Err(errors) => Ok(Err(Render(ProjectFormPage {
-            errors,
-            project: None,
-        }))),
+        Err(errors) => Ok(Err(Render(ProjectFormPage::new(user, errors, None)))),
     }
 }
 
