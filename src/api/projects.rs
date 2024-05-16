@@ -1,7 +1,4 @@
-use std::{
-    mem::MaybeUninit,
-    sync::{Arc, OnceLock},
-};
+use std::{mem::MaybeUninit, sync::OnceLock};
 
 use aws_sdk_s3::primitives::{ByteStream, SdkBody};
 use axum::{
@@ -19,6 +16,10 @@ use comrak::Options;
 use regex::Regex;
 use serde::Deserialize;
 use time::OffsetDateTime;
+use tower_sessions_redis_store::fred::{
+    clients::RedisPool, interfaces::KeysInterface, types::Expiration,
+};
+use tracing::error;
 use validator::{Validate, ValidationError, ValidationErrors};
 
 use crate::{
@@ -54,30 +55,57 @@ pub struct ListProjectsUrl;
 async fn list_projects(
     _: ListProjectsUrl,
     State(repo): State<ProjectsRepository>,
-    State(client): State<Arc<aws_sdk_s3::Client>>,
+    State(client): State<aws_sdk_s3::Client>,
+    State(redis_pool): State<RedisPool>,
     user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<
         Valid<Query<Pager<(OffsetDateTime, String)>>>,
     >,
 ) -> PageResult<Render<ListProjectsPage>> {
     const ABOUT_KEY: &str = "projects";
+    const ABOUT_CACHE_KEY: &str = "tortoaster_system_about_projects";
 
     let projects = repo.list(&pager).await?;
 
-    let about = String::from_utf8(
-        client
-            .get_object()
-            .bucket(&AppConfig::get().buckets().system)
-            .key(ABOUT_KEY)
-            .send()
-            .await?
-            .body
-            .collect()
-            .await
-            .map_err(|_| AppError::ObjectEncoding)?
-            .to_vec(),
-    )
-    .map_err(|_| AppError::ObjectEncoding)?;
+    let about = match redis_pool
+        .get::<Option<String>, _>(ABOUT_CACHE_KEY)
+        .await
+        .ok()
+        .flatten()
+    {
+        None => {
+            let about = String::from_utf8(
+                client
+                    .get_object()
+                    .bucket(&AppConfig::get().buckets().system)
+                    .key(ABOUT_KEY)
+                    .send()
+                    .await?
+                    .body
+                    .collect()
+                    .await
+                    .map_err(|_| AppError::ObjectEncoding)?
+                    .to_vec(),
+            )
+            .map_err(|_| AppError::ObjectEncoding)?;
+
+            if let Err(error) = redis_pool
+                .set::<(), _, _>(
+                    ABOUT_CACHE_KEY,
+                    &about,
+                    Some(Expiration::EX(24 * 3600)),
+                    None,
+                    false,
+                )
+                .await
+            {
+                error!("failed to cache projects about section: {error}")
+            }
+
+            about
+        }
+        Some(about) => about,
+    };
 
     Ok(Render(ListProjectsPage::new(user, about, projects)))
 }
@@ -91,7 +119,7 @@ pub struct GetProjectUrl {
 async fn get_project(
     GetProjectUrl { id }: GetProjectUrl,
     State(repo): State<ProjectsRepository>,
-    State(client): State<Arc<aws_sdk_s3::Client>>,
+    State(client): State<aws_sdk_s3::Client>,
     user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<i32>>>>,
 ) -> PageResult<Render<GetProjectPage>> {
@@ -135,7 +163,7 @@ pub struct PostProjectFormUrl;
 async fn post_project_form(
     _: PostProjectFormUrl,
     State(repo): State<ProjectsRepository>,
-    State(client): State<Arc<aws_sdk_s3::Client>>,
+    State(client): State<aws_sdk_s3::Client>,
     user: Option<User>,
     WithRejection(parts, _): WithPageRejection<Multipart>,
 ) -> PageResult<Result<Redirect, Render<ProjectFormPage>>> {
