@@ -13,7 +13,10 @@ use axum_s3::ServeBucket;
 use tokio::{net::TcpListener, signal, task::AbortHandle};
 use tower::ServiceBuilder;
 use tower_http::services::ServeDir;
-use tower_sessions::{cookie::SameSite, ExpiredDeletion, Expiry, SessionManagerLayer};
+use tower_sessions::{
+    cookie::SameSite, CachingSessionStore, ExpiredDeletion, Expiry, SessionManagerLayer,
+};
+use tower_sessions_redis_store::RedisStore;
 use tower_sessions_sqlx_store::PostgresStore;
 use tracing::info;
 
@@ -45,18 +48,19 @@ async fn main() {
         .with_env_filter(config.env_filter())
         .init();
 
-    let state = AppState::new().await;
+    let (state, abort_handle) = AppState::new().await;
 
-    let session_store = PostgresStore::new(state.pool.clone())
+    let redis_session_store = RedisStore::new(state.redis_pool.clone());
+    let postgres_session_store = PostgresStore::new(state.pool.clone())
         .with_schema_name("public")
         .unwrap()
         .with_table_name("sessions")
         .unwrap();
+    let session_store =
+        CachingSessionStore::new(redis_session_store, postgres_session_store.clone());
 
     let deletion_task = tokio::task::spawn(
-        session_store
-            .clone()
-            .continuously_delete_expired(Duration::from_secs(1800)),
+        postgres_session_store.continuously_delete_expired(Duration::from_secs(1800)),
     );
 
     let session_layer = SessionManagerLayer::new(session_store)
@@ -119,12 +123,15 @@ async fn main() {
 
     info!("listening on http://{addr}");
     axum::serve(listener, app)
-        .with_graceful_shutdown(graceful_shutdown(deletion_task.abort_handle()))
+        .with_graceful_shutdown(graceful_shutdown([
+            abort_handle,
+            deletion_task.abort_handle(),
+        ]))
         .await
         .unwrap();
 }
 
-pub async fn graceful_shutdown(abort_handle: AbortHandle) {
+pub async fn graceful_shutdown(abort_handles: impl IntoIterator<Item = AbortHandle>) {
     let ctrl_c = async {
         signal::ctrl_c()
             .await
@@ -143,7 +150,7 @@ pub async fn graceful_shutdown(abort_handle: AbortHandle) {
     let terminate = std::future::pending::<()>();
 
     tokio::select! {
-        _ = ctrl_c => { abort_handle.abort() },
-        _ = terminate => { abort_handle.abort() },
+        _ = ctrl_c => { for handle in abort_handles { handle.abort() } },
+        _ = terminate => { for handle in abort_handles { handle.abort() } },
     }
 }

@@ -34,6 +34,7 @@ toml = "0.8.10"
 tower = "0.4.13"
 tower-http = { version = "0.5.1", features = ["fs"] }
 tower-sessions = { version = "0.12.2", default-features = false, features = ["axum-core"] }
+tower-sessions-redis-store = "0.12.0"
 tower-sessions-sqlx-store = { version = "0.12.0", features = ["postgres"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

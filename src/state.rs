@@ -3,6 +3,10 @@ use std::{sync::Arc, time::Duration};
 use axum::extract::FromRef;
 use backoff::ExponentialBackoff;
 use sqlx::PgPool;
+use tokio::task::AbortHandle;
+use tower_sessions_redis_store::fred::{
+    clients::RedisPool, interfaces::ClientLike, prelude::RedisConfig,
+};
 use tracing::{info, warn};
 
 use crate::{config::AppConfig, repository::projects::ProjectsRepository};
@@ -11,10 +15,11 @@ use crate::{config::AppConfig, repository::projects::ProjectsRepository};
 pub struct AppState {
     pub pool: PgPool,
     pub s3_client: Arc<aws_sdk_s3::Client>,
+    pub redis_pool: RedisPool,
 }
 
 impl AppState {
-    pub async fn new() -> Self {
+    pub async fn new() -> (Self, AbortHandle) {
         let config = AppConfig::get();
 
         let pool = backoff::future::retry_notify(
@@ -80,7 +85,28 @@ impl AppState {
             config.buckets().content
         );
 
-        AppState { pool, s3_client }
+        let (redis_pool, redis_handle) = backoff::future::retry_notify(
+            ExponentialBackoff::default(),
+            || async {
+                let redis_pool = RedisPool::new(RedisConfig::default(), None, None, None, 6)?;
+                let redis_handle = redis_pool.init().await?;
+                Ok((redis_pool, redis_handle))
+            },
+            |error, duration: Duration| {
+                warn!("failed to connect to redis: {error}");
+                warn!("retrying in {} seconds", duration.as_secs());
+            },
+        )
+        .await
+        .expect("failed to connect to redis");
+
+        let state = AppState {
+            pool,
+            s3_client,
+            redis_pool,
+        };
+
+        (state, redis_handle.abort_handle())
     }
 }
 
