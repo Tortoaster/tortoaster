@@ -15,6 +15,10 @@ services:
       OBJECT_STORAGE_BUCKET_THUMBNAILS: "tortoaster-thumbnails"
       OBJECT_STORAGE_BUCKET_CONTENT: "tortoaster-content"
       OBJECT_STORAGE_BUCKET_SYSTEM: "tortoaster-system"
+      OIDC_CLIENT_ID: "tortoaster"
+      OIDC_CLIENT_SECRET: "UzuoAuMFtHuf4USSl2CVGmgXockttxxh"
+      OIDC_ISSUER_URL: "http://127.0.0.1:8003/realms/tortoaster"
+      OIDC_REDIRECT_URL: "http://127.0.0.1:8000/projects"
     depends_on:
       tailwindcss:
         condition: service_completed_successfully
