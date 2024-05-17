@@ -1,15 +1,14 @@
 use std::time::Duration;
 
 use axum::extract::FromRef;
+use axum_oidc::OidcAuthLayer;
 use backoff::ExponentialBackoff;
 use sqlx::PgPool;
 use tokio::task::AbortHandle;
-use tower_sessions_redis_store::fred::{
-    clients::RedisPool, interfaces::ClientLike, prelude::RedisConfig,
-};
+use tower_sessions_redis_store::fred::{clients::RedisPool, interfaces::ClientLike};
 use tracing::{info, warn};
 
-use crate::{config::AppConfig, repository::projects::ProjectsRepository};
+use crate::{config::AppConfig, repository::projects::ProjectsRepository, user::AppClaims};
 
 #[derive(Clone, Debug)]
 pub struct AppState {
@@ -19,13 +18,13 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new() -> (Self, AbortHandle) {
+    pub async fn new() -> (Self, OidcAuthLayer<AppClaims>, AbortHandle) {
         let config = AppConfig::get();
 
         let pool = backoff::future::retry_notify(
             ExponentialBackoff::default(),
             || async {
-                let pool = PgPool::connect(&config.database_url).await?;
+                let pool = PgPool::connect(config.database_url()).await?;
                 Ok(pool)
             },
             |error, duration: Duration| {
@@ -85,10 +84,35 @@ impl AppState {
             config.buckets().content
         );
 
+        let oidc_auth_layer = backoff::future::retry_notify(
+            ExponentialBackoff::default(),
+            || async {
+                let oidc_auth_layer = OidcAuthLayer::<AppClaims>::discover_client(
+                    config
+                        .oidc
+                        .redirect_url
+                        .parse()
+                        .expect("invalid application base url"),
+                    config.oidc.issuer_url.clone(),
+                    config.oidc.client_id.clone(),
+                    config.oidc.client_secret.clone(),
+                    vec![],
+                )
+                .await?;
+                Ok(oidc_auth_layer)
+            },
+            |error, duration: Duration| {
+                warn!("failed to discover oidc client: {error}");
+                warn!("retrying in {} seconds", duration.as_secs());
+            },
+        )
+        .await
+        .expect("failed to discover oidc client");
+
         let (redis_pool, redis_handle) = backoff::future::retry_notify(
             ExponentialBackoff::default(),
             || async {
-                let redis_pool = RedisPool::new(RedisConfig::default(), None, None, None, 6)?;
+                let redis_pool = RedisPool::new(config.cache_config(), None, None, None, 6)?;
                 let redis_handle = redis_pool.init().await?;
                 Ok((redis_pool, redis_handle))
             },
@@ -106,7 +130,7 @@ impl AppState {
             redis_pool,
         };
 
-        (state, redis_handle.abort_handle())
+        (state, oidc_auth_layer, redis_handle.abort_handle())
     }
 }
 

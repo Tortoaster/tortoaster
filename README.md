@@ -7,7 +7,7 @@ My personal website!
 ## Launch Project
 
 ```shell
-docker compose --profile full up
+docker compose up -d tortoaster
 ```
 
 ## Navigation
@@ -54,7 +54,7 @@ cargo install cargo-watch
 #### Run dependencies
 
 ```shell
-docker compose up
+docker compose up -d
 ```
 
 #### Run database migrations

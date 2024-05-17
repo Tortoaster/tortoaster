@@ -1,17 +1,27 @@
-host = "127.0.0.1"
-port = 8000
-rust_log = "tortoaster=trace,warn"
-database_url = "postgres://tortoaster:password@localhost/tortoaster"
+# host = "127.0.0.1" # default: 127.0.0.1
+# port = 8000 # default: 8000
+rust_log = "tortoaster=trace,warn" # default: info
 
-[object_storage]
-endpoint_url = "http://127.0.0.1:9000"
+[database]
+url = "postgres://tortoaster:password@localhost/tortoaster"
+
+[s3]
+endpoint_url = "http://localhost:9000"
 access_key_id = "tortoaster"
 secret_access_key = "password"
-# session_token = "..."
-bucket = { thumbnails = "tortoaster-thumbnails", content = "tortoaster-content", system = "tortoaster-system" }
+# session_token = "" # default: None
+
+# [s3.bucket]
+# thumbnails = "tortoaster-thumbnails" # default: tortoaster-thumbnails
+# content = "tortoaster-content" # default: tortoaster-content
+# system = "tortoaster-system" # default: tortoaster-system
 
 [oidc]
 client_id = "tortoaster"
-client_secret = "UzuoAuMFtHuf4USSl2CVGmgXockttxxh"
-issuer_url = "http://127.0.0.1:8003/realms/tortoaster"
-redirect_url = "http://127.0.0.1:8000/projects"
+client_secret = "UzuoAuMFtHuf4USSl2CVGmgXockttxxh" # default: None
+issuer_url = "http://localhost:8003/realms/tortoaster"
+redirect_url = "http://localhost:8000/projects"
+
+# [cache]
+# host = "localhost" # default: localhost
+# port = 6379 # default: 6379

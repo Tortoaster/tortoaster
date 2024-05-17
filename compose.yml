@@ -3,29 +3,29 @@ services:
     profiles: [ "full" ]
     build:
       dockerfile: "Dockerfile"
+    pull_policy: build
     ports: [ "8000:8000" ]
     environment:
       HOST: "0.0.0.0"
-      PORT: "8000"
       RUST_LOG: "tortoaster=info,warn"
-      DATABASE_URL: "postgres://tortoaster:password@db/tortoaster"
-      OBJECT_STORAGE_ENDPOINT_URL: "http://object-store:9000/"
-      OBJECT_STORAGE_ACCESS_KEY_ID: "tortoaster"
-      OBJECT_STORAGE_SECRET_ACCESS_KEY: "password"
-      OBJECT_STORAGE_BUCKET_THUMBNAILS: "tortoaster-thumbnails"
-      OBJECT_STORAGE_BUCKET_CONTENT: "tortoaster-content"
-      OBJECT_STORAGE_BUCKET_SYSTEM: "tortoaster-system"
-      OIDC_CLIENT_ID: "tortoaster"
-      OIDC_CLIENT_SECRET: "UzuoAuMFtHuf4USSl2CVGmgXockttxxh"
-      OIDC_ISSUER_URL: "http://127.0.0.1:8003/realms/tortoaster"
-      OIDC_REDIRECT_URL: "http://127.0.0.1:8000/projects"
+      DATABASE__URL: "postgres://tortoaster:password@db/tortoaster"
+      S3__ENDPOINT_URL: "http://object-store:9000/"
+      S3__ACCESS_KEY_ID: "tortoaster"
+      S3__SECRET_ACCESS_KEY: "password"
+      OIDC__CLIENT_ID: "tortoaster"
+      OIDC__CLIENT_SECRET: "UzuoAuMFtHuf4USSl2CVGmgXockttxxh"
+      OIDC__ISSUER_URL: "http://iam-provider:8003/realms/tortoaster"
+      OIDC__REDIRECT_URL: "http://localhost:8000/projects"
+      CACHE__HOST: "cache"
     depends_on:
-      tailwindcss:
-        condition: service_completed_successfully
       db-migrate:
         condition: service_completed_successfully
       object-store-migrate:
         condition: service_completed_successfully
+      iam-provider:
+        condition: service_started
+      cache:
+        condition: service_started
 
   tailwindcss:
     build:
@@ -96,14 +96,14 @@ services:
         /usr/bin/mc mirror --overwrite /app/system myminio/tortoaster-system \
       "
 
-  smtp_server:
+  smtp-server:
     image: marlonb/mailcrab:v1.1.0
     ports: [ "8002:8002" ]
     environment:
       HTTP_PORT: "8002"
       SMTP_PORT: "25"
 
-  iam_provider:
+  iam-provider:
     image: quay.io/keycloak/keycloak:24.0
     volumes: [ "./keycloak:/opt/keycloak/data/import" ]
     ports: [ "8003:8003" ]
@@ -120,6 +120,8 @@ services:
     depends_on:
       db-migrate:
         condition: service_completed_successfully
+      smtp-server:
+        condition: service_started
 
   cache:
     image: redis:alpine

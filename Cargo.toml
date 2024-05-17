@@ -25,6 +25,7 @@ openidconnect = { version = "3.5.0", default-features = false }
 regex = "1.10.4"
 sea-orm = { version = "0.12.15", default-features = false, features = ["macros", "runtime-tokio-rustls", "sqlx-postgres", "with-time", "with-uuid"] }
 serde = { version = "1.0.196", features = ["derive"] }
+serde-inline-default = "0.2.0"
 sqlx = { version = "0.7.3", features = ["runtime-tokio-rustls", "postgres", "time"] }
 thiserror = "1.0.56"
 time = { version = "=0.3.34", features = ["serde"] }

@@ -8,7 +8,7 @@ use axum::{
     Router,
 };
 use axum_extra::routing::RouterExt;
-use axum_oidc::{error::MiddlewareError, OidcAuthLayer, OidcLoginLayer};
+use axum_oidc::{error::MiddlewareError, OidcLoginLayer};
 use axum_s3::ServeBucket;
 use tokio::{net::TcpListener, signal, task::AbortHandle};
 use tower::ServiceBuilder;
@@ -48,7 +48,7 @@ async fn main() {
         .with_env_filter(config.env_filter())
         .init();
 
-    let (state, abort_handle) = AppState::new().await;
+    let (state, oidc_auth_layer, abort_handle) = AppState::new().await;
 
     let redis_session_store = RedisStore::new(state.redis_pool.clone());
     let postgres_session_store = PostgresStore::new(state.pool.clone())
@@ -78,21 +78,7 @@ async fn main() {
 
     let oidc_auth_service = ServiceBuilder::new()
         .layer(tortoaster_handle_error_layer)
-        .layer(
-            OidcAuthLayer::<AppClaims>::discover_client(
-                config
-                    .oidc
-                    .redirect_url
-                    .parse()
-                    .expect("invalid application base url"),
-                config.oidc.issuer_url.clone(),
-                config.oidc.client_id.clone(),
-                config.oidc.client_secret.clone(),
-                vec![],
-            )
-            .await
-            .expect("failed to discover oidc client"),
-        );
+        .layer(oidc_auth_layer);
 
     let app = Router::new()
         // Login required

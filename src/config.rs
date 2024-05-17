@@ -1,6 +1,6 @@
 use std::{
     fmt::Debug,
-    net::{IpAddr, SocketAddr},
+    net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::OnceLock,
 };
 
@@ -8,16 +8,24 @@ use aws_config::{BehaviorVersion, SdkConfig};
 use aws_sdk_s3::config::Credentials;
 use config::Config;
 use serde::Deserialize;
+use serde_inline_default::serde_inline_default;
+use tower_sessions_redis_store::fred::prelude::{RedisConfig, Server, ServerConfig};
 use tracing_subscriber::EnvFilter;
 
+#[serde_inline_default]
 #[derive(Debug, Deserialize)]
 pub struct AppConfig {
+    #[serde_inline_default(IpAddr::V4(Ipv4Addr::LOCALHOST))]
     pub host: IpAddr,
+    #[serde_inline_default(8000)]
     pub port: u16,
+    #[serde_inline_default("info".to_owned())]
     rust_log: String,
-    pub database_url: String,
-    object_storage: ObjectStorageConfig,
+    database: DatabaseConfig,
+    s3: S3Config,
     pub oidc: OidcConfig,
+    #[serde(default)]
+    cache: CacheConfig,
 }
 
 impl AppConfig {
@@ -25,13 +33,11 @@ impl AppConfig {
         static CONFIG: OnceLock<AppConfig> = OnceLock::new();
 
         CONFIG.get_or_init(|| {
-            let settings = Config::builder()
-                .add_source(config::File::with_name("Config.toml"))
-                .add_source(config::Environment::default())
+            Config::builder()
+                .add_source(config::File::with_name("Config.toml").required(false))
+                .add_source(config::Environment::default().separator("__"))
                 .build()
-                .expect("invalid config settings");
-
-            settings
+                .expect("invalid config settings")
                 .try_deserialize()
                 .expect("failed to deserialize config")
         })
@@ -45,14 +51,18 @@ impl AppConfig {
         EnvFilter::new(&self.rust_log)
     }
 
+    pub fn database_url(&self) -> &str {
+        &self.database.url
+    }
+
     pub async fn s3_config(&self) -> SdkConfig {
         aws_config::defaults(BehaviorVersion::v2023_11_09())
             .region("eu-central-1")
-            .endpoint_url(&self.object_storage.endpoint_url)
+            .endpoint_url(&self.s3.endpoint_url)
             .credentials_provider(Credentials::new(
-                &self.object_storage.access_key_id,
-                &self.object_storage.secret_access_key,
-                self.object_storage.session_token.clone(),
+                &self.s3.access_key_id,
+                &self.s3.secret_access_key,
+                self.s3.session_token.clone(),
                 None,
                 "tortoaster-credential-provider",
             ))
@@ -60,31 +70,80 @@ impl AppConfig {
             .await
     }
 
+    pub fn cache_config(&self) -> RedisConfig {
+        RedisConfig {
+            server: ServerConfig::Centralized {
+                server: Server::new(self.cache.host.to_string(), self.cache.port),
+            },
+            ..Default::default()
+        }
+    }
+
     pub fn buckets(&self) -> &BucketConfig {
-        &self.object_storage.bucket
+        &self.s3.bucket
     }
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ObjectStorageConfig {
-    pub endpoint_url: String,
-    pub access_key_id: String,
-    pub secret_access_key: String,
-    pub session_token: Option<String>,
-    pub bucket: BucketConfig,
+struct DatabaseConfig {
+    url: String,
 }
 
 #[derive(Debug, Deserialize)]
+struct S3Config {
+    endpoint_url: String,
+    access_key_id: String,
+    secret_access_key: String,
+    #[serde(default)]
+    session_token: Option<String>,
+    #[serde(default)]
+    bucket: BucketConfig,
+}
+
+#[serde_inline_default]
+#[derive(Debug, Deserialize)]
 pub struct BucketConfig {
+    #[serde_inline_default("tortoaster-thumbnails".to_owned())]
     pub thumbnails: String,
+    #[serde_inline_default("tortoaster-content".to_owned())]
     pub content: String,
+    #[serde_inline_default("tortoaster-system".to_owned())]
     pub system: String,
+}
+
+impl Default for BucketConfig {
+    fn default() -> Self {
+        Self {
+            thumbnails: "tortoaster-thumbnails".to_owned(),
+            content: "tortoaster-content".to_owned(),
+            system: "tortoaster-system".to_owned(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
 pub struct OidcConfig {
     pub client_id: String,
+    #[serde(default)]
     pub client_secret: Option<String>,
     pub issuer_url: String,
     pub redirect_url: String,
+}
+
+#[serde_inline_default]
+#[derive(Debug, Deserialize)]
+struct CacheConfig {
+    #[serde_inline_default(Ipv4Addr::LOCALHOST.to_string())]
+    host: String,
+    #[serde_inline_default(6379)]
+    port: u16,
+}
+
+impl Default for CacheConfig {
+    fn default() -> Self {
+        Self {
+            host: Ipv4Addr::LOCALHOST.to_string(),
+            port: 6379,
+        }
+    }
 }
