@@ -52,7 +52,7 @@ async fn main() {
 
     let redis_session_store = RedisStore::new(state.redis_pool.clone());
     let postgres_session_store = PostgresStore::new(state.pool.clone())
-        .with_schema_name("public")
+        .with_schema_name("sessions")
         .unwrap()
         .with_table_name("sessions")
         .unwrap();

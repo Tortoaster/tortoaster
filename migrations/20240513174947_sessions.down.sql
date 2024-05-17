@@ -1,1 +1,3 @@
-DROP TABLE sessions;
+DROP TABLE sessions.sessions;
+
+DROP SCHEMA sessions;
