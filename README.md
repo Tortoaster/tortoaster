@@ -10,6 +10,13 @@ My personal website!
 docker compose --profile full up
 ```
 
+## Navigation
+
+* The website itself can be found at http://localhost:8000
+* MinIO, which hosts all images and markdown files, can be accessed at http://localhost:8001
+* A MailCrab instance, useful for intercepting account confirmation emails, runs on http://localhost:8002
+* The KeyCloak admin console is at http://localhost:8003
+
 ## Set-Up for Local Development or Debugging
 
 ### Install dependencies
