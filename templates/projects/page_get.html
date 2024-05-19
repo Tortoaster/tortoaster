@@ -6,12 +6,12 @@
 {% match user %}
 {% when Some with (user) %}
 {% if user.is_admin %}
-<a href="/form/projects"
-   class="block size-16 p-4 pr-2 rounded-l-full hover:bg-blue-300 text-stone-300 hover:text-blue-500 transition-colors">
+<a href="/projects/{{ project.id }}/form"
+   class="block size-16 p-4 pr-2 rounded-l-full text-stone-300 hover:bg-stone-300 hover:text-stone-100 transition-colors">
     {% include "icons/pencil.svg" %}
 </a>
-<a href="/form/projects"
-   class="block size-16 p-4 pl-2 rounded-r-full hover:bg-red-300 text-stone-300 hover:text-red-500 transition-colors">
+<a href="/projects/{{ project.id }}/form-delete"
+   class="block size-16 p-4 pl-2 rounded-r-full text-stone-300 hover:bg-red-300 hover:text-stone-100 transition-colors">
     {% include "icons/trash-can.svg" %}
 </a>
 {% endif %}
