@@ -1,8 +1,5 @@
-use std::{mem::MaybeUninit, sync::OnceLock};
-
-use aws_sdk_s3::primitives::{ByteStream, SdkBody};
 use axum::{
-    extract::{multipart::MultipartError, Multipart, Query, State},
+    extract::{Multipart, Query, State},
     response::Redirect,
     Router,
 };
@@ -11,20 +8,17 @@ use axum_extra::{
     routing::{RouterExt, TypedPath},
 };
 use axum_valid::Valid;
-use bytes::Bytes;
-use comrak::Options;
-use regex::Regex;
 use serde::Deserialize;
 use time::OffsetDateTime;
 use tower_sessions_redis_store::fred::{
     clients::RedisPool, interfaces::KeysInterface, types::Expiration,
 };
 use tracing::error;
-use validator::{Validate, ValidationError, ValidationErrors};
+use validator::ValidationErrors;
 
 use crate::{
-    config::AppConfig,
-    dto::projects::{NewProject, Project},
+    config::AppBucket,
+    dto::projects::Project,
     error::{AppError, PageResult, ToastResult, WithPageRejection, WithToastRejection},
     pagination::{Pager, PaginatedResponse},
     render::Render,
@@ -42,18 +36,62 @@ pub fn public_router() -> Router<AppState> {
 
 pub fn protected_router() -> Router<AppState> {
     Router::new()
-        .typed_get(get_project_form)
-        .typed_post(post_project_form)
+        .typed_get(get_project_post_form)
+        .typed_get(get_project_put_form)
+        .typed_post(post_project)
+        .typed_put(put_project)
 }
 
-// Pages
+// Forms
 
-#[derive(Copy, Clone, Default, TypedPath)]
+#[derive(Copy, Clone, TypedPath)]
+#[typed_path("/projects/form")]
+pub struct ProjectsFormUrl;
+
+#[derive(Clone, Deserialize, TypedPath)]
+#[typed_path("/projects/:id/form")]
+pub struct SingleProjectFormUrl {
+    id: String,
+}
+
+async fn get_project_post_form(
+    _: ProjectsFormUrl,
+    user: Option<User>,
+) -> Render<ProjectFormPage<ProjectsUrl>> {
+    Render(ProjectFormPage::new(
+        ProjectsUrl,
+        user,
+        ValidationErrors::new(),
+        None,
+    ))
+}
+
+async fn get_project_put_form(
+    SingleProjectFormUrl { id }: SingleProjectFormUrl,
+    user: Option<User>,
+) -> Render<ProjectFormPage<SingleProjectUrl>> {
+    Render(ProjectFormPage::new(
+        SingleProjectUrl { id },
+        user,
+        ValidationErrors::new(),
+        None,
+    ))
+}
+
+// API Pages
+
+#[derive(Copy, Clone, TypedPath)]
 #[typed_path("/projects")]
-pub struct ListProjectsUrl;
+pub struct ProjectsUrl;
+
+#[derive(Clone, Deserialize, TypedPath)]
+#[typed_path("/projects/:id")]
+pub struct SingleProjectUrl {
+    id: String,
+}
 
 async fn list_projects(
-    _: ListProjectsUrl,
+    _: ProjectsUrl,
     State(repo): State<ProjectsRepository>,
     State(client): State<aws_sdk_s3::Client>,
     State(redis_pool): State<RedisPool>,
@@ -77,7 +115,7 @@ async fn list_projects(
             let about = String::from_utf8(
                 client
                     .get_object()
-                    .bucket(&AppConfig::get().buckets().system)
+                    .bucket(AppBucket::System.to_string())
                     .key(ABOUT_KEY)
                     .send()
                     .await?
@@ -110,14 +148,8 @@ async fn list_projects(
     Ok(Render(ListProjectsPage::new(user, about, projects)))
 }
 
-#[derive(Clone, Deserialize, TypedPath)]
-#[typed_path("/projects/:id")]
-pub struct GetProjectUrl {
-    id: String,
-}
-
 async fn get_project(
-    GetProjectUrl { id }: GetProjectUrl,
+    SingleProjectUrl { id }: SingleProjectUrl,
     State(repo): State<ProjectsRepository>,
     State(client): State<aws_sdk_s3::Client>,
     user: Option<User>,
@@ -131,7 +163,7 @@ async fn get_project(
     let content = String::from_utf8(
         client
             .get_object()
-            .bucket(&AppConfig::get().buckets().content)
+            .bucket(AppBucket::Content.to_string())
             .key(project.content_id.to_string())
             .send()
             .await?
@@ -148,35 +180,84 @@ async fn get_project(
     )))
 }
 
-#[derive(Copy, Clone, TypedPath)]
-#[typed_path("/projects/form")]
-pub struct GetProjectFormUrl;
-
-async fn get_project_form(_: GetProjectFormUrl, user: Option<User>) -> Render<ProjectFormPage> {
-    Render(ProjectFormPage::new(user, ValidationErrors::new(), None))
-}
-
-#[derive(Copy, Clone, TypedPath)]
-#[typed_path("/projects/form")]
-pub struct PostProjectFormUrl;
-
-async fn post_project_form(
-    _: PostProjectFormUrl,
+async fn put_project(
+    _: SingleProjectUrl,
     State(repo): State<ProjectsRepository>,
     State(client): State<aws_sdk_s3::Client>,
     user: Option<User>,
     WithRejection(parts, _): WithPageRejection<Multipart>,
-) -> PageResult<Result<Redirect, Render<ProjectFormPage>>> {
-    #[derive(Validate)]
-    struct FormData {
-        name: String,
-        #[validate(length(min = 1))]
-        content: String,
-        thumbnail: (Option<String>, Option<String>, Bytes),
-        project_url: Option<String>,
-    }
+) {
+}
 
-    impl TryFrom<IncompleteFormData> for FormData {
+async fn post_project(
+    _: ProjectsUrl,
+    State(repo): State<ProjectsRepository>,
+    user: Option<User>,
+    WithRejection(parts, _): WithPageRejection<Multipart>,
+) -> PageResult<Result<Redirect, Render<ProjectFormPage<ProjectsUrl>>>> {
+    let project = match form_helper::parse_form_data(parts).await? {
+        Ok(data) => data,
+        Err(errors) => {
+            return Ok(Err(Render(ProjectFormPage::new(
+                ProjectsUrl,
+                user,
+                errors,
+                None,
+            ))))
+        }
+    };
+
+    let project = repo.create(project).await?;
+
+    Ok(Ok(Redirect::to(
+        &SingleProjectUrl { id: project.id }.to_string(),
+    )))
+}
+
+// Partials
+
+#[derive(Copy, Clone, Default, TypedPath)]
+#[typed_path("/partial/projects")]
+pub struct ListProjectsPartialUrl;
+
+async fn list_projects_partial(
+    url: ListProjectsPartialUrl,
+    State(repo): State<ProjectsRepository>,
+    WithRejection(Valid(Query(pager)), _): WithToastRejection<
+        Valid<Query<Pager<(OffsetDateTime, String)>>>,
+    >,
+) -> ToastResult<PaginatedResponse<Project, ListProjectsPartialUrl, (OffsetDateTime, String)>> {
+    let items = repo.list(&pager).await?;
+    Ok(PaginatedResponse { items, url, pager })
+}
+
+#[derive(Copy, Clone, TypedPath)]
+#[typed_path("/partial/projects/form")]
+pub struct ProjectFormPartialUrl;
+
+async fn project_form_partial(_: ProjectFormPartialUrl) -> Render<ProjectForm> {
+    Render(ProjectForm {
+        action: String::new(),
+        errors: ValidationErrors::new(),
+        project: None,
+    })
+}
+
+mod form_helper {
+    use std::mem::MaybeUninit;
+
+    use axum::extract::Multipart;
+    use bytes::Bytes;
+    use validator::{Validate, ValidationError, ValidationErrors};
+
+    use crate::{
+        config::AppBucket,
+        dto::projects::NewProject,
+        error::{AppError, AppResult},
+        repository::files::AppFile,
+    };
+
+    impl TryFrom<IncompleteFormData> for NewProject {
         type Error = ValidationErrors;
 
         fn try_from(value: IncompleteFormData) -> Result<Self, Self::Error> {
@@ -225,7 +306,7 @@ async fn post_project_form(
             }
 
             let data = unsafe {
-                FormData {
+                NewProject {
                     name: name.assume_init(),
                     content: content.assume_init(),
                     thumbnail: thumbnail.assume_init(),
@@ -241,12 +322,12 @@ async fn post_project_form(
     struct IncompleteFormData {
         name: Option<String>,
         content: Option<String>,
-        thumbnail: Option<(Option<String>, Option<String>, Bytes)>,
+        thumbnail: Option<AppFile<Bytes>>,
         project_url: Option<Option<String>>,
     }
 
     impl IncompleteFormData {
-        async fn from_multipart(mut parts: Multipart) -> Result<Self, MultipartError> {
+        async fn from_multipart(mut parts: Multipart) -> AppResult<Self> {
             let mut data = IncompleteFormData::default();
 
             while let Some(field) = parts.next_field().await? {
@@ -254,10 +335,15 @@ async fn post_project_form(
                     Some("name") => data.name = Some(field.text().await?),
                     Some("description") => data.content = Some(field.text().await?),
                     Some("thumbnail") => {
-                        data.thumbnail = Some((
-                            field.content_type().map(ToOwned::to_owned),
-                            field.file_name().map(ToOwned::to_owned),
+                        let content_type = field
+                            .content_type()
+                            .and_then(|content_type| content_type.parse().ok())
+                            .ok_or(AppError::FileType)?;
+
+                        data.thumbnail = Some(AppFile::new(
                             field.bytes().await?,
+                            AppBucket::Thumbnails,
+                            content_type,
                         ))
                     }
                     Some("project-url") => {
@@ -272,101 +358,22 @@ async fn post_project_form(
         }
     }
 
-    fn generate_preview(content: &str) -> String {
-        const PREVIEW_LENGTH: usize = 300;
-        static RE: OnceLock<Regex> = OnceLock::new();
+    pub async fn parse_form_data(
+        parts: Multipart,
+    ) -> AppResult<Result<NewProject, ValidationErrors>> {
+        let result: Result<NewProject, _> =
+            IncompleteFormData::from_multipart(parts).await?.try_into();
 
-        let html = comrak::markdown_to_html(content, &Options::default());
-        let re = RE.get_or_init(|| Regex::new(r"<[^>]*>").unwrap());
-        let mut preview = re.replace_all(&html, "").to_string();
-
-        if preview.len() >= PREVIEW_LENGTH {
-            preview.truncate(PREVIEW_LENGTH - 3);
-            preview += "...";
-        }
-
-        preview
-    }
-
-    let result: Result<FormData, _> = IncompleteFormData::from_multipart(parts).await?.try_into();
-    let data = match result {
-        Ok(data) => data,
-        Err(errors) => return Ok(Err(Render(ProjectFormPage::new(user, errors, None)))),
-    };
-    if let Err(errors) = data.validate() {
-        return Ok(Err(Render(ProjectFormPage::new(user, errors, None))));
-    }
-    let project = NewProject::new(data.name, data.project_url);
-
-    match project.validate() {
-        Ok(_) => {
-            let (project, transaction) = repo
-                .create(&project, &generate_preview(&data.content))
-                .await?;
-
-            let mut builder = client
-                .put_object()
-                .bucket(&AppConfig::get().buckets().thumbnails)
-                .key(project.thumbnail_id.to_string());
-
-            if let Some(content_type) = data.thumbnail.0 {
-                builder = builder.content_type(content_type);
+        let data = match result {
+            Ok(data) => data,
+            Err(errors) => {
+                return Ok(Err(errors));
             }
+        };
 
-            if let Some(file_name) = data.thumbnail.1 {
-                builder = builder.content_disposition(format!(r#"filename="{file_name}""#))
-            }
-
-            builder
-                .body(ByteStream::new(SdkBody::from(data.thumbnail.2)))
-                .send()
-                .await?;
-
-            client
-                .put_object()
-                .bucket(&AppConfig::get().buckets().content)
-                .key(project.content_id.to_string())
-                .content_disposition(r#"filename="content.md""#)
-                .content_length(data.content.len() as i64)
-                .content_type("text/markdown")
-                .body(ByteStream::new(SdkBody::from(data.content)))
-                .send()
-                .await?;
-
-            transaction.commit().await?;
-
-            Ok(Ok(Redirect::to(
-                &GetProjectUrl { id: project.id }.to_string(),
-            )))
+        match data.validate() {
+            Ok(_) => Ok(Ok(data)),
+            Err(errors) => Ok(Err(errors)),
         }
-        Err(errors) => Ok(Err(Render(ProjectFormPage::new(user, errors, None)))),
     }
-}
-
-// Partials
-
-#[derive(Copy, Clone, Default, TypedPath)]
-#[typed_path("/partial/projects")]
-pub struct ListProjectsPartialUrl;
-
-async fn list_projects_partial(
-    url: ListProjectsPartialUrl,
-    State(repo): State<ProjectsRepository>,
-    WithRejection(Valid(Query(pager)), _): WithToastRejection<
-        Valid<Query<Pager<(OffsetDateTime, String)>>>,
-    >,
-) -> ToastResult<PaginatedResponse<Project, ListProjectsPartialUrl, (OffsetDateTime, String)>> {
-    let items = repo.list(&pager).await?;
-    Ok(PaginatedResponse { items, url, pager })
-}
-
-#[derive(Copy, Clone, TypedPath)]
-#[typed_path("/partial/projects/form")]
-pub struct ProjectFormPartialUrl;
-
-async fn project_form_partial(_: ProjectFormPartialUrl) -> Render<ProjectForm> {
-    Render(ProjectForm {
-        errors: ValidationErrors::new(),
-        project: None,
-    })
 }

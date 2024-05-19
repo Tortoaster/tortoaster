@@ -27,6 +27,7 @@ sea-orm = { version = "0.12.15", default-features = false, features = ["macros",
 serde = { version = "1.0.196", features = ["derive"] }
 serde-inline-default = "0.2.0"
 sqlx = { version = "0.7.3", features = ["runtime-tokio-rustls", "postgres", "time"] }
+strum = { version = "0.26.2", features = ["derive"] }
 thiserror = "1.0.56"
 time = { version = "=0.3.34", features = ["serde"] }
 time-humanize = "0.1.3"

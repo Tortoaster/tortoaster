@@ -21,8 +21,8 @@ use tower_sessions_sqlx_store::PostgresStore;
 use tracing::info;
 
 use crate::{
-    api::projects::ListProjectsUrl,
-    config::AppConfig,
+    api::projects::ProjectsUrl,
+    config::{AppBucket, AppConfig},
     error::{AppError, PageError},
     state::AppState,
     user::AppClaims,
@@ -92,12 +92,12 @@ async fn main() {
         // Publicly available
         .route(
             "/",
-            get(|| async { Redirect::permanent(&ListProjectsUrl.to_string()) }),
+            get(|| async { Redirect::permanent(&ProjectsUrl.to_string()) }),
         )
         .nest_service("/static", ServeDir::new("static"))
         .nest_service(
             "/thumbnails",
-            ServeBucket::new(state.s3_client.clone(), &config.buckets().thumbnails),
+            ServeBucket::new(state.s3_client.clone(), AppBucket::Thumbnails.to_string()),
         )
         .fallback(|| async { PageError(AppError::NotFound) })
         .layer(DefaultBodyLimit::max(1024 * 1024 * 5))

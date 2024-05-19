@@ -1,33 +1,30 @@
-use sea_orm::ActiveValue::Set;
-use serde::Deserialize;
+use std::sync::OnceLock;
+
+use bytes::Bytes;
+use comrak::Options;
+use regex::Regex;
 use sqlx::types::time::OffsetDateTime;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{model::projects, pagination::Paginatable, template::projects::ProjectComponent};
+use crate::{
+    model::projects, pagination::Paginatable, repository::files::AppFile,
+    template::projects::ProjectComponent,
+};
 
-#[derive(Debug, Deserialize, Validate)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Validate)]
 pub struct NewProject {
     #[validate(length(min = 1, max = 128))]
     pub name: String,
-    pub content_id: Uuid,
-    pub thumbnail_id: Uuid,
-    #[serde(default)]
+    #[validate(length(min = 1))]
+    pub content: String,
+    #[validate]
+    pub thumbnail: AppFile<Bytes>,
     #[validate(length(min = 1, max = 2000), url)]
     pub project_url: Option<String>,
 }
 
 impl NewProject {
-    pub fn new(name: String, project_url: Option<String>) -> Self {
-        NewProject {
-            name,
-            content_id: Uuid::new_v4(),
-            thumbnail_id: Uuid::new_v4(),
-            project_url,
-        }
-    }
-
     pub fn id(&self) -> String {
         Self::generate_id(&self.name)
     }
@@ -47,17 +44,21 @@ impl NewProject {
         const ID_CHARS: [char; 2] = ['-', '_'];
         !c.is_alphanumeric() && !ID_CHARS.contains(&c)
     }
-}
 
-impl From<NewProject> for projects::ActiveModel {
-    fn from(value: NewProject) -> Self {
-        Self {
-            name: Set(value.name),
-            content_id: Set(value.content_id),
-            thumbnail_id: Set(value.thumbnail_id),
-            project_url: Set(value.project_url),
-            ..Default::default()
+    pub fn preview(&self) -> String {
+        const PREVIEW_LENGTH: usize = 300;
+        static RE: OnceLock<Regex> = OnceLock::new();
+
+        let html = comrak::markdown_to_html(&self.content, &Options::default());
+        let re = RE.get_or_init(|| Regex::new(r"<[^>]*>").unwrap());
+        let mut preview = re.replace_all(&html, "").to_string();
+
+        if preview.len() >= PREVIEW_LENGTH {
+            preview.truncate(PREVIEW_LENGTH - 3);
+            preview += "...";
         }
+
+        preview
     }
 }
 

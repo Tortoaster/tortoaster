@@ -1,10 +1,12 @@
+use std::fmt::Display;
+
 use askama::Template;
 use validator::ValidationErrors;
 
 use crate::{
     api::{
         auth::{LoginUrl, LogoutUrl},
-        projects::GetProjectFormUrl,
+        projects::ProjectsFormUrl,
     },
     dto::{comments::Comment, projects::Project},
     user::User,
@@ -18,7 +20,7 @@ pub struct ListProjectsPage {
     user: Option<User>,
     login_url: LoginUrl,
     logout_url: LogoutUrl,
-    new_project_url: GetProjectFormUrl,
+    new_project_url: ProjectsFormUrl,
     about: String,
     projects: Vec<Project>,
 }
@@ -29,7 +31,7 @@ impl ListProjectsPage {
             user,
             login_url: LoginUrl,
             logout_url: LogoutUrl,
-            new_project_url: GetProjectFormUrl,
+            new_project_url: ProjectsFormUrl,
             about,
             projects,
         }
@@ -67,7 +69,8 @@ impl GetProjectPage {
 
 #[derive(Default, Template)]
 #[template(path = "projects/page_form.html")]
-pub struct ProjectFormPage {
+pub struct ProjectFormPage<Url: Display> {
+    action: Url,
     user: Option<User>,
     login_url: LoginUrl,
     logout_url: LogoutUrl,
@@ -75,9 +78,15 @@ pub struct ProjectFormPage {
     project: Option<Project>,
 }
 
-impl ProjectFormPage {
-    pub fn new(user: Option<User>, errors: ValidationErrors, project: Option<Project>) -> Self {
+impl<Url: Display> ProjectFormPage<Url> {
+    pub fn new(
+        action: Url,
+        user: Option<User>,
+        errors: ValidationErrors,
+        project: Option<Project>,
+    ) -> Self {
         Self {
+            action,
             user,
             login_url: LoginUrl,
             logout_url: LogoutUrl,
@@ -98,6 +107,7 @@ pub struct ProjectComponent {
 #[derive(Default, Template)]
 #[template(path = "projects/form.html")]
 pub struct ProjectForm {
+    pub action: String,
     pub errors: ValidationErrors,
     pub project: Option<Project>,
 }

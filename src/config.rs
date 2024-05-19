@@ -1,6 +1,7 @@
 use std::{
     fmt::Debug,
     net::{IpAddr, Ipv4Addr, SocketAddr},
+    ops::Deref,
     sync::OnceLock,
 };
 
@@ -9,6 +10,7 @@ use aws_sdk_s3::config::Credentials;
 use config::Config;
 use serde::Deserialize;
 use serde_inline_default::serde_inline_default;
+use strum::EnumIter;
 use tower_sessions_redis_store::fred::prelude::{RedisConfig, Server, ServerConfig};
 use tracing_subscriber::EnvFilter;
 
@@ -78,10 +80,6 @@ impl AppConfig {
             ..Default::default()
         }
     }
-
-    pub fn buckets(&self) -> &BucketConfig {
-        &self.s3.bucket
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -109,6 +107,28 @@ pub struct BucketConfig {
     pub content: String,
     #[serde_inline_default("tortoaster-system".to_owned())]
     pub system: String,
+}
+
+/// Smart pointer to the bucket names stored in the configuration.
+#[derive(Copy, Clone, Debug, EnumIter)]
+pub enum AppBucket {
+    Thumbnails,
+    Content,
+    System,
+}
+
+impl Deref for AppBucket {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        let config = AppConfig::get();
+
+        match self {
+            AppBucket::Thumbnails => &config.s3.bucket.thumbnails,
+            AppBucket::Content => &config.s3.bucket.content,
+            AppBucket::System => &config.s3.bucket.system,
+        }
+    }
 }
 
 impl Default for BucketConfig {

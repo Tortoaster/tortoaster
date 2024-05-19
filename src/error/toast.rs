@@ -31,7 +31,7 @@ impl IntoResponse for ToastError {
 
         match self.0 {
             AppError::NotFound => (),
-            _ => error!("user encountered {status_code}:\n{:#?}", self.0),
+            _ => error!("user encountered {status_code}:\n{:?}", self.0),
         }
 
         let template = ErrorToast { message };

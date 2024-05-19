@@ -1,15 +1,18 @@
 use sea_orm::{
     DatabaseConnection, DbErr, EntityTrait, Order, QueryOrder, QuerySelect, SqlxPostgresConnector,
 };
-use sqlx::{query_as, types::time::OffsetDateTime, PgPool, Postgres, Transaction};
+use sqlx::{query_as, types::time::OffsetDateTime, PgPool};
+use uuid::Uuid;
 
 use crate::{
     dto::{
         comments::Comment,
         projects::{NewProject, Project},
     },
+    error::AppResult,
     model::{comments, projects},
     pagination::Pager,
+    repository::files::{AppFile, FileRepository},
 };
 
 const DEFAULT_PROJECTS_PER_PAGE: i64 = 10;
@@ -19,13 +22,15 @@ const DEFAULT_COMMENTS_PER_PAGE: i64 = 10;
 pub struct ProjectsRepository {
     pool: PgPool,
     conn: DatabaseConnection,
+    file_repo: FileRepository,
 }
 
 impl ProjectsRepository {
-    pub fn new(pool: PgPool) -> Self {
+    pub fn new(pool: PgPool, file_repo: FileRepository) -> Self {
         Self {
             conn: SqlxPostgresConnector::from_sqlx_postgres_pool(pool.clone()),
             pool,
+            file_repo,
         }
     }
 
@@ -69,27 +74,34 @@ impl ProjectsRepository {
         }
     }
 
-    pub async fn create(
-        &self,
-        project: &NewProject,
-        preview: &str,
-    ) -> sqlx::Result<(Project, Transaction<Postgres>)> {
+    pub async fn create(&self, new_project: NewProject) -> AppResult<Project> {
+        let content_id = Uuid::new_v4();
+        let thumbnail_id = Uuid::new_v4();
+
         let mut transaction = self.pool.begin().await?;
 
         let project = query_as!(
             Project,
             "INSERT INTO projects (id, name, preview, content_id, thumbnail_id, project_url) \
              VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;",
-            project.id(),
-            &project.name,
-            preview,
-            &project.content_id,
-            &project.thumbnail_id,
-            project.project_url.as_ref()
+            new_project.id(),
+            &new_project.name,
+            new_project.preview(),
+            content_id,
+            thumbnail_id,
+            new_project.project_url.as_ref()
         )
         .fetch_one(&mut *transaction)
         .await?;
 
-        Ok((project, transaction))
+        let content_file = AppFile::new_markdown(&new_project.content);
+        self.file_repo.store(content_id, content_file).await?;
+        self.file_repo
+            .store(thumbnail_id, new_project.thumbnail)
+            .await?;
+
+        transaction.commit().await?;
+
+        Ok(project)
     }
 }

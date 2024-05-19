@@ -4,11 +4,16 @@ use axum::extract::FromRef;
 use axum_oidc::OidcAuthLayer;
 use backoff::ExponentialBackoff;
 use sqlx::PgPool;
+use strum::IntoEnumIterator;
 use tokio::task::AbortHandle;
 use tower_sessions_redis_store::fred::{clients::RedisPool, interfaces::ClientLike};
 use tracing::{info, warn};
 
-use crate::{config::AppConfig, repository::projects::ProjectsRepository, user::AppClaims};
+use crate::{
+    config::{AppBucket, AppConfig},
+    repository::{files::FileRepository, projects::ProjectsRepository},
+    user::AppClaims,
+};
 
 #[derive(Clone, Debug)]
 pub struct AppState {
@@ -68,21 +73,15 @@ impl AppState {
                 .join(", ")
         );
 
-        assert!(
-            buckets
-                .iter()
-                .any(|bucket| bucket.name() == Some(&config.buckets().thumbnails)),
-            "{} bucket not found",
-            config.buckets().thumbnails
-        );
-
-        assert!(
-            buckets
-                .iter()
-                .any(|bucket| bucket.name() == Some(&config.buckets().content)),
-            "{} bucket not found",
-            config.buckets().content
-        );
+        for app_bucket in AppBucket::iter() {
+            assert!(
+                buckets
+                    .iter()
+                    .any(|bucket| bucket.name() == Some(&app_bucket)),
+                "{} bucket not found",
+                &*app_bucket
+            );
+        }
 
         let oidc_auth_layer = backoff::future::retry_notify(
             ExponentialBackoff::default(),
@@ -142,7 +141,13 @@ impl FromRef<AppState> for PgPool {
 
 impl FromRef<AppState> for ProjectsRepository {
     fn from_ref(input: &AppState) -> Self {
-        ProjectsRepository::new(input.pool.clone())
+        Self::new(input.pool.clone(), FileRepository::from_ref(input))
+    }
+}
+
+impl FromRef<AppState> for FileRepository {
+    fn from_ref(input: &AppState) -> Self {
+        Self::new(input.s3_client.clone())
     }
 }
 

@@ -13,6 +13,8 @@ mod toast;
 pub use page::{PageError, PageResult, WithPageRejection};
 pub use toast::{ToastResult, WithToastRejection};
 
+pub type AppResult<T> = Result<T, AppError>;
+
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("I couldn't access the database! :(")]
@@ -35,6 +37,8 @@ pub enum AppError {
     Session(#[from] axum_oidc::error::MiddlewareError),
     #[error("Something went wrong while retrieving your file :(")]
     ObjectEncoding,
+    #[error("I don't understand that type of file :(")]
+    FileType,
     #[error("I couldn't find the page you're looking for! :(")]
     NotFound,
     #[error("Please fill out all the fields!")]
@@ -61,7 +65,8 @@ impl AppError {
             AppError::Form(_)
             | AppError::MultipartError(_)
             | AppError::MultipartRejection(_)
-            | AppError::Validate(_) => StatusCode::BAD_REQUEST,
+            | AppError::Validate(_)
+            | AppError::FileType => StatusCode::BAD_REQUEST,
             AppError::Session(_) | AppError::Logout(_) | AppError::User(_) => {
                 StatusCode::UNAUTHORIZED
             }
