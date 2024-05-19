@@ -103,7 +103,7 @@ cargo run
 Alternatively, to re-run automatically on change:
 
 ```shell
-cargo watch -x run -w templates
+cargo watch -x run -w src -w templates
 ```
 
 #### Prepare compile-time checked queries
