@@ -133,12 +133,6 @@ impl AppState {
     }
 }
 
-impl FromRef<AppState> for PgPool {
-    fn from_ref(input: &AppState) -> Self {
-        input.pool.clone()
-    }
-}
-
 impl FromRef<AppState> for ProjectsRepository {
     fn from_ref(input: &AppState) -> Self {
         Self::new(input.pool.clone(), FileRepository::from_ref(input))
@@ -147,18 +141,6 @@ impl FromRef<AppState> for ProjectsRepository {
 
 impl FromRef<AppState> for FileRepository {
     fn from_ref(input: &AppState) -> Self {
-        Self::new(input.s3_client.clone())
-    }
-}
-
-impl FromRef<AppState> for aws_sdk_s3::Client {
-    fn from_ref(input: &AppState) -> Self {
-        input.s3_client.clone()
-    }
-}
-
-impl FromRef<AppState> for RedisPool {
-    fn from_ref(input: &AppState) -> Self {
-        input.redis_pool.clone()
+        Self::new(input.s3_client.clone(), input.redis_pool.clone())
     }
 }

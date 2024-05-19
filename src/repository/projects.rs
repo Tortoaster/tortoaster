@@ -5,6 +5,7 @@ use sqlx::{query_as, types::time::OffsetDateTime, PgPool};
 use uuid::Uuid;
 
 use crate::{
+    config::AppBucket,
     dto::{
         comments::Comment,
         projects::{NewProject, Project},
@@ -12,7 +13,7 @@ use crate::{
     error::AppResult,
     model::{comments, projects},
     pagination::Pager,
-    repository::files::{AppFile, FileRepository},
+    repository::files::FileRepository,
 };
 
 const DEFAULT_PROJECTS_PER_PAGE: i64 = 10;
@@ -94,8 +95,9 @@ impl ProjectsRepository {
         .fetch_one(&mut *transaction)
         .await?;
 
-        let content_file = AppFile::new_markdown(&new_project.content);
-        self.file_repo.store(content_id, content_file).await?;
+        self.file_repo
+            .store_markdown(content_id, AppBucket::Content, &new_project.content)
+            .await?;
         self.file_repo
             .store(thumbnail_id, new_project.thumbnail)
             .await?;

@@ -6,22 +6,29 @@ use std::{
 
 use aws_sdk_s3::primitives::{ByteStream, SdkBody};
 use thiserror::Error;
-use uuid::Uuid;
+use tower_sessions_redis_store::fred::{
+    clients::RedisPool, interfaces::KeysInterface, prelude::Expiration,
+};
+use tracing::{error, trace};
 use validator::Validate;
 
-use crate::{config::AppBucket, error::AppResult};
+use crate::{
+    config::AppBucket,
+    error::{AppError, AppResult},
+};
 
 #[derive(Clone, Debug)]
 pub struct FileRepository {
     client: aws_sdk_s3::Client,
+    redis_pool: RedisPool,
 }
 
 impl FileRepository {
-    pub fn new(client: aws_sdk_s3::Client) -> Self {
-        Self { client }
+    pub fn new(client: aws_sdk_s3::Client, redis_pool: RedisPool) -> Self {
+        Self { client, redis_pool }
     }
 
-    pub async fn store<T>(&self, id: Uuid, file: AppFile<T>) -> AppResult<()>
+    pub async fn store<T>(&self, id: impl Into<String>, file: AppFile<T>) -> AppResult<()>
     where
         T: Deref,
         T::Target: Length,
@@ -38,6 +45,85 @@ impl FileRepository {
             .await?;
 
         Ok(())
+    }
+
+    pub async fn store_markdown(
+        &self,
+        id: impl Into<String>,
+        bucket: AppBucket,
+        content: &str,
+    ) -> AppResult<()> {
+        let file = AppFile::new_markdown(content, bucket);
+        let id = id.into();
+
+        self.store(&id, file).await?;
+
+        self.store_in_cache(&id, bucket, content).await;
+
+        Ok(())
+    }
+
+    pub async fn retrieve_markdown(
+        &self,
+        id: impl Into<String>,
+        bucket: AppBucket,
+    ) -> AppResult<String> {
+        let id = id.into();
+
+        if let Some(content) = self.retrieve_from_cache(&id, bucket).await {
+            trace!("found cached entry for {}/{id}", bucket.name());
+            return Ok(content);
+        }
+        trace!("no cached entry for {}/{id}", bucket.name());
+
+        let content = String::from_utf8(
+            self.client
+                .get_object()
+                .bucket(bucket.to_string())
+                .key(&id)
+                .send()
+                .await?
+                .body
+                .collect()
+                .await
+                .map_err(|_| AppError::ObjectEncoding)?
+                .to_vec(),
+        )
+        .map_err(|_| AppError::ObjectEncoding)?;
+
+        self.store_in_cache(&id, bucket, &content).await;
+
+        Ok(content)
+    }
+
+    async fn store_in_cache(&self, id: &str, bucket: AppBucket, content: &str) {
+        if let Err(error) = self
+            .redis_pool
+            .set::<(), _, _>(
+                Self::cache_key(id, bucket),
+                content,
+                Some(Expiration::EX(24 * 3600)),
+                None,
+                false,
+            )
+            .await
+        {
+            error!("failed to store in cache: {error}")
+        }
+    }
+
+    async fn retrieve_from_cache(&self, id: &str, bucket: AppBucket) -> Option<String> {
+        self.redis_pool
+            .get::<Option<String>, _>(Self::cache_key(id, bucket))
+            .await
+            .unwrap_or_else(|error| {
+                error!("failed to retrieve from cache: {error}");
+                None
+            })
+    }
+
+    fn cache_key(id: &str, bucket: AppBucket) -> String {
+        format!("{}/{id}", bucket.name())
     }
 }
 
@@ -59,10 +145,10 @@ impl<T> AppFile<T> {
 }
 
 impl<'a> AppFile<&'a str> {
-    pub fn new_markdown(content: &'a str) -> Self {
+    fn new_markdown(content: &'a str, bucket: AppBucket) -> Self {
         Self {
             content,
-            bucket: AppBucket::Content,
+            bucket,
             content_type: ContentType::TextMarkdown,
         }
     }

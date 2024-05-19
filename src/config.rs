@@ -117,6 +117,16 @@ pub enum AppBucket {
     System,
 }
 
+impl AppBucket {
+    pub fn name(&self) -> &'static str {
+        match self {
+            AppBucket::Thumbnails => "thumbnails",
+            AppBucket::Content => "content",
+            AppBucket::System => "system",
+        }
+    }
+}
+
 impl Deref for AppBucket {
     type Target = str;
 

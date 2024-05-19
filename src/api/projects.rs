@@ -10,10 +10,6 @@ use axum_extra::{
 use axum_valid::Valid;
 use serde::Deserialize;
 use time::OffsetDateTime;
-use tower_sessions_redis_store::fred::{
-    clients::RedisPool, interfaces::KeysInterface, types::Expiration,
-};
-use tracing::error;
 use validator::ValidationErrors;
 
 use crate::{
@@ -22,7 +18,7 @@ use crate::{
     error::{AppError, PageResult, ToastResult, WithPageRejection, WithToastRejection},
     pagination::{Pager, PaginatedResponse},
     render::Render,
-    repository::projects::ProjectsRepository,
+    repository::{files::FileRepository, projects::ProjectsRepository},
     state::AppState,
     template::projects::{GetProjectPage, ListProjectsPage, ProjectForm, ProjectFormPage},
     user::User,
@@ -93,57 +89,19 @@ pub struct SingleProjectUrl {
 async fn list_projects(
     _: ProjectsUrl,
     State(repo): State<ProjectsRepository>,
-    State(client): State<aws_sdk_s3::Client>,
-    State(redis_pool): State<RedisPool>,
+    State(file_repo): State<FileRepository>,
     user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<
         Valid<Query<Pager<(OffsetDateTime, String)>>>,
     >,
 ) -> PageResult<Render<ListProjectsPage>> {
     const ABOUT_KEY: &str = "projects";
-    const ABOUT_CACHE_KEY: &str = "tortoaster_system_about_projects";
 
     let projects = repo.list(&pager).await?;
 
-    let about = match redis_pool
-        .get::<Option<String>, _>(ABOUT_CACHE_KEY)
-        .await
-        .ok()
-        .flatten()
-    {
-        None => {
-            let about = String::from_utf8(
-                client
-                    .get_object()
-                    .bucket(AppBucket::System.to_string())
-                    .key(ABOUT_KEY)
-                    .send()
-                    .await?
-                    .body
-                    .collect()
-                    .await
-                    .map_err(|_| AppError::ObjectEncoding)?
-                    .to_vec(),
-            )
-            .map_err(|_| AppError::ObjectEncoding)?;
-
-            if let Err(error) = redis_pool
-                .set::<(), _, _>(
-                    ABOUT_CACHE_KEY,
-                    &about,
-                    Some(Expiration::EX(24 * 3600)),
-                    None,
-                    false,
-                )
-                .await
-            {
-                error!("failed to cache projects about section: {error}")
-            }
-
-            about
-        }
-        Some(about) => about,
-    };
+    let about = file_repo
+        .retrieve_markdown(ABOUT_KEY, AppBucket::System)
+        .await?;
 
     Ok(Render(ListProjectsPage::new(user, about, projects)))
 }
@@ -151,7 +109,7 @@ async fn list_projects(
 async fn get_project(
     SingleProjectUrl { id }: SingleProjectUrl,
     State(repo): State<ProjectsRepository>,
-    State(client): State<aws_sdk_s3::Client>,
+    State(file_repo): State<FileRepository>,
     user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<i32>>>>,
 ) -> PageResult<Render<GetProjectPage>> {
@@ -160,20 +118,9 @@ async fn get_project(
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let content = String::from_utf8(
-        client
-            .get_object()
-            .bucket(AppBucket::Content.to_string())
-            .key(project.content_id.to_string())
-            .send()
-            .await?
-            .body
-            .collect()
-            .await
-            .map_err(|_| AppError::ObjectEncoding)?
-            .to_vec(),
-    )
-    .map_err(|_| AppError::ObjectEncoding)?;
+    let content = file_repo
+        .retrieve_markdown(project.content_id, AppBucket::Content)
+        .await?;
 
     Ok(Render(GetProjectPage::new(
         user, project, content, comments,
@@ -183,7 +130,7 @@ async fn get_project(
 async fn put_project(
     _: SingleProjectUrl,
     State(repo): State<ProjectsRepository>,
-    State(client): State<aws_sdk_s3::Client>,
+    State(file_repo): State<FileRepository>,
     user: Option<User>,
     WithRejection(parts, _): WithPageRejection<Multipart>,
 ) {
