@@ -10,7 +10,6 @@ use crate::{
     },
     dto::projects::{ProjectNameContentUrl, ProjectPreview, ProjectWithComments},
     user::User,
-    utils::method::Method,
 };
 
 // Pages
@@ -60,18 +59,9 @@ impl GetProjectPage {
 }
 
 #[derive(Template)]
-#[template(path = "projects/page_get.html", block = "content")]
-pub struct GetProjectPartial {
-    pub project: ProjectWithComments,
-    // TODO: This is here due to a bug in askama, remove when it is fixed
-    pub user: Option<&'static str>,
-}
-
-#[derive(Template)]
 #[template(path = "projects/page_form.html")]
 pub struct ProjectFormPage<Url: Display> {
     title: &'static str,
-    method: Method,
     action: Url,
     user: Option<User>,
     login_url: LoginUrl,
@@ -83,7 +73,6 @@ pub struct ProjectFormPage<Url: Display> {
 impl<Url: Display> ProjectFormPage<Url> {
     pub fn new(
         title: &'static str,
-        method: Method,
         action: Url,
         user: Option<User>,
         errors: ValidationErrors,
@@ -91,7 +80,6 @@ impl<Url: Display> ProjectFormPage<Url> {
     ) -> Self {
         Self {
             title,
-            method,
             action,
             user,
             login_url: LoginUrl,

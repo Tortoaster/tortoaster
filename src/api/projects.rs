@@ -1,7 +1,6 @@
 use axum::{
     extract::{Multipart, Query, State},
     response::Redirect,
-    routing::post,
     Router,
 };
 use axum_extra::{
@@ -20,14 +19,11 @@ use crate::{
     repository::{files::FileRepository, projects::ProjectsRepository},
     state::AppState,
     template::{
-        projects::{GetProjectPage, GetProjectPartial, ListProjectsPage, ProjectFormPage},
+        projects::{GetProjectPage, ListProjectsPage, ProjectFormPage},
         Render,
     },
     user::User,
-    utils::{
-        method::Method,
-        pagination::{Pager, PaginatedResponse},
-    },
+    utils::pagination::{Pager, PaginatedResponse},
 };
 
 pub fn public_router() -> Router<AppState> {
@@ -41,8 +37,7 @@ pub fn protected_router() -> Router<AppState> {
         .typed_get(get_project_post_form)
         .typed_get(get_project_patch_form)
         .typed_post(post_project)
-        .typed_patch(patch_project)
-        .route("/projects/:id/patch", post(post_patch_project))
+        .typed_post(post_patch_project)
 }
 
 // Forms
@@ -60,11 +55,10 @@ pub struct SingleProjectFormUrl {
 async fn get_project_post_form(
     _: ProjectsFormUrl,
     user: Option<User>,
-) -> Render<ProjectFormPage<ProjectsUrl>> {
+) -> Render<ProjectFormPage<ListProjectsUrl>> {
     Render(ProjectFormPage::new(
         "Create Project",
-        Method::Post,
-        ProjectsUrl,
+        ListProjectsUrl,
         user,
         ValidationErrors::new(),
         None,
@@ -75,13 +69,12 @@ async fn get_project_patch_form(
     SingleProjectFormUrl { id }: SingleProjectFormUrl,
     State(repo): State<ProjectsRepository>,
     user: Option<User>,
-) -> PageResult<Render<ProjectFormPage<SingleProjectUrl>>> {
+) -> PageResult<Render<ProjectFormPage<PostPatchProjectUrl>>> {
     let project = repo.get_name_content_url(&id).await?;
 
     Ok(Render(ProjectFormPage::new(
         "Update Project",
-        Method::Patch,
-        SingleProjectUrl { id },
+        PostPatchProjectUrl { id },
         user,
         ValidationErrors::new(),
         Some(project),
@@ -92,16 +85,22 @@ async fn get_project_patch_form(
 
 #[derive(Copy, Clone, TypedPath)]
 #[typed_path("/projects")]
-pub struct ProjectsUrl;
+pub struct ListProjectsUrl;
 
 #[derive(Clone, Deserialize, TypedPath)]
 #[typed_path("/projects/:id")]
-pub struct SingleProjectUrl {
+pub struct GetProjectUrl {
+    id: String,
+}
+
+#[derive(Clone, Deserialize, TypedPath)]
+#[typed_path("/projects/:id/patch")]
+pub struct PostPatchProjectUrl {
     id: String,
 }
 
 async fn list_projects(
-    _: ProjectsUrl,
+    _: ListProjectsUrl,
     State(repo): State<ProjectsRepository>,
     State(file_repo): State<FileRepository>,
     user: Option<User>,
@@ -121,7 +120,7 @@ async fn list_projects(
 }
 
 async fn get_project(
-    SingleProjectUrl { id }: SingleProjectUrl,
+    GetProjectUrl { id }: GetProjectUrl,
     State(repo): State<ProjectsRepository>,
     user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<i32>>>>,
@@ -135,18 +134,17 @@ async fn get_project(
 }
 
 async fn post_project(
-    _: ProjectsUrl,
+    _: ListProjectsUrl,
     State(repo): State<ProjectsRepository>,
     user: Option<User>,
     WithRejection(parts, _): WithPageRejection<Multipart>,
-) -> PageResult<Result<Redirect, Render<ProjectFormPage<ProjectsUrl>>>> {
+) -> PageResult<Result<Redirect, Render<ProjectFormPage<ListProjectsUrl>>>> {
     let project = match NewProject::try_from_multipart(parts).await? {
         Ok(data) => data,
         Err(errors) => {
             return Ok(Err(Render(ProjectFormPage::new(
                 "Create Project",
-                Method::Post,
-                ProjectsUrl,
+                ListProjectsUrl,
                 user,
                 errors,
                 None,
@@ -157,50 +155,22 @@ async fn post_project(
     let project = repo.create(project).await?;
 
     Ok(Ok(Redirect::to(
-        &SingleProjectUrl { id: project.id }.to_string(),
+        &GetProjectUrl { id: project.id }.to_string(),
     )))
 }
 
-/// Workaround to call patch endpoint with a post request, for browsers without
-/// javascript.
 async fn post_patch_project(
-    SingleProjectUrl { id }: SingleProjectUrl,
+    PostPatchProjectUrl { id }: PostPatchProjectUrl,
     State(repo): State<ProjectsRepository>,
     user: Option<User>,
     WithRejection(parts, _): WithPageRejection<Multipart>,
-) -> PageResult<Result<Redirect, Render<ProjectFormPage<SingleProjectUrl>>>> {
+) -> PageResult<Result<Render<GetProjectPage>, Render<ProjectFormPage<GetProjectUrl>>>> {
     let project = match UpdateProject::try_from_multipart(parts).await? {
         Ok(data) => data,
         Err(errors) => {
             return Ok(Err(Render(ProjectFormPage::new(
                 "Update Project",
-                Method::Patch,
-                SingleProjectUrl { id },
-                user,
-                errors,
-                None,
-            ))))
-        }
-    };
-
-    repo.update(&id, project).await?;
-
-    Ok(Ok(Redirect::to(&SingleProjectUrl { id }.to_string())))
-}
-
-async fn patch_project(
-    SingleProjectUrl { id }: SingleProjectUrl,
-    State(repo): State<ProjectsRepository>,
-    user: Option<User>,
-    WithRejection(parts, _): WithPageRejection<Multipart>,
-) -> PageResult<Result<Render<GetProjectPartial>, Render<ProjectFormPage<SingleProjectUrl>>>> {
-    let project = match UpdateProject::try_from_multipart(parts).await? {
-        Ok(data) => data,
-        Err(errors) => {
-            return Ok(Err(Render(ProjectFormPage::new(
-                "Update Project",
-                Method::Patch,
-                SingleProjectUrl { id },
+                GetProjectUrl { id },
                 user,
                 errors,
                 None,
@@ -214,10 +184,7 @@ async fn patch_project(
         .await?
         .ok_or(AppError::NotFound)?;
 
-    Ok(Ok(Render(GetProjectPartial {
-        project,
-        user: None,
-    })))
+    Ok(Ok(Render(GetProjectPage::new(user, project))))
 }
 
 // Partials
