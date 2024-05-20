@@ -1,15 +1,12 @@
 use sea_orm::{
-    DatabaseConnection, DbErr, EntityTrait, Order, QueryOrder, QuerySelect, SqlxPostgresConnector,
+    DatabaseConnection, EntityTrait, Order, QueryOrder, QuerySelect, SqlxPostgresConnector,
 };
 use sqlx::{query_as, types::time::OffsetDateTime, PgPool};
 use uuid::Uuid;
 
 use crate::{
     config::AppBucket,
-    dto::{
-        comments::Comment,
-        projects::{NewProject, Project},
-    },
+    dto::projects::{NewProject, ProjectId, ProjectPreview, ProjectWithComments},
     error::AppResult,
     model::{comments, projects},
     pagination::Pager,
@@ -38,24 +35,27 @@ impl ProjectsRepository {
     pub async fn list(
         &self,
         pager: &Pager<(OffsetDateTime, String)>,
-    ) -> sqlx::Result<Vec<Project>> {
-        query_as!(
-            Project,
-            "SELECT * FROM projects WHERE COALESCE((date_posted, id) < ($1, $2), TRUE) ORDER BY \
-             (date_posted, id) DESC LIMIT $3;",
+    ) -> sqlx::Result<Vec<ProjectPreview>> {
+        let previews = query_as!(
+            ProjectPreview,
+            "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE \
+             COALESCE((date_posted, id) < ($1, $2), TRUE) ORDER BY (date_posted, id) DESC LIMIT \
+             $3;",
             pager.after.as_ref().map(|columns| &columns.0),
             pager.after.as_ref().map(|columns| &columns.1),
             pager.items.unwrap_or(DEFAULT_PROJECTS_PER_PAGE),
         )
         .fetch_all(&self.pool)
-        .await
+        .await?;
+
+        Ok(previews)
     }
 
     pub async fn get_with_comments(
         &self,
         id: &str,
         pager: &Pager<i32>,
-    ) -> Result<Option<(Project, Vec<Comment>)>, DbErr> {
+    ) -> AppResult<Option<ProjectWithComments>> {
         let mut result: Vec<(projects::Model, Vec<comments::Model>)> =
             projects::Entity::find_by_id(id)
                 .find_with_related(comments::Entity)
@@ -68,23 +68,25 @@ impl ProjectsRepository {
 
         match result.pop() {
             None => Ok(None),
-            Some((project, comments)) => Ok(Some((
-                project.into(),
-                comments.into_iter().map(Into::into).collect(),
-            ))),
+            Some((project, comments)) => {
+                let comments = comments.into_iter().map(Into::into).collect();
+                let project =
+                    ProjectWithComments::from_model(comments, project, &self.file_repo).await?;
+                Ok(Some(project))
+            }
         }
     }
 
-    pub async fn create(&self, new_project: NewProject) -> AppResult<Project> {
+    pub async fn create(&self, new_project: NewProject) -> AppResult<ProjectId> {
         let content_id = Uuid::new_v4();
         let thumbnail_id = Uuid::new_v4();
 
         let mut transaction = self.pool.begin().await?;
 
         let project = query_as!(
-            Project,
+            ProjectId,
             "INSERT INTO projects (id, name, preview, content_id, thumbnail_id, project_url) \
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;",
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;",
             new_project.id(),
             &new_project.name,
             new_project.preview(),

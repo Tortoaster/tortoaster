@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM projects WHERE COALESCE((date_posted, id) < ($1, $2), TRUE) ORDER BY (date_posted, id) DESC LIMIT $3;",
+  "query": "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE COALESCE((date_posted, id) < ($1, $2), TRUE) ORDER BY (date_posted, id) DESC LIMIT $3;",
   "describe": {
     "columns": [
       {
@@ -20,21 +20,11 @@
       },
       {
         "ordinal": 3,
-        "name": "content_id",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 4,
         "name": "thumbnail_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 5,
-        "name": "project_url",
-        "type_info": "Varchar"
-      },
-      {
-        "ordinal": 6,
+        "ordinal": 4,
         "name": "date_posted",
         "type_info": "Timestamptz"
       }
@@ -51,10 +41,8 @@
       false,
       false,
       false,
-      false,
-      true,
       false
     ]
   },
-  "hash": "ecd80b978105adc1f1c1b6a42bec660cae3c1085958afaedee2853ea66402271"
+  "hash": "ef7a0de5b2edc5880ada428c5d296ec502cbca05d6602281dc7d0e249d2746b9"
 }

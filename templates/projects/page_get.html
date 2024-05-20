@@ -32,9 +32,9 @@
 <img class="max-w-full mx-auto my-8 border-stone-900 border-4 shadow-comic" alt="Thumbnail"
      src="/thumbnails/{{ project.thumbnail_id }}">
 <div class="prose prose-stone mx-auto">
-    {{ content|markdown }}
+    {{ project.content|markdown }}
     <h2>Comments</h2>
-    {% for comment in comments %}
+    {% for comment in project.comments %}
     {% include "../comments/comment.html" %}
     {% endfor %}
 </div>

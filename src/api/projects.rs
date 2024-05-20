@@ -14,7 +14,7 @@ use validator::ValidationErrors;
 
 use crate::{
     config::AppBucket,
-    dto::projects::Project,
+    dto::projects::ProjectPreview,
     error::{AppError, PageResult, ToastResult, WithPageRejection, WithToastRejection},
     pagination::{Pager, PaginatedResponse},
     repository::{files::FileRepository, projects::ProjectsRepository},
@@ -111,28 +111,20 @@ async fn list_projects(
 async fn get_project(
     SingleProjectUrl { id }: SingleProjectUrl,
     State(repo): State<ProjectsRepository>,
-    State(file_repo): State<FileRepository>,
     user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<i32>>>>,
 ) -> PageResult<Render<GetProjectPage>> {
-    let (project, comments) = repo
+    let project = repo
         .get_with_comments(&id, &pager)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let content = file_repo
-        .retrieve_markdown(project.content_id, AppBucket::Content)
-        .await?;
-
-    Ok(Render(GetProjectPage::new(
-        user, project, content, comments,
-    )))
+    Ok(Render(GetProjectPage::new(user, project)))
 }
 
 async fn put_project(
     _: SingleProjectUrl,
     State(repo): State<ProjectsRepository>,
-    State(file_repo): State<FileRepository>,
     user: Option<User>,
     WithRejection(parts, _): WithPageRejection<Multipart>,
 ) {
@@ -175,7 +167,8 @@ async fn list_projects_partial(
     WithRejection(Valid(Query(pager)), _): WithToastRejection<
         Valid<Query<Pager<(OffsetDateTime, String)>>>,
     >,
-) -> ToastResult<PaginatedResponse<Project, ListProjectsPartialUrl, (OffsetDateTime, String)>> {
+) -> ToastResult<PaginatedResponse<ProjectPreview, ListProjectsPartialUrl, (OffsetDateTime, String)>>
+{
     let items = repo.list(&pager).await?;
     Ok(PaginatedResponse { items, url, pager })
 }

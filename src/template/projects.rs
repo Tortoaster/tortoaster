@@ -8,7 +8,7 @@ use crate::{
         auth::{LoginUrl, LogoutUrl},
         projects::ProjectsFormUrl,
     },
-    dto::{comments::Comment, projects::Project},
+    dto::projects::{ProjectPreview, ProjectWithComments},
     user::User,
 };
 
@@ -22,11 +22,11 @@ pub struct ListProjectsPage {
     logout_url: LogoutUrl,
     new_project_url: ProjectsFormUrl,
     about: String,
-    projects: Vec<Project>,
+    projects: Vec<ProjectPreview>,
 }
 
 impl ListProjectsPage {
-    pub fn new(user: Option<User>, about: String, projects: Vec<Project>) -> Self {
+    pub fn new(user: Option<User>, about: String, projects: Vec<ProjectPreview>) -> Self {
         Self {
             user,
             login_url: LoginUrl,
@@ -44,25 +44,16 @@ pub struct GetProjectPage {
     user: Option<User>,
     login_url: LoginUrl,
     logout_url: LogoutUrl,
-    project: Project,
-    content: String,
-    comments: Vec<Comment>,
+    project: ProjectWithComments,
 }
 
 impl GetProjectPage {
-    pub fn new(
-        user: Option<User>,
-        project: Project,
-        content: String,
-        comments: Vec<Comment>,
-    ) -> Self {
+    pub fn new(user: Option<User>, project: ProjectWithComments) -> Self {
         Self {
             user,
             login_url: LoginUrl,
             logout_url: LogoutUrl,
             project,
-            content,
-            comments,
         }
     }
 }
@@ -75,7 +66,7 @@ pub struct ProjectFormPage<Url: Display> {
     login_url: LoginUrl,
     logout_url: LogoutUrl,
     errors: ValidationErrors,
-    project: Option<Project>,
+    project: Option<ProjectWithComments>,
 }
 
 impl<Url: Display> ProjectFormPage<Url> {
@@ -83,7 +74,7 @@ impl<Url: Display> ProjectFormPage<Url> {
         action: Url,
         user: Option<User>,
         errors: ValidationErrors,
-        project: Option<Project>,
+        project: Option<ProjectWithComments>,
     ) -> Self {
         Self {
             action,
@@ -101,7 +92,7 @@ impl<Url: Display> ProjectFormPage<Url> {
 #[derive(Template)]
 #[template(path = "projects/component.html")]
 pub struct ProjectComponent {
-    pub project: Project,
+    pub project: ProjectWithComments,
 }
 
 #[derive(Default, Template)]
@@ -109,7 +100,7 @@ pub struct ProjectComponent {
 pub struct ProjectForm {
     pub action: String,
     pub errors: ValidationErrors,
-    pub project: Option<Project>,
+    pub project: Option<ProjectWithComments>,
 }
 
 mod filters {

@@ -8,9 +8,16 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    model::projects, pagination::Paginatable, repository::files::AppFile,
+    config::AppBucket,
+    dto::comments::Comment,
+    error::AppResult,
+    model::projects,
+    pagination::Paginatable,
+    repository::files::{AppFile, FileRepository},
     template::projects::ProjectComponent,
 };
+
+// Requests
 
 #[derive(Debug, Validate)]
 pub struct NewProject {
@@ -62,18 +69,70 @@ impl NewProject {
     }
 }
 
+// Responses
+
 #[derive(Debug)]
-pub struct Project {
+pub struct ProjectPreview {
     pub id: String,
     pub name: String,
     pub preview: String,
-    pub content_id: Uuid,
     pub thumbnail_id: Uuid,
-    pub project_url: Option<String>,
     pub date_posted: OffsetDateTime,
 }
 
-impl Paginatable for Project {
+impl From<projects::Model> for ProjectPreview {
+    fn from(value: projects::Model) -> Self {
+        Self {
+            id: value.id,
+            name: value.name,
+            preview: value.preview,
+            thumbnail_id: value.thumbnail_id,
+            date_posted: value.date_posted,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ProjectId {
+    pub id: String,
+}
+
+#[derive(Debug)]
+pub struct ProjectWithComments {
+    pub id: String,
+    pub name: String,
+    pub preview: String,
+    pub content: String,
+    pub thumbnail_id: Uuid,
+    pub project_url: Option<String>,
+    pub date_posted: OffsetDateTime,
+    pub comments: Vec<Comment>,
+}
+
+impl ProjectWithComments {
+    pub async fn from_model(
+        comments: Vec<Comment>,
+        model: projects::Model,
+        file_repo: &FileRepository,
+    ) -> AppResult<Self> {
+        let content = file_repo
+            .retrieve_markdown(model.content_id, AppBucket::Content)
+            .await?;
+
+        Ok(Self {
+            id: model.id,
+            name: model.name,
+            preview: model.preview,
+            content,
+            thumbnail_id: model.thumbnail_id,
+            project_url: model.project_url,
+            date_posted: model.date_posted,
+            comments,
+        })
+    }
+}
+
+impl Paginatable for ProjectWithComments {
     type Id = (OffsetDateTime, String);
     type Template = ProjectComponent;
 
@@ -83,19 +142,5 @@ impl Paginatable for Project {
 
     fn id(&self) -> Self::Id {
         (self.date_posted, self.id.clone())
-    }
-}
-
-impl From<projects::Model> for Project {
-    fn from(value: projects::Model) -> Self {
-        Self {
-            id: value.id,
-            name: value.name,
-            preview: value.preview,
-            content_id: value.content_id,
-            thumbnail_id: value.thumbnail_id,
-            project_url: value.project_url,
-            date_posted: value.date_posted,
-        }
     }
 }
