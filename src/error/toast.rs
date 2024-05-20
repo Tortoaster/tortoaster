@@ -2,7 +2,10 @@ use axum::response::{IntoResponse, Response};
 use axum_extra::extract::WithRejection;
 use tracing::error;
 
-use crate::{error::AppError, render::Render, template::error::ErrorToast};
+use crate::{
+    error::AppError,
+    template::{error::ErrorToast, Render},
+};
 
 /// Helper type that displays a toast message on error, for dynamically loaded
 /// content.

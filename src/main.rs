@@ -34,7 +34,6 @@ mod dto;
 mod error;
 mod model;
 mod pagination;
-mod render;
 mod repository;
 mod state;
 mod template;

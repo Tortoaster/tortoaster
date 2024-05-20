@@ -2,7 +2,10 @@ use axum::response::{IntoResponse, Response};
 use axum_extra::extract::WithRejection;
 use tracing::error;
 
-use crate::{error::AppError, render::Render, template::error::ErrorPage};
+use crate::{
+    error::AppError,
+    template::{error::ErrorPage, Render},
+};
 
 /// Helper type that displays a full page with status code and message on error.
 pub type PageResult<T> = Result<T, PageError>;

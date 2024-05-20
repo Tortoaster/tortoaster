@@ -17,10 +17,12 @@ use crate::{
     dto::projects::Project,
     error::{AppError, PageResult, ToastResult, WithPageRejection, WithToastRejection},
     pagination::{Pager, PaginatedResponse},
-    render::Render,
     repository::{files::FileRepository, projects::ProjectsRepository},
     state::AppState,
-    template::projects::{GetProjectPage, ListProjectsPage, ProjectForm, ProjectFormPage},
+    template::{
+        projects::{GetProjectPage, ListProjectsPage, ProjectForm, ProjectFormPage},
+        Render,
+    },
     user::User,
 };
 
