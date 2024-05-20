@@ -2,7 +2,9 @@ use sea_orm::ActiveValue::Set;
 use sqlx::types::time::OffsetDateTime;
 use validator::Validate;
 
-use crate::{model::comments, pagination::Paginatable, template::comments::CommentComponent};
+use crate::{
+    model::comments, template::comments::CommentComponent, utils::pagination::Paginatable,
+};
 
 #[derive(Debug, Validate)]
 pub struct NewComment {

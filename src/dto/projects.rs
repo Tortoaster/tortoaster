@@ -1,7 +1,6 @@
 use std::sync::OnceLock;
 
 use bytes::Bytes;
-use comrak::Options;
 use regex::Regex;
 use sqlx::types::time::OffsetDateTime;
 use uuid::Uuid;
@@ -12,9 +11,9 @@ use crate::{
     dto::comments::Comment,
     error::AppResult,
     model::projects,
-    pagination::Paginatable,
     repository::files::{AppFile, FileRepository},
     template::projects::ProjectComponent,
+    utils::pagination::Paginatable,
 };
 
 // Requests
@@ -52,24 +51,39 @@ impl NewProject {
         !c.is_alphanumeric() && !ID_CHARS.contains(&c)
     }
 
+    #[inline]
     pub fn preview(&self) -> String {
-        const PREVIEW_LENGTH: usize = 300;
-        static RE: OnceLock<Regex> = OnceLock::new();
+        generate_preview(&self.content)
+    }
+}
 
-        let html = comrak::markdown_to_html(&self.content, &Options::default());
-        let re = RE.get_or_init(|| Regex::new(r"<[^>]*>").unwrap());
-        let mut preview = re.replace_all(&html, "").to_string();
+#[derive(Debug, Validate)]
+pub struct UpdateProject {
+    #[validate(length(min = 1, max = 128))]
+    pub name: String,
+    #[validate(length(min = 1))]
+    pub content: String,
+    #[validate]
+    pub thumbnail: Option<AppFile<Bytes>>,
+    #[validate(length(min = 1, max = 2000), url)]
+    pub project_url: Option<String>,
+}
 
-        if preview.len() >= PREVIEW_LENGTH {
-            preview.truncate(PREVIEW_LENGTH - 3);
-            preview += "...";
-        }
-
-        preview
+impl UpdateProject {
+    #[inline]
+    pub fn preview(&self) -> String {
+        generate_preview(&self.content)
     }
 }
 
 // Responses
+
+#[derive(Debug)]
+pub struct ProjectNameContentUrl {
+    pub name: String,
+    pub content: String,
+    pub project_url: Option<String>,
+}
 
 #[derive(Debug)]
 pub struct ProjectPreview {
@@ -143,4 +157,22 @@ impl Paginatable for ProjectWithComments {
     fn id(&self) -> Self::Id {
         (self.date_posted, self.id.clone())
     }
+}
+
+fn generate_preview(content: &str) -> String {
+    const PREVIEW_LENGTH: usize = 300;
+    static RE: OnceLock<Regex> = OnceLock::new();
+
+    let parser = pulldown_cmark::Parser::new(content);
+    let mut html = String::new();
+    pulldown_cmark::html::push_html(&mut html, parser);
+    let re = RE.get_or_init(|| Regex::new(r"<[^>]*>").unwrap());
+    let mut preview = re.replace_all(&html, "").to_string();
+
+    if preview.len() >= PREVIEW_LENGTH {
+        preview.truncate(PREVIEW_LENGTH - 3);
+        preview += "...";
+    }
+
+    preview
 }

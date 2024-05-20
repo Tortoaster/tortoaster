@@ -33,11 +33,11 @@ mod config;
 mod dto;
 mod error;
 mod model;
-mod pagination;
 mod repository;
 mod state;
 mod template;
 mod user;
+mod utils;
 
 #[tokio::main]
 async fn main() {

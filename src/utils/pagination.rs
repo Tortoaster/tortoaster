@@ -8,7 +8,7 @@ use validator::Validate;
 
 use crate::error::PageError;
 
-#[derive(Debug, Serialize, Deserialize, Validate)]
+#[derive(Debug, Default, Serialize, Deserialize, Validate)]
 pub struct Pager<Id> {
     pub after: Option<Id>,
     #[validate(range(min = 1, max = 50))]

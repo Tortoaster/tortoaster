@@ -6,7 +6,7 @@
 {% match user %}
 {% when Some with (user) %}
 {% if user.is_admin %}
-<a href="/projects/{{ project.id }}/form"
+<a hx-boost="true" href="/projects/{{ project.id }}/form"
    class="block size-16 p-4 pr-2 rounded-l-full text-stone-300 hover:bg-stone-300 hover:text-stone-100 transition-colors">
     {% include "icons/pencil.svg" %}
 </a>
@@ -32,7 +32,7 @@
 <img class="max-w-full mx-auto my-8 border-stone-900 border-4 shadow-comic" alt="Thumbnail"
      src="/thumbnails/{{ project.thumbnail_id }}">
 <div class="prose prose-stone mx-auto">
-    {{ project.content|markdown }}
+    {{ project.content|markdown|e("none") }}
     <h2>Comments</h2>
     {% for comment in project.comments %}
     {% include "../comments/comment.html" %}

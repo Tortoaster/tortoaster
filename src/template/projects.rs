@@ -8,8 +8,9 @@ use crate::{
         auth::{LoginUrl, LogoutUrl},
         projects::ProjectsFormUrl,
     },
-    dto::projects::{ProjectPreview, ProjectWithComments},
+    dto::projects::{ProjectNameContentUrl, ProjectPreview, ProjectWithComments},
     user::User,
+    utils::method::Method,
 };
 
 // Pages
@@ -58,25 +59,39 @@ impl GetProjectPage {
     }
 }
 
-#[derive(Default, Template)]
+#[derive(Template)]
+#[template(path = "projects/page_get.html", block = "content")]
+pub struct GetProjectPartial {
+    pub project: ProjectWithComments,
+    // TODO: This is here due to a bug in askama, remove when it is fixed
+    pub user: Option<&'static str>,
+}
+
+#[derive(Template)]
 #[template(path = "projects/page_form.html")]
 pub struct ProjectFormPage<Url: Display> {
+    title: &'static str,
+    method: Method,
     action: Url,
     user: Option<User>,
     login_url: LoginUrl,
     logout_url: LogoutUrl,
     errors: ValidationErrors,
-    project: Option<ProjectWithComments>,
+    project: Option<ProjectNameContentUrl>,
 }
 
 impl<Url: Display> ProjectFormPage<Url> {
     pub fn new(
+        title: &'static str,
+        method: Method,
         action: Url,
         user: Option<User>,
         errors: ValidationErrors,
-        project: Option<ProjectWithComments>,
+        project: Option<ProjectNameContentUrl>,
     ) -> Self {
         Self {
+            title,
+            method,
             action,
             user,
             login_url: LoginUrl,
@@ -95,15 +110,9 @@ pub struct ProjectComponent {
     pub project: ProjectWithComments,
 }
 
-#[derive(Default, Template)]
-#[template(path = "projects/form.html")]
-pub struct ProjectForm {
-    pub action: String,
-    pub errors: ValidationErrors,
-    pub project: Option<ProjectWithComments>,
-}
-
 mod filters {
+    use std::convert::Infallible;
+
     use askama::Result;
     use sqlx::types::time::OffsetDateTime;
     use time_humanize::HumanTime;
@@ -113,5 +122,14 @@ mod filters {
             - HumanTime::now();
 
         Ok(human_time.to_string())
+    }
+
+    pub fn markdown(s: impl AsRef<str>) -> Result<String, Infallible> {
+        let parser = pulldown_cmark::Parser::new(s.as_ref());
+        let mut html = String::new();
+
+        pulldown_cmark::html::push_html(&mut html, parser);
+
+        Ok(html)
     }
 }

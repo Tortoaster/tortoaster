@@ -1,16 +1,19 @@
 use sea_orm::{
     DatabaseConnection, EntityTrait, Order, QueryOrder, QuerySelect, SqlxPostgresConnector,
 };
-use sqlx::{query_as, types::time::OffsetDateTime, PgPool};
+use sqlx::{query, query_as, types::time::OffsetDateTime, PgPool};
 use uuid::Uuid;
 
 use crate::{
     config::AppBucket,
-    dto::projects::{NewProject, ProjectId, ProjectPreview, ProjectWithComments},
+    dto::projects::{
+        NewProject, ProjectId, ProjectNameContentUrl, ProjectPreview, ProjectWithComments,
+        UpdateProject,
+    },
     error::AppResult,
     model::{comments, projects},
-    pagination::Pager,
     repository::files::FileRepository,
+    utils::pagination::Pager,
 };
 
 const DEFAULT_PROJECTS_PER_PAGE: i64 = 10;
@@ -49,6 +52,37 @@ impl ProjectsRepository {
         .await?;
 
         Ok(previews)
+    }
+
+    pub async fn get_name_content_url(&self, id: &str) -> AppResult<ProjectNameContentUrl> {
+        struct NameUrl {
+            name: String,
+            content_id: Uuid,
+            project_url: Option<String>,
+        }
+
+        let NameUrl {
+            name,
+            content_id,
+            project_url,
+        } = query_as!(
+            NameUrl,
+            "SELECT name, content_id, project_url FROM projects WHERE id = $1;",
+            id,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        let content = self
+            .file_repo
+            .retrieve_markdown(content_id, AppBucket::Content)
+            .await?;
+
+        Ok(ProjectNameContentUrl {
+            name,
+            content,
+            project_url,
+        })
     }
 
     pub async fn get_with_comments(
@@ -92,7 +126,7 @@ impl ProjectsRepository {
             new_project.preview(),
             content_id,
             thumbnail_id,
-            new_project.project_url.as_ref()
+            new_project.project_url.as_ref(),
         )
         .fetch_one(&mut *transaction)
         .await?;
@@ -107,5 +141,46 @@ impl ProjectsRepository {
         transaction.commit().await?;
 
         Ok(project)
+    }
+
+    pub async fn update(&self, id: &str, update_project: UpdateProject) -> AppResult<()> {
+        struct Ids {
+            content_id: Uuid,
+            thumbnail_id: Uuid,
+        }
+
+        let mut transaction = self.pool.begin().await?;
+
+        let Ids {
+            content_id,
+            thumbnail_id,
+        } = query_as!(
+            Ids,
+            "SELECT content_id, thumbnail_id FROM projects WHERE id = $1;",
+            id
+        )
+        .fetch_one(&mut *transaction)
+        .await?;
+
+        query!(
+            "UPDATE projects SET name = $1, preview = $2, project_url = $3 WHERE id = $4;",
+            &update_project.name,
+            update_project.preview(),
+            update_project.project_url.as_ref(),
+            id,
+        )
+        .execute(&mut *transaction)
+        .await?;
+
+        self.file_repo
+            .store_markdown(content_id, AppBucket::Content, &update_project.content)
+            .await?;
+        if let Some(thumbnail) = update_project.thumbnail {
+            self.file_repo.store(thumbnail_id, thumbnail).await?;
+        }
+
+        transaction.commit().await?;
+
+        Ok(())
     }
 }
