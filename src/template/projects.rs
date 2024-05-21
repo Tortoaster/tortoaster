@@ -5,7 +5,7 @@ use crate::{
     api::{
         auth::{LoginUrl, LogoutUrl},
         files::PostImageUrl,
-        projects::{PostProjectUrl, PostPutProjectUrl, ProjectsFormUrl},
+        projects::{GetProjectPostFormUrl, PostProjectUrl, PostPutProjectUrl},
     },
     dto::projects::{ProjectPreview, ProjectView, ProjectWithComments},
     user::User,
@@ -13,7 +13,7 @@ use crate::{
 
 // Forms
 
-#[derive(Template)]
+#[derive(Debug, Template)]
 #[template(path = "projects/form/create_form_page.html")]
 pub struct CreateProjectFormPage {
     user: Option<User>,
@@ -37,7 +37,7 @@ impl CreateProjectFormPage {
     }
 }
 
-#[derive(Template)]
+#[derive(Debug, Template)]
 #[template(path = "projects/form/update_form_page.html")]
 pub struct UpdateProjectFormPage {
     user: Option<User>,
@@ -70,13 +70,13 @@ impl UpdateProjectFormPage {
 
 // Pages
 
-#[derive(Template)]
+#[derive(Debug, Template)]
 #[template(path = "projects/page_list.html")]
 pub struct ListProjectsPage {
     user: Option<User>,
     login_url: LoginUrl,
     logout_url: LogoutUrl,
-    new_project_url: ProjectsFormUrl,
+    new_project_url: GetProjectPostFormUrl,
     about: String,
     projects: Vec<ProjectPreview>,
 }
@@ -87,14 +87,14 @@ impl ListProjectsPage {
             user,
             login_url: LoginUrl,
             logout_url: LogoutUrl,
-            new_project_url: ProjectsFormUrl,
+            new_project_url: GetProjectPostFormUrl,
             about,
             projects,
         }
     }
 }
 
-#[derive(Template)]
+#[derive(Debug, Template)]
 #[template(path = "projects/page_get.html")]
 pub struct GetProjectPage {
     user: Option<User>,
@@ -116,7 +116,7 @@ impl GetProjectPage {
 
 // Partials
 
-#[derive(Template)]
+#[derive(Debug, Template)]
 #[template(path = "projects/component.html")]
 pub struct ProjectComponent {
     pub project: ProjectWithComments,

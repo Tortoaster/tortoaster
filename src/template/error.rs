@@ -6,7 +6,7 @@ use crate::{
     user::User,
 };
 
-#[derive(Template)]
+#[derive(Debug, Template)]
 #[template(path = "error.html")]
 pub struct ErrorPage {
     user: Option<User>,
@@ -28,7 +28,7 @@ impl ErrorPage {
     }
 }
 
-#[derive(Template)]
+#[derive(Debug, Template)]
 #[template(path = "error_toast.html")]
 pub struct ErrorToast {
     pub message: String,

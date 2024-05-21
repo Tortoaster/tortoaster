@@ -68,7 +68,7 @@ where
     }
 }
 
-#[derive(Template)]
+#[derive(Debug, Template)]
 #[template(path = "pagination/lazy_list.html")]
 struct LazyList<U: Display> {
     url: U,
@@ -76,6 +76,7 @@ struct LazyList<U: Display> {
 }
 
 #[non_exhaustive]
+#[derive(Debug)]
 enum Trigger {
     Revealed,
 }

@@ -44,25 +44,25 @@ pub fn protected_router() -> Router<AppState> {
 
 // Forms
 
-#[derive(Copy, Clone, TypedPath)]
+#[derive(Copy, Clone, Debug, TypedPath)]
 #[typed_path("/projects/form")]
-pub struct ProjectsFormUrl;
+pub struct GetProjectPostFormUrl;
 
-#[derive(Clone, Deserialize, TypedPath)]
+#[derive(Clone, Debug, Deserialize, TypedPath)]
 #[typed_path("/projects/:id/form")]
-pub struct SingleProjectFormUrl {
+pub struct GetProjectPutFormUrl {
     id: String,
 }
 
 async fn get_project_post_form(
-    _: ProjectsFormUrl,
+    _: GetProjectPostFormUrl,
     user: Option<User>,
 ) -> Render<CreateProjectFormPage> {
     Render(CreateProjectFormPage::new(user, ValidationErrors::new()))
 }
 
 async fn get_project_put_form(
-    SingleProjectFormUrl { id }: SingleProjectFormUrl,
+    GetProjectPutFormUrl { id }: GetProjectPutFormUrl,
     State(repo): State<ProjectsRepository>,
     user: Option<User>,
 ) -> PageResult<Render<UpdateProjectFormPage>> {
@@ -78,21 +78,21 @@ async fn get_project_put_form(
 
 // API Pages
 
-#[derive(Copy, Clone, TypedPath)]
+#[derive(Copy, Clone, Debug, TypedPath)]
 #[typed_path("/projects")]
 pub struct ListProjectsUrl;
 
-#[derive(Copy, Clone, TypedPath)]
-#[typed_path("/projects")]
-pub struct PostProjectUrl;
-
-#[derive(Clone, Deserialize, TypedPath)]
+#[derive(Clone, Debug, Deserialize, TypedPath)]
 #[typed_path("/projects/:id")]
 pub struct GetProjectUrl {
     pub id: String,
 }
 
-#[derive(Clone, Deserialize, TypedPath)]
+#[derive(Copy, Clone, Debug, TypedPath)]
+#[typed_path("/projects")]
+pub struct PostProjectUrl;
+
+#[derive(Clone, Debug, Deserialize, TypedPath)]
 #[typed_path("/projects/:id/put")]
 pub struct PostPutProjectUrl {
     pub id: String,
@@ -175,7 +175,7 @@ async fn post_put_project(
 
 // Partials
 
-#[derive(Copy, Clone, Default, TypedPath)]
+#[derive(Copy, Clone, Debug, Default, TypedPath)]
 #[typed_path("/partial/projects")]
 pub struct ListProjectsPartialUrl;
 

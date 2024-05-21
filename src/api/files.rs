@@ -23,7 +23,7 @@ pub fn public_router() -> Router<AppState> {
         .layer(DefaultBodyLimit::max(1024 * 1024 * 10))
 }
 
-#[derive(Copy, Clone, Default, TypedPath)]
+#[derive(Copy, Clone, Debug, Default, TypedPath)]
 #[typed_path("/uploads")]
 pub struct PostImageUrl;
 
