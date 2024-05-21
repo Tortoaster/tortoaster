@@ -5,12 +5,12 @@ use std::{
 };
 
 use aws_sdk_s3::primitives::{ByteStream, SdkBody};
+use bytes::Bytes;
 use thiserror::Error;
 use tower_sessions_redis_store::fred::{
     clients::RedisPool, interfaces::KeysInterface, prelude::Expiration,
 };
 use tracing::{error, trace};
-use validator::Validate;
 
 use crate::{
     config::AppBucket,
@@ -28,7 +28,13 @@ impl FileRepository {
         Self { client, redis_pool }
     }
 
-    pub async fn store<T>(&self, id: impl Into<String>, file: AppFile<T>) -> AppResult<()>
+    async fn store<T>(
+        &self,
+        id: impl Into<String>,
+        content: T,
+        bucket: AppBucket,
+        content_type: impl Into<String>,
+    ) -> AppResult<()>
     where
         T: Deref,
         T::Target: Length,
@@ -36,12 +42,27 @@ impl FileRepository {
     {
         self.client
             .put_object()
-            .bucket(file.bucket.to_string())
+            .bucket(bucket.to_string())
             .key(id)
-            .content_type(file.content_type.to_string())
-            .content_length(file.content.len() as i64)
-            .body(ByteStream::new(SdkBody::from(file.content)))
+            .content_type(content_type)
+            .content_length(content.len() as i64)
+            .body(ByteStream::new(SdkBody::from(content)))
             .send()
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn store_image(
+        &self,
+        id: impl Into<String>,
+        bucket: AppBucket,
+        bytes: Bytes,
+        content_type: ImageContentType,
+    ) -> AppResult<()> {
+        let id = id.into();
+
+        self.store(&id, bytes, bucket, content_type.to_string())
             .await?;
 
         Ok(())
@@ -53,10 +74,9 @@ impl FileRepository {
         bucket: AppBucket,
         content: &str,
     ) -> AppResult<()> {
-        let file = AppFile::new_markdown(content, bucket);
         let id = id.into();
 
-        self.store(&id, file).await?;
+        self.store(&id, content, bucket, "text/markdown").await?;
 
         self.store_in_cache(&id, bucket, content).await;
 
@@ -127,67 +147,8 @@ impl FileRepository {
     }
 }
 
-#[derive(Debug, Validate)]
-pub struct AppFile<T> {
-    content: T,
-    bucket: AppBucket,
-    content_type: ContentType,
-}
-
-impl<T> AppFile<T> {
-    pub fn new(content: T, bucket: AppBucket, content_type: ContentType) -> Self {
-        Self {
-            content,
-            bucket,
-            content_type,
-        }
-    }
-}
-
-impl<'a> AppFile<&'a str> {
-    fn new_markdown(content: &'a str, bucket: AppBucket) -> Self {
-        Self {
-            content,
-            bucket,
-            content_type: ContentType::TextMarkdown,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum ContentType {
-    TextMarkdown,
-    Image(ImageType),
-}
-
-impl Display for ContentType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ContentType::TextMarkdown => write!(f, "text/markdown"),
-            ContentType::Image(ty) => write!(f, "image/{ty}"),
-        }
-    }
-}
-
-impl FromStr for ContentType {
-    type Err = UnsupportedContentType;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let s = s.to_lowercase();
-        let (begin, end) = s.split_once('/').ok_or(UnsupportedContentType)?;
-        match begin {
-            "text" => match end {
-                "markdown" => Ok(ContentType::TextMarkdown),
-                _ => Err(UnsupportedContentType),
-            },
-            "image" => Ok(ContentType::Image(ImageType::from_str(end)?)),
-            _ => Err(UnsupportedContentType),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum ImageType {
+#[derive(Copy, Clone, Debug)]
+pub enum ImageContentType {
     Png,
     Jpg,
     Jpeg,
@@ -196,30 +157,30 @@ pub enum ImageType {
     Svg,
 }
 
-impl Display for ImageType {
+impl Display for ImageContentType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ImageType::Png => write!(f, "png"),
-            ImageType::Jpg => write!(f, "jpg"),
-            ImageType::Jpeg => write!(f, "jpeg"),
-            ImageType::Gif => write!(f, "gif"),
-            ImageType::Webp => write!(f, "webp"),
-            ImageType::Svg => write!(f, "svg"),
+            ImageContentType::Png => write!(f, "image/png"),
+            ImageContentType::Jpg => write!(f, "image/jpg"),
+            ImageContentType::Jpeg => write!(f, "image/jpeg"),
+            ImageContentType::Gif => write!(f, "image/gif"),
+            ImageContentType::Webp => write!(f, "image/webp"),
+            ImageContentType::Svg => write!(f, "image/svg"),
         }
     }
 }
 
-impl FromStr for ImageType {
+impl FromStr for ImageContentType {
     type Err = UnsupportedContentType;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &*s.to_lowercase() {
-            "png" => Ok(Self::Png),
-            "jpg" => Ok(Self::Jpg),
-            "jpeg" => Ok(Self::Jpeg),
-            "gif" => Ok(Self::Gif),
-            "webp" => Ok(Self::Webp),
-            "svg" => Ok(Self::Svg),
+            "image/png" => Ok(Self::Png),
+            "image/jpg" => Ok(Self::Jpg),
+            "image/jpeg" => Ok(Self::Jpeg),
+            "image/gif" => Ok(Self::Gif),
+            "image/webp" => Ok(Self::Webp),
+            "image/svg" => Ok(Self::Svg),
             _ => Err(UnsupportedContentType),
         }
     }

@@ -5,6 +5,7 @@ use crate::error::PageError;
 
 pub mod comments;
 pub mod error;
+pub mod files;
 pub mod projects;
 
 #[derive(Debug)]

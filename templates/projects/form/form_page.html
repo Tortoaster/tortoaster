@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<noscript>
+    The image upload functionality currently requires JavaScript to function, please consider enabling it.
+</noscript>
+<form hx-post="{{ post_image_url }}"
+      hx-encoding="multipart/form-data"
+      hx-target="#upload-target"
+      hx-disabled-elt=".upload-form"
+      class="flex flex-col gap-8 prose prose-stone mx-auto"
+>
+    <h1>{% block page_title %}{% endblock %}</h1>
+
+    <div class="text-red-500">
+        {{- errors -}}
+    </div>
+
+    <div class="flex flex-col gap-4">
+        <label class="block font-bold text-lg text-stone-900" for="thumbnail">
+            Thumbnail image <span class="text-red-500">*</span>
+        </label>
+        <input class="upload-form bg-transparent w-full px-4 py-16 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 outline-none border-dashed text-center text-lg text-stone-900"
+               id="thumbnail"
+               name="thumbnail"
+               type="file"
+               accept=".png, .jpg, .jpeg, .gif, .webp, .svg"
+        />
+
+        <button
+                class="upload-form self-center py-4 px-8 bg-blue-500 hover:bg-blue-300 disabled:bg-stone-300 hover:disabled:bg-stone-300 border-stone-900 border-4 shadow-comic text-stone-100 font-bold text-xl"
+                type="submit"
+        >
+            Upload
+        </button>
+    </div>
+
+    <div class="htmx-indicator animate-spin size-16 text-stone-300 self-center">
+        {% include "icons/bread-slice.svg" %}
+    </div>
+</form>
+<form
+        hx-boost="true"
+        method="post"
+        action="{% block action %}{% endblock %}"
+>
+    <div id="upload-target" class="w-full my-8">
+        {%- block thumbnail %}{% endblock -%}
+    </div>
+    <div class="flex flex-col gap-8 prose prose-stone mx-auto">
+        <div class="flex flex-col gap-4">
+            <label class="block font-bold text-lg text-stone-900" for="name">
+                Project name <span class="text-red-500">*</span>
+            </label>
+            <input class="bg-transparent w-2/3 p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 shadow-comic outline-none text-stone-900"
+                   id="name"
+                   name="name"
+                   value="{% block name_value %}{% endblock %}"
+            />
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <label class="block font-bold text-lg text-stone-900" for="content">
+                Description <span class="text-red-500">*</span>
+            </label>
+            <textarea
+                    class="bg-transparent w-full h-64 p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 shadow-comic outline-none text-stone-900 resize-none"
+                    id="content" name="content"
+            >
+                {%- block content_value %}{% endblock -%}
+            </textarea>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <label class="block font-bold text-lg text-stone-900" for="project-url">URL to the project page</label>
+            <input class="bg-transparent w-full p-4 border-4 border-stone-900 focus:border-blue-500 invalid:border-red-500 shadow-comic outline-none text-stone-900"
+                   id="project-url" name="project-url" type="url"
+                   value="{% block project_url_value %}{% endblock %}"
+            />
+        </div>
+
+        <button
+                class="py-4 px-8 bg-blue-500 hover:bg-blue-300 border-stone-900 border-4 shadow-comic text-stone-100 font-bold text-xl"
+                type="submit"
+        >
+            {%- block submit_text %}{% endblock -%}
+        </button>
+    </div>
+</form>
+{% endblock %}

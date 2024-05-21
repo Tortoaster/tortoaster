@@ -1,7 +1,7 @@
 use axum::{
-    extract::{Multipart, Query, State},
+    extract::{Query, State},
     response::Redirect,
-    Router,
+    Form, Router,
 };
 use axum_extra::{
     extract::WithRejection,
@@ -10,16 +10,18 @@ use axum_extra::{
 use axum_valid::Valid;
 use serde::Deserialize;
 use time::OffsetDateTime;
-use validator::ValidationErrors;
+use validator::{Validate, ValidationErrors};
 
 use crate::{
     config::AppBucket,
-    dto::projects::{NewProject, ProjectPreview, UpdateProject},
+    dto::projects::{NewProject, ProjectId, ProjectPreview, ProjectView},
     error::{AppError, PageResult, ToastResult, WithPageRejection, WithToastRejection},
     repository::{files::FileRepository, projects::ProjectsRepository},
     state::AppState,
     template::{
-        projects::{GetProjectPage, ListProjectsPage, ProjectFormPage},
+        projects::{
+            CreateProjectFormPage, GetProjectPage, ListProjectsPage, UpdateProjectFormPage,
+        },
         Render,
     },
     user::User,
@@ -35,9 +37,9 @@ pub fn public_router() -> Router<AppState> {
 pub fn protected_router() -> Router<AppState> {
     Router::new()
         .typed_get(get_project_post_form)
-        .typed_get(get_project_patch_form)
+        .typed_get(get_project_put_form)
         .typed_post(post_project)
-        .typed_post(post_patch_project)
+        .typed_post(post_put_project)
 }
 
 // Forms
@@ -55,29 +57,22 @@ pub struct SingleProjectFormUrl {
 async fn get_project_post_form(
     _: ProjectsFormUrl,
     user: Option<User>,
-) -> Render<ProjectFormPage<ListProjectsUrl>> {
-    Render(ProjectFormPage::new(
-        "Create Project",
-        ListProjectsUrl,
-        user,
-        ValidationErrors::new(),
-        None,
-    ))
+) -> Render<CreateProjectFormPage> {
+    Render(CreateProjectFormPage::new(user, ValidationErrors::new()))
 }
 
-async fn get_project_patch_form(
+async fn get_project_put_form(
     SingleProjectFormUrl { id }: SingleProjectFormUrl,
     State(repo): State<ProjectsRepository>,
     user: Option<User>,
-) -> PageResult<Render<ProjectFormPage<PostPatchProjectUrl>>> {
-    let project = repo.get_name_content_url(&id).await?;
+) -> PageResult<Render<UpdateProjectFormPage>> {
+    let project = repo.get(&id).await?;
 
-    Ok(Render(ProjectFormPage::new(
-        "Update Project",
-        PostPatchProjectUrl { id },
+    Ok(Render(UpdateProjectFormPage::new(
         user,
+        PostPutProjectUrl { id },
         ValidationErrors::new(),
-        Some(project),
+        project,
     )))
 }
 
@@ -87,16 +82,20 @@ async fn get_project_patch_form(
 #[typed_path("/projects")]
 pub struct ListProjectsUrl;
 
+#[derive(Copy, Clone, TypedPath)]
+#[typed_path("/projects")]
+pub struct PostProjectUrl;
+
 #[derive(Clone, Deserialize, TypedPath)]
 #[typed_path("/projects/:id")]
 pub struct GetProjectUrl {
-    id: String,
+    pub id: String,
 }
 
 #[derive(Clone, Deserialize, TypedPath)]
-#[typed_path("/projects/:id/patch")]
-pub struct PostPatchProjectUrl {
-    id: String,
+#[typed_path("/projects/:id/put")]
+pub struct PostPutProjectUrl {
+    pub id: String,
 }
 
 async fn list_projects(
@@ -134,57 +133,44 @@ async fn get_project(
 }
 
 async fn post_project(
-    _: ListProjectsUrl,
+    _: PostProjectUrl,
     State(repo): State<ProjectsRepository>,
     user: Option<User>,
-    WithRejection(parts, _): WithPageRejection<Multipart>,
-) -> PageResult<Result<Redirect, Render<ProjectFormPage<ListProjectsUrl>>>> {
-    let project = match NewProject::try_from_multipart(parts).await? {
-        Ok(data) => data,
-        Err(errors) => {
-            return Ok(Err(Render(ProjectFormPage::new(
-                "Create Project",
-                ListProjectsUrl,
-                user,
-                errors,
-                None,
-            ))))
-        }
-    };
+    WithRejection(new_project, _): WithPageRejection<Form<NewProject>>,
+) -> PageResult<Result<Redirect, Render<CreateProjectFormPage>>> {
+    if let Err(errors) = new_project.validate() {
+        return Ok(Err(Render(CreateProjectFormPage::new(user, errors))));
+    }
 
-    let project = repo.create(project).await?;
+    let ProjectId { id } = repo.create(new_project.0).await?;
 
-    Ok(Ok(Redirect::to(
-        &GetProjectUrl { id: project.id }.to_string(),
-    )))
+    Ok(Ok(Redirect::to(&GetProjectUrl { id }.to_string())))
 }
 
-async fn post_patch_project(
-    PostPatchProjectUrl { id }: PostPatchProjectUrl,
+async fn post_put_project(
+    PostPutProjectUrl { id }: PostPutProjectUrl,
     State(repo): State<ProjectsRepository>,
     user: Option<User>,
-    WithRejection(parts, _): WithPageRejection<Multipart>,
-) -> PageResult<Result<Render<GetProjectPage>, Render<ProjectFormPage<GetProjectUrl>>>> {
-    let project = match UpdateProject::try_from_multipart(parts).await? {
-        Ok(data) => data,
-        Err(errors) => {
-            return Ok(Err(Render(ProjectFormPage::new(
-                "Update Project",
-                GetProjectUrl { id },
-                user,
-                errors,
-                None,
-            ))))
-        }
-    };
+    WithRejection(new_project, _): WithPageRejection<Form<NewProject>>,
+) -> PageResult<Result<Redirect, Render<UpdateProjectFormPage>>> {
+    if let Err(errors) = new_project.validate() {
+        let project = ProjectView {
+            name: new_project.0.name,
+            content: new_project.0.content,
+            thumbnail_id: new_project.0.thumbnail_id,
+            project_url: new_project.0.project_url,
+        };
+        return Ok(Err(Render(UpdateProjectFormPage::new(
+            user,
+            PostPutProjectUrl { id },
+            errors,
+            project,
+        ))));
+    }
 
-    repo.update(&id, project).await?;
-    let project = repo
-        .get_with_comments(&id, &Pager::default())
-        .await?
-        .ok_or(AppError::NotFound)?;
+    repo.update(&id, new_project.0).await?;
 
-    Ok(Ok(Render(GetProjectPage::new(user, project))))
+    Ok(Ok(Redirect::to(&GetProjectUrl { id }.to_string())))
 }
 
 // Partials
@@ -203,218 +189,4 @@ async fn list_projects_partial(
 {
     let items = repo.list(&pager).await?;
     Ok(PaginatedResponse { items, url, pager })
-}
-
-// TODO: Replace with derive macros
-mod form_helper {
-    use std::mem::MaybeUninit;
-
-    use axum::extract::Multipart;
-    use bytes::Bytes;
-    use validator::{Validate, ValidationError, ValidationErrors};
-
-    use crate::{
-        config::AppBucket,
-        dto::projects::{NewProject, UpdateProject},
-        error::{AppError, AppResult},
-        repository::files::AppFile,
-    };
-
-    #[derive(Default)]
-    struct IncompleteProject {
-        name: Option<String>,
-        content: Option<String>,
-        thumbnail: Option<AppFile<Bytes>>,
-        project_url: Option<Option<String>>,
-    }
-
-    impl IncompleteProject {
-        async fn from_multipart(mut parts: Multipart) -> AppResult<Self> {
-            let mut data = IncompleteProject::default();
-
-            while let Some(field) = parts.next_field().await? {
-                match field.name() {
-                    Some("name") => data.name = Some(field.text().await?),
-                    Some("content") => data.content = Some(field.text().await?),
-                    Some("thumbnail") => {
-                        let content_type = field
-                            .content_type()
-                            .and_then(|content_type| content_type.parse().ok())
-                            .ok_or(AppError::FileType);
-                        let content = field.bytes().await?;
-
-                        if !content.is_empty() {
-                            data.thumbnail =
-                                Some(AppFile::new(content, AppBucket::Thumbnails, content_type?))
-                        }
-                    }
-                    Some("project-url") => {
-                        let text = field.text().await?;
-                        data.project_url = Some((!text.is_empty()).then_some(text))
-                    }
-                    _ => continue,
-                }
-            }
-
-            Ok(data)
-        }
-    }
-
-    impl TryFrom<IncompleteProject> for NewProject {
-        type Error = ValidationErrors;
-
-        fn try_from(value: IncompleteProject) -> Result<Self, Self::Error> {
-            let mut errors = ValidationErrors::new();
-
-            let name = match value.name {
-                None => {
-                    errors.add("name", ValidationError::new("Please fill out this field"));
-                    MaybeUninit::uninit()
-                }
-                Some(name) => MaybeUninit::new(name),
-            };
-            let content = match value.content {
-                None => {
-                    errors.add(
-                        "content",
-                        ValidationError::new("Please fill out this field"),
-                    );
-                    MaybeUninit::uninit()
-                }
-                Some(content) => MaybeUninit::new(content),
-            };
-            let thumbnail = match value.thumbnail {
-                None => {
-                    errors.add(
-                        "thumbnail",
-                        ValidationError::new("Please fill out this field"),
-                    );
-                    MaybeUninit::uninit()
-                }
-                Some(thumbnail) => MaybeUninit::new(thumbnail),
-            };
-            let project_url = match value.project_url {
-                None => {
-                    errors.add(
-                        "project_url",
-                        ValidationError::new("Please fill out this field"),
-                    );
-                    MaybeUninit::uninit()
-                }
-                Some(project_url) => MaybeUninit::new(project_url),
-            };
-
-            if !errors.is_empty() {
-                return Err(errors);
-            }
-
-            let data = unsafe {
-                Self {
-                    name: name.assume_init(),
-                    content: content.assume_init(),
-                    thumbnail: thumbnail.assume_init(),
-                    project_url: project_url.assume_init(),
-                }
-            };
-
-            Ok(data)
-        }
-    }
-
-    impl NewProject {
-        pub async fn try_from_multipart(
-            parts: Multipart,
-        ) -> AppResult<Result<Self, ValidationErrors>> {
-            let result: Result<Self, _> =
-                IncompleteProject::from_multipart(parts).await?.try_into();
-
-            let data = match result {
-                Ok(data) => data,
-                Err(errors) => {
-                    return Ok(Err(errors));
-                }
-            };
-
-            match data.validate() {
-                Ok(_) => Ok(Ok(data)),
-                Err(errors) => Ok(Err(errors)),
-            }
-        }
-    }
-
-    impl TryFrom<IncompleteProject> for UpdateProject {
-        type Error = ValidationErrors;
-
-        fn try_from(value: IncompleteProject) -> Result<Self, Self::Error> {
-            let mut errors = ValidationErrors::new();
-
-            let name = match value.name {
-                None => {
-                    errors.add("name", ValidationError::new("Please fill out this field"));
-                    MaybeUninit::uninit()
-                }
-                Some(name) => MaybeUninit::new(name),
-            };
-            let content = match value.content {
-                None => {
-                    errors.add(
-                        "content",
-                        ValidationError::new("Please fill out this field"),
-                    );
-                    MaybeUninit::uninit()
-                }
-                Some(content) => MaybeUninit::new(content),
-            };
-            let thumbnail = match value.thumbnail {
-                None => MaybeUninit::new(None),
-                Some(thumbnail) => MaybeUninit::new(Some(thumbnail)),
-            };
-            let project_url = match value.project_url {
-                None => {
-                    errors.add(
-                        "project_url",
-                        ValidationError::new("Please fill out this field"),
-                    );
-                    MaybeUninit::uninit()
-                }
-                Some(project_url) => MaybeUninit::new(project_url),
-            };
-
-            if !errors.is_empty() {
-                return Err(errors);
-            }
-
-            let data = unsafe {
-                Self {
-                    name: name.assume_init(),
-                    content: content.assume_init(),
-                    thumbnail: thumbnail.assume_init(),
-                    project_url: project_url.assume_init(),
-                }
-            };
-
-            Ok(data)
-        }
-    }
-
-    impl UpdateProject {
-        pub async fn try_from_multipart(
-            parts: Multipart,
-        ) -> AppResult<Result<Self, ValidationErrors>> {
-            let result: Result<Self, _> =
-                IncompleteProject::from_multipart(parts).await?.try_into();
-
-            let data = match result {
-                Ok(data) => data,
-                Err(errors) => {
-                    return Ok(Err(errors));
-                }
-            };
-
-            match data.validate() {
-                Ok(_) => Ok(Ok(data)),
-                Err(errors) => Ok(Err(errors)),
-            }
-        }
-    }
 }

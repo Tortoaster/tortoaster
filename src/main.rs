@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use axum::{
     error_handling::HandleErrorLayer,
-    extract::DefaultBodyLimit,
     response::{IntoResponse, Redirect},
     routing::get,
     Router,
@@ -89,6 +88,7 @@ async fn main() {
         .typed_get(api::auth::logout)
         .layer(oidc_auth_service)
         // Publicly available
+        .merge(api::files::public_router())
         .route(
             "/",
             get(|| async { Redirect::permanent(&ListProjectsUrl.to_string()) }),
@@ -99,7 +99,6 @@ async fn main() {
             ServeBucket::new(state.s3_client.clone(), AppBucket::Thumbnails.to_string()),
         )
         .fallback(|| async { PageError(AppError::NotFound) })
-        .layer(DefaultBodyLimit::max(1024 * 1024 * 5))
         .layer(session_layer)
         .with_state(state);
 

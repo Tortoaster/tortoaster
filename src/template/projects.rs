@@ -1,16 +1,72 @@
-use std::fmt::Display;
-
 use askama::Template;
 use validator::ValidationErrors;
 
 use crate::{
     api::{
         auth::{LoginUrl, LogoutUrl},
-        projects::ProjectsFormUrl,
+        files::PostImageUrl,
+        projects::{PostProjectUrl, PostPutProjectUrl, ProjectsFormUrl},
     },
-    dto::projects::{ProjectNameContentUrl, ProjectPreview, ProjectWithComments},
+    dto::projects::{ProjectPreview, ProjectView, ProjectWithComments},
     user::User,
 };
+
+// Forms
+
+#[derive(Template)]
+#[template(path = "projects/form/create_form_page.html")]
+pub struct CreateProjectFormPage {
+    user: Option<User>,
+    login_url: LoginUrl,
+    logout_url: LogoutUrl,
+    post_image_url: PostImageUrl,
+    post_project_url: PostProjectUrl,
+    errors: ValidationErrors,
+}
+
+impl CreateProjectFormPage {
+    pub fn new(user: Option<User>, errors: ValidationErrors) -> Self {
+        Self {
+            user,
+            login_url: LoginUrl,
+            logout_url: LogoutUrl,
+            post_image_url: PostImageUrl,
+            post_project_url: PostProjectUrl,
+            errors,
+        }
+    }
+}
+
+#[derive(Template)]
+#[template(path = "projects/form/update_form_page.html")]
+pub struct UpdateProjectFormPage {
+    user: Option<User>,
+    login_url: LoginUrl,
+    logout_url: LogoutUrl,
+    post_image_url: PostImageUrl,
+    post_put_project_url: PostPutProjectUrl,
+    errors: ValidationErrors,
+    project: ProjectView,
+}
+
+impl UpdateProjectFormPage {
+    pub fn new(
+        user: Option<User>,
+        post_put_project_url: PostPutProjectUrl,
+        errors: ValidationErrors,
+        project: ProjectView,
+    ) -> Self {
+        Self {
+            user,
+            login_url: LoginUrl,
+            logout_url: LogoutUrl,
+            post_image_url: PostImageUrl,
+            post_put_project_url,
+            errors,
+            project,
+        }
+    }
+}
 
 // Pages
 
@@ -53,38 +109,6 @@ impl GetProjectPage {
             user,
             login_url: LoginUrl,
             logout_url: LogoutUrl,
-            project,
-        }
-    }
-}
-
-#[derive(Template)]
-#[template(path = "projects/page_form.html")]
-pub struct ProjectFormPage<Url: Display> {
-    title: &'static str,
-    action: Url,
-    user: Option<User>,
-    login_url: LoginUrl,
-    logout_url: LogoutUrl,
-    errors: ValidationErrors,
-    project: Option<ProjectNameContentUrl>,
-}
-
-impl<Url: Display> ProjectFormPage<Url> {
-    pub fn new(
-        title: &'static str,
-        action: Url,
-        user: Option<User>,
-        errors: ValidationErrors,
-        project: Option<ProjectNameContentUrl>,
-    ) -> Self {
-        Self {
-            title,
-            action,
-            user,
-            login_url: LoginUrl,
-            logout_url: LogoutUrl,
-            errors,
             project,
         }
     }

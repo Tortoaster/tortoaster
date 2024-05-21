@@ -39,6 +39,8 @@ pub enum AppError {
     ObjectEncoding,
     #[error("I don't understand that type of file :(")]
     FileType,
+    #[error("Please add an image for the project! :3")]
+    FileMissing,
     #[error("I couldn't find the page you're looking for! :(")]
     NotFound,
     #[error("Please fill out all the fields!")]
@@ -66,7 +68,8 @@ impl AppError {
             | AppError::MultipartError(_)
             | AppError::MultipartRejection(_)
             | AppError::Validate(_)
-            | AppError::FileType => StatusCode::BAD_REQUEST,
+            | AppError::FileType
+            | AppError::FileMissing => StatusCode::BAD_REQUEST,
             AppError::Session(_) | AppError::Logout(_) | AppError::User(_) => {
                 StatusCode::UNAUTHORIZED
             }

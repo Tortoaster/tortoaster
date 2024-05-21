@@ -3955,6 +3955,7 @@ dependencies = [
  "sea-orm",
  "serde",
  "serde-inline-default",
+ "serde_with",
  "sqlx",
  "strum 0.26.2",
  "thiserror",

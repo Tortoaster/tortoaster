@@ -1,17 +1,18 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE projects SET name = $1, preview = $2, project_url = $3 WHERE id = $4;",
+  "query": "UPDATE projects SET name = $1, preview = $2, thumbnail_id = $3, project_url = $4 WHERE id = $5;",
   "describe": {
     "columns": [],
     "parameters": {
       "Left": [
         "Varchar",
         "Varchar",
+        "Uuid",
         "Varchar",
         "Text"
       ]
     },
     "nullable": []
   },
-  "hash": "cde182eb81561e33f7196b7ad016d7aee82687589088b485c2b39b91823e66c5"
+  "hash": "445c4d1dd874be9aaeeb912ca6eb3695edccc2777b6a61808244741f0a70f310"
 }

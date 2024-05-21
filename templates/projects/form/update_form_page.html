@@ -1,0 +1,27 @@
+{% extends "projects/form/form_page.html" %}
+
+{% block title %}Update {{ project.name }}{% endblock %}
+
+{% block page_title %}Update {{ project.name }}{% endblock %}
+
+{% block action %}{{ post_put_project_url }}{% endblock %}
+
+{% block thumbnail %}
+{% include "files/image_with_id.html" %}
+{% endblock %}
+
+{% block name_value %}
+{{- project.name -}}
+{% endblock %}
+
+{% block content_value %}
+{{- project.content -}}
+{% endblock %}
+
+{% block project_url_value %}
+{% if let Some(project_url) = project.project_url %}
+{{- project_url -}}
+{% endif %}
+{% endblock %}
+
+{% block submit_text %}Update{% endblock %}

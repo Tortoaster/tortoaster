@@ -1,16 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT content_id, thumbnail_id FROM projects WHERE id = $1;",
+  "query": "SELECT content_id FROM projects WHERE id = $1;",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
         "name": "content_id",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 1,
-        "name": "thumbnail_id",
         "type_info": "Uuid"
       }
     ],
@@ -20,9 +15,8 @@
       ]
     },
     "nullable": [
-      false,
       false
     ]
   },
-  "hash": "2918a33a6f678cd0f15f358e8f4b7a2a0fe97bc8aea046f3f499dd8bed47a1cb"
+  "hash": "695defa02e5016b52790f346113e4911af373f616ab0194515d77b41014adb54"
 }

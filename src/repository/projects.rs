@@ -6,10 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     config::AppBucket,
-    dto::projects::{
-        NewProject, ProjectId, ProjectNameContentUrl, ProjectPreview, ProjectWithComments,
-        UpdateProject,
-    },
+    dto::projects::{NewProject, ProjectId, ProjectPreview, ProjectView, ProjectWithComments},
     error::AppResult,
     model::{comments, projects},
     repository::files::FileRepository,
@@ -54,20 +51,22 @@ impl ProjectsRepository {
         Ok(previews)
     }
 
-    pub async fn get_name_content_url(&self, id: &str) -> AppResult<ProjectNameContentUrl> {
+    pub async fn get(&self, id: &str) -> AppResult<ProjectView> {
         struct NameUrl {
             name: String,
             content_id: Uuid,
+            thumbnail_id: Uuid,
             project_url: Option<String>,
         }
 
         let NameUrl {
             name,
             content_id,
+            thumbnail_id,
             project_url,
         } = query_as!(
             NameUrl,
-            "SELECT name, content_id, project_url FROM projects WHERE id = $1;",
+            "SELECT name, content_id, thumbnail_id, project_url FROM projects WHERE id = $1;",
             id,
         )
         .fetch_one(&self.pool)
@@ -78,9 +77,10 @@ impl ProjectsRepository {
             .retrieve_markdown(content_id, AppBucket::Content)
             .await?;
 
-        Ok(ProjectNameContentUrl {
+        Ok(ProjectView {
             name,
             content,
+            thumbnail_id,
             project_url,
         })
     }
@@ -113,7 +113,6 @@ impl ProjectsRepository {
 
     pub async fn create(&self, new_project: NewProject) -> AppResult<ProjectId> {
         let content_id = Uuid::new_v4();
-        let thumbnail_id = Uuid::new_v4();
 
         let mut transaction = self.pool.begin().await?;
 
@@ -125,7 +124,7 @@ impl ProjectsRepository {
             &new_project.name,
             new_project.preview(),
             content_id,
-            thumbnail_id,
+            &new_project.thumbnail_id,
             new_project.project_url.as_ref(),
         )
         .fetch_one(&mut *transaction)
@@ -134,50 +133,42 @@ impl ProjectsRepository {
         self.file_repo
             .store_markdown(content_id, AppBucket::Content, &new_project.content)
             .await?;
-        self.file_repo
-            .store(thumbnail_id, new_project.thumbnail)
-            .await?;
 
         transaction.commit().await?;
 
         Ok(project)
     }
 
-    pub async fn update(&self, id: &str, update_project: UpdateProject) -> AppResult<()> {
-        struct Ids {
+    pub async fn update(&self, id: &str, new_project: NewProject) -> AppResult<()> {
+        struct ContentId {
             content_id: Uuid,
-            thumbnail_id: Uuid,
         }
 
         let mut transaction = self.pool.begin().await?;
 
-        let Ids {
-            content_id,
-            thumbnail_id,
-        } = query_as!(
-            Ids,
-            "SELECT content_id, thumbnail_id FROM projects WHERE id = $1;",
+        let ContentId { content_id } = query_as!(
+            ContentId,
+            "SELECT content_id FROM projects WHERE id = $1;",
             id
         )
         .fetch_one(&mut *transaction)
         .await?;
 
         query!(
-            "UPDATE projects SET name = $1, preview = $2, project_url = $3 WHERE id = $4;",
-            &update_project.name,
-            update_project.preview(),
-            update_project.project_url.as_ref(),
+            "UPDATE projects SET name = $1, preview = $2, thumbnail_id = $3, project_url = $4 \
+             WHERE id = $5;",
+            &new_project.name,
+            new_project.preview(),
+            &new_project.thumbnail_id,
+            new_project.project_url.as_ref(),
             id,
         )
         .execute(&mut *transaction)
         .await?;
 
         self.file_repo
-            .store_markdown(content_id, AppBucket::Content, &update_project.content)
+            .store_markdown(content_id, AppBucket::Content, &new_project.content)
             .await?;
-        if let Some(thumbnail) = update_project.thumbnail {
-            self.file_repo.store(thumbnail_id, thumbnail).await?;
-        }
 
         transaction.commit().await?;
 
