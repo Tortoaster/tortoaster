@@ -12,14 +12,14 @@
 <body class="bg-blue-300 min-h-screen font-comic">
 <div class="flex flex-col items-center container mx-auto">
     <header class="w-1/3 aspect-[2/1] relative">
-        <a href="/">
+        <a hx-boost="true" href="/">
             {%- block header %}
             {% include "header/turtle.html" %}
             {% endblock -%}
         </a>
     </header>
     <div class="flex flex-col w-full px-8 py-16 gap-8 bg-stone-100 border-4 border-stone-900 shadow-comic relative">
-        <div class="flex justify-between items-center md:px-12">
+        <div hx-boost="true" class="flex justify-between items-center md:px-12">
             <nav class="flex">
                 {%- block nav %} {% endblock -%}
             </nav>

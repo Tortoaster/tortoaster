@@ -22,7 +22,7 @@
             {{ about|markdown|e("none") }}
         </div>
     </div>
-    <div class="flex flex-wrap gap-8">
+    <div hx-boost="true" class="flex flex-wrap gap-8">
         {% for project in projects %}
         {% include "component.html" %}
         {% endfor %}
