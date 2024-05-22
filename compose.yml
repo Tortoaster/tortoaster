@@ -33,7 +33,10 @@ services:
       target: "tailwindcss"
     working_dir: "/app"
     command: [ "-i", "./input.css", "-o", "./static/style.css", "-m" ]
-    volumes: [ ".:/app" ]
+    volumes:
+      - "./tailwind:/app"
+      - "./templates:/app/templates:ro"
+      - "./static:/app/static"
     user: "1000:1000"
 
   db:
@@ -53,8 +56,8 @@ services:
     working_dir: "/app"
     command: [ "migrate", "run", "--source", "migrations", "--source", "fixtures" ]
     volumes:
-      - "./migrations:/app/migrations"
-      - "./fixtures:/app/fixtures"
+      - "./migrations:/app/migrations:ro"
+      - "./fixtures:/app/fixtures:ro"
     environment:
       DATABASE_URL: "postgres://tortoaster:password@db/tortoaster"
     depends_on:
@@ -78,7 +81,7 @@ services:
 
   object-store-migrate:
     image: quay.io/minio/mc
-    volumes: [ "./bucket_data:/app" ]
+    volumes: [ "./bucket_data:/app:ro" ]
     depends_on:
       object-store:
         condition: service_healthy
@@ -105,7 +108,7 @@ services:
 
   iam-provider:
     image: quay.io/keycloak/keycloak:24.0
-    volumes: [ "./keycloak:/opt/keycloak/data/import" ]
+    volumes: [ "./keycloak:/opt/keycloak/data/import:ro" ]
     ports: [ "8003:8003" ]
     environment:
       KEYCLOAK_ADMIN: "tortoaster"

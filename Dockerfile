@@ -15,9 +15,8 @@ FROM tailwindcss AS style
 
 WORKDIR /app
 
+COPY ./tailwind /app
 COPY ./templates /app/templates
-COPY ./input.css /app/input.css
-COPY ./tailwind.config.js /app/tailwind.config.js
 
 RUN tailwindcss-linux-x64 -i ./input.css -o ./output.css -m
 
