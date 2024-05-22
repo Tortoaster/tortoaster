@@ -58,8 +58,9 @@ impl NewProject {
         let parser = pulldown_cmark::Parser::new(&self.content);
         let mut html = String::new();
         pulldown_cmark::html::push_html(&mut html, parser);
+        let stripped = html.strip_suffix('\n').unwrap_or(&html);
         let re = RE.get_or_init(|| Regex::new(r"<[^>]*>").unwrap());
-        let mut preview = re.replace_all(&html, "").to_string();
+        let mut preview = re.replace_all(&stripped, "").to_string();
 
         if preview.len() >= PREVIEW_LENGTH {
             preview.truncate(PREVIEW_LENGTH - 3);
