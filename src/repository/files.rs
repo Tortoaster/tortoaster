@@ -165,7 +165,7 @@ impl Display for ImageContentType {
             ImageContentType::Jpeg => write!(f, "image/jpeg"),
             ImageContentType::Gif => write!(f, "image/gif"),
             ImageContentType::Webp => write!(f, "image/webp"),
-            ImageContentType::Svg => write!(f, "image/svg"),
+            ImageContentType::Svg => write!(f, "image/svg+xml"),
         }
     }
 }
@@ -180,7 +180,7 @@ impl FromStr for ImageContentType {
             "image/jpeg" => Ok(Self::Jpeg),
             "image/gif" => Ok(Self::Gif),
             "image/webp" => Ok(Self::Webp),
-            "image/svg" => Ok(Self::Svg),
+            "image/svg+xml" => Ok(Self::Svg),
             _ => Err(UnsupportedContentType),
         }
     }
