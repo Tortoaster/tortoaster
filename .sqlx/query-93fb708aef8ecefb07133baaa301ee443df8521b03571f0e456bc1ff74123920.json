@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO projects (id, name, preview, content_id, thumbnail_id, project_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;",
+  "query": "INSERT INTO projects (id, name, preview, thumbnail_id, project_url) VALUES ($1, $2, $3, $4, $5) RETURNING id;",
   "describe": {
     "columns": [
       {
@@ -15,7 +15,6 @@
         "Varchar",
         "Varchar",
         "Uuid",
-        "Uuid",
         "Varchar"
       ]
     },
@@ -23,5 +22,5 @@
       false
     ]
   },
-  "hash": "d10f6461ccbb93d9df3fa5cea3ab92de14987fd827092bb47f862ecd7c94cd52"
+  "hash": "93fb708aef8ecefb07133baaa301ee443df8521b03571f0e456bc1ff74123920"
 }

@@ -3,7 +3,6 @@ CREATE TABLE projects
     id           VARCHAR(128) PRIMARY KEY,
     name         VARCHAR(32)              NOT NULL,
     preview      VARCHAR(300)             NOT NULL,
-    content_id   UUID                     NOT NULL,
     thumbnail_id UUID                     NOT NULL,
     project_url  VARCHAR(2000),
     date_posted  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()

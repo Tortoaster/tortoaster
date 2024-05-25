@@ -9,7 +9,6 @@ pub struct Model {
     pub id: String,
     pub name: String,
     pub preview: String,
-    pub content_id: Uuid,
     pub thumbnail_id: Uuid,
     pub project_url: Option<String>,
     pub date_posted: TimeDateTimeWithTimeZone,

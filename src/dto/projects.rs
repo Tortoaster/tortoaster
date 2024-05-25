@@ -135,7 +135,7 @@ impl ProjectWithComments {
         file_repo: &FileRepository,
     ) -> AppResult<Self> {
         let content = file_repo
-            .retrieve_markdown(model.content_id, AppBucket::Content)
+            .retrieve_markdown(&model.id, AppBucket::Content)
             .await?;
 
         Ok(Self {

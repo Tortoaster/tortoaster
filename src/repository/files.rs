@@ -70,11 +70,11 @@ impl FileRepository {
 
     pub async fn store_markdown(
         &self,
-        id: impl Into<String>,
+        id: impl Display,
         bucket: AppBucket,
         content: &str,
     ) -> AppResult<()> {
-        let id = id.into();
+        let id = format!("{id}.md");
 
         self.store(&id, content, bucket, "text/markdown").await?;
 
@@ -85,10 +85,10 @@ impl FileRepository {
 
     pub async fn retrieve_markdown(
         &self,
-        id: impl Into<String>,
+        id: impl Display,
         bucket: AppBucket,
     ) -> AppResult<String> {
-        let id = id.into();
+        let id = format!("{id}.md");
 
         if let Some(content) = self.retrieve_from_cache(&id, bucket).await {
             trace!("found cached entry for {}/{id}", bucket.name());

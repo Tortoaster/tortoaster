@@ -15,7 +15,7 @@ use crate::{
     utils::pagination::{Page, Pager},
 };
 
-const DEFAULT_PROJECTS_PER_PAGE: i64 = 6;
+const DEFAULT_PROJECTS_PER_PAGE: i64 = 12;
 const DEFAULT_COMMENTS_PER_PAGE: i64 = 10;
 
 #[derive(Clone, Debug)]
@@ -144,19 +144,17 @@ impl ProjectsRepository {
     pub async fn get(&self, id: &str) -> AppResult<ProjectView> {
         struct NameUrl {
             name: String,
-            content_id: Uuid,
             thumbnail_id: Uuid,
             project_url: Option<String>,
         }
 
         let NameUrl {
             name,
-            content_id,
             thumbnail_id,
             project_url,
         } = query_as!(
             NameUrl,
-            "SELECT name, content_id, thumbnail_id, project_url FROM projects WHERE id = $1;",
+            "SELECT name, thumbnail_id, project_url FROM projects WHERE id = $1;",
             id,
         )
         .fetch_one(&self.pool)
@@ -164,7 +162,7 @@ impl ProjectsRepository {
 
         let content = self
             .file_repo
-            .retrieve_markdown(content_id, AppBucket::Content)
+            .retrieve_markdown(id, AppBucket::Content)
             .await?;
 
         Ok(ProjectView {
@@ -202,18 +200,17 @@ impl ProjectsRepository {
     }
 
     pub async fn create(&self, new_project: NewProject) -> AppResult<ProjectId> {
-        let content_id = Uuid::new_v4();
-
         let mut transaction = self.pool.begin().await?;
+
+        let id = new_project.id();
 
         let project = query_as!(
             ProjectId,
-            "INSERT INTO projects (id, name, preview, content_id, thumbnail_id, project_url) \
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;",
-            new_project.id(),
+            "INSERT INTO projects (id, name, preview, thumbnail_id, project_url) VALUES ($1, $2, \
+             $3, $4, $5) RETURNING id;",
+            &id,
             &new_project.name,
             new_project.preview(),
-            content_id,
             &new_project.thumbnail_id,
             new_project.project_url.as_ref(),
         )
@@ -221,7 +218,7 @@ impl ProjectsRepository {
         .await?;
 
         self.file_repo
-            .store_markdown(content_id, AppBucket::Content, &new_project.content)
+            .store_markdown(&id, AppBucket::Content, &new_project.content)
             .await?;
 
         transaction.commit().await?;
@@ -230,19 +227,7 @@ impl ProjectsRepository {
     }
 
     pub async fn update(&self, id: &str, new_project: NewProject) -> AppResult<()> {
-        struct ContentId {
-            content_id: Uuid,
-        }
-
         let mut transaction = self.pool.begin().await?;
-
-        let ContentId { content_id } = query_as!(
-            ContentId,
-            "SELECT content_id FROM projects WHERE id = $1;",
-            id
-        )
-        .fetch_one(&mut *transaction)
-        .await?;
 
         query!(
             "UPDATE projects SET name = $1, preview = $2, thumbnail_id = $3, project_url = $4 \
@@ -257,7 +242,7 @@ impl ProjectsRepository {
         .await?;
 
         self.file_repo
-            .store_markdown(content_id, AppBucket::Content, &new_project.content)
+            .store_markdown(id, AppBucket::Content, &new_project.content)
             .await?;
 
         transaction.commit().await?;
