@@ -1,16 +1,20 @@
-use std::sync::OnceLock;
+use std::{
+    fmt::{Display, Formatter},
+    str::FromStr,
+    sync::OnceLock,
+};
 
 use regex::Regex;
 use serde::Deserialize;
-use serde_with::{serde_as, NoneAsEmptyString};
+use serde_with::{serde_as, DeserializeFromStr, NoneAsEmptyString};
 use sqlx::types::time::OffsetDateTime;
+use time::format_description::well_known;
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
     config::AppBucket, dto::comments::Comment, error::AppResult, model::projects,
-    repository::files::FileRepository, template::projects::ProjectComponent,
-    utils::pagination::Paginatable,
+    repository::files::FileRepository,
 };
 
 // Requests
@@ -60,7 +64,7 @@ impl NewProject {
         pulldown_cmark::html::push_html(&mut html, parser);
         let stripped = html.strip_suffix('\n').unwrap_or(&html);
         let re = RE.get_or_init(|| Regex::new(r"<[^>]*>").unwrap());
-        let mut preview = re.replace_all(&stripped, "").to_string();
+        let mut preview = re.replace_all(stripped, "").to_string();
 
         if preview.len() >= PREVIEW_LENGTH {
             preview.truncate(PREVIEW_LENGTH - 3);
@@ -87,7 +91,7 @@ pub struct ProjectPreview {
     pub name: String,
     pub preview: String,
     pub thumbnail_id: Uuid,
-    pub date_posted: OffsetDateTime,
+    pub date_posted: ProjectTime,
 }
 
 impl From<projects::Model> for ProjectPreview {
@@ -97,7 +101,7 @@ impl From<projects::Model> for ProjectPreview {
             name: value.name,
             preview: value.preview,
             thumbnail_id: value.thumbnail_id,
-            date_posted: value.date_posted,
+            date_posted: ProjectTime(value.date_posted),
         }
     }
 }
@@ -120,7 +124,7 @@ pub struct ProjectWithComments {
     pub content: String,
     pub thumbnail_id: Uuid,
     pub project_url: Option<String>,
-    pub date_posted: OffsetDateTime,
+    pub date_posted: ProjectTime,
     pub comments: Vec<Comment>,
 }
 
@@ -141,21 +145,58 @@ impl ProjectWithComments {
             content,
             thumbnail_id: model.thumbnail_id,
             project_url: model.project_url,
-            date_posted: model.date_posted,
+            date_posted: ProjectTime(model.date_posted),
             comments,
         })
     }
 }
 
-impl Paginatable for ProjectWithComments {
-    type Id = (OffsetDateTime, String);
-    type Template = ProjectComponent;
+#[derive(Debug, DeserializeFromStr)]
+pub struct ProjectIndex {
+    pub date_posted: ProjectTime,
+    pub id: String,
+}
 
-    fn into_template(self) -> Self::Template {
-        ProjectComponent { project: self }
+impl FromStr for ProjectIndex {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (date_posted, id) = s.split_once(',').ok_or("invalid project index")?;
+
+        let index = ProjectIndex {
+            date_posted: date_posted.parse().map_err(|_| "invalid date syntax")?,
+            id: id.to_owned(),
+        };
+
+        Ok(index)
     }
+}
 
-    fn id(&self) -> Self::Id {
-        (self.date_posted, self.id.clone())
+#[derive(Debug, DeserializeFromStr)]
+pub struct ProjectTime(OffsetDateTime);
+
+impl ProjectTime {
+    pub fn as_offset(&self) -> &OffsetDateTime {
+        &self.0
+    }
+}
+
+impl From<OffsetDateTime> for ProjectTime {
+    fn from(value: OffsetDateTime) -> Self {
+        Self(value)
+    }
+}
+
+impl Display for ProjectTime {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.format(&well_known::Rfc3339).unwrap())
+    }
+}
+
+impl FromStr for ProjectTime {
+    type Err = time::error::Parse;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(ProjectTime(OffsetDateTime::parse(s, &well_known::Rfc3339)?))
     }
 }

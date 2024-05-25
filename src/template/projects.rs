@@ -5,10 +5,11 @@ use crate::{
     api::{
         auth::{LoginUrl, LogoutUrl},
         files::PostImageUrl,
-        projects::{GetProjectPostFormUrl, PostProjectUrl, PostPutProjectUrl},
+        projects::{GetProjectPostFormUrl, GetProjectsUrl, PostProjectUrl, PostPutProjectUrl},
     },
     dto::projects::{ProjectPreview, ProjectView, ProjectWithComments},
     user::User,
+    utils::pagination::Page,
 };
 
 // Forms
@@ -71,31 +72,33 @@ impl UpdateProjectFormPage {
 // Pages
 
 #[derive(Debug, Template)]
-#[template(path = "projects/page_list.html")]
+#[template(path = "projects/list_page.html")]
 pub struct ListProjectsPage {
     user: Option<User>,
     login_url: LoginUrl,
     logout_url: LogoutUrl,
-    new_project_url: GetProjectPostFormUrl,
+    get_project_post_form_url: GetProjectPostFormUrl,
+    get_projects_url: GetProjectsUrl,
     about: String,
-    projects: Vec<ProjectPreview>,
+    page: Page<ProjectPreview>,
 }
 
 impl ListProjectsPage {
-    pub fn new(user: Option<User>, about: String, projects: Vec<ProjectPreview>) -> Self {
+    pub fn new(user: Option<User>, about: String, page: Page<ProjectPreview>) -> Self {
         Self {
             user,
             login_url: LoginUrl,
             logout_url: LogoutUrl,
-            new_project_url: GetProjectPostFormUrl,
+            get_project_post_form_url: GetProjectPostFormUrl,
+            get_projects_url: GetProjectsUrl,
             about,
-            projects,
+            page,
         }
     }
 }
 
 #[derive(Debug, Template)]
-#[template(path = "projects/page_get.html")]
+#[template(path = "projects/read_page.html")]
 pub struct GetProjectPage {
     user: Option<User>,
     login_url: LoginUrl,
@@ -125,13 +128,14 @@ pub struct ProjectComponent {
 mod filters {
     use std::convert::Infallible;
 
-    use askama::Result;
-    use sqlx::types::time::OffsetDateTime;
     use time_humanize::HumanTime;
 
-    pub fn humantime(time: &OffsetDateTime) -> Result<String> {
-        let human_time = HumanTime::from_duration_since_timestamp(time.unix_timestamp() as u64)
-            - HumanTime::now();
+    use crate::dto::projects::ProjectTime;
+
+    pub fn humantime(time: &ProjectTime) -> Result<String, Infallible> {
+        let human_time =
+            HumanTime::from_duration_since_timestamp(time.as_offset().unix_timestamp() as u64)
+                - HumanTime::now();
 
         Ok(human_time.to_string())
     }

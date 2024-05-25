@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE COALESCE((date_posted, id) < ($1, $2), TRUE) ORDER BY (date_posted, id) DESC LIMIT $3;",
+  "query": "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE (date_posted, id) > ($1, $2) ORDER BY (date_posted, id) LIMIT $3;",
   "describe": {
     "columns": [
       {
@@ -44,5 +44,5 @@
       false
     ]
   },
-  "hash": "ef7a0de5b2edc5880ada428c5d296ec502cbca05d6602281dc7d0e249d2746b9"
+  "hash": "83e57ff6f01830f582b95d6bd7738222ad6c6a6975a56759dde1089e06f8cec2"
 }

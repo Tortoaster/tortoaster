@@ -9,13 +9,12 @@ use axum_extra::{
 };
 use axum_valid::Valid;
 use serde::Deserialize;
-use time::OffsetDateTime;
 use validator::{Validate, ValidationErrors};
 
 use crate::{
     config::AppBucket,
-    dto::projects::{NewProject, ProjectId, ProjectPreview, ProjectView},
-    error::{AppError, PageResult, ToastResult, WithPageRejection, WithToastRejection},
+    dto::projects::{NewProject, ProjectId, ProjectIndex, ProjectView},
+    error::{AppError, PageResult, WithPageRejection},
     repository::{files::FileRepository, projects::ProjectsRepository},
     state::AppState,
     template::{
@@ -25,7 +24,7 @@ use crate::{
         Render,
     },
     user::User,
-    utils::pagination::{Pager, PaginatedResponse},
+    utils::pagination::Pager,
 };
 
 pub fn public_router() -> Router<AppState> {
@@ -80,7 +79,7 @@ async fn get_project_put_form(
 
 #[derive(Copy, Clone, Debug, TypedPath)]
 #[typed_path("/projects")]
-pub struct ListProjectsUrl;
+pub struct GetProjectsUrl;
 
 #[derive(Clone, Debug, Deserialize, TypedPath)]
 #[typed_path("/projects/:id")]
@@ -99,23 +98,21 @@ pub struct PostPutProjectUrl {
 }
 
 async fn list_projects(
-    _: ListProjectsUrl,
+    _: GetProjectsUrl,
     State(repo): State<ProjectsRepository>,
     State(file_repo): State<FileRepository>,
     user: Option<User>,
-    WithRejection(Valid(Query(pager)), _): WithPageRejection<
-        Valid<Query<Pager<(OffsetDateTime, String)>>>,
-    >,
+    WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<ProjectIndex>>>>,
 ) -> PageResult<Render<ListProjectsPage>> {
     const ABOUT_KEY: &str = "projects";
-
-    let projects = repo.list(&pager).await?;
 
     let about = file_repo
         .retrieve_markdown(ABOUT_KEY, AppBucket::System)
         .await?;
 
-    Ok(Render(ListProjectsPage::new(user, about, projects)))
+    let page = repo.list(&pager).await?;
+
+    Ok(Render(ListProjectsPage::new(user, about, page)))
 }
 
 async fn get_project(
@@ -171,22 +168,4 @@ async fn post_put_project(
     repo.update(&id, new_project.0).await?;
 
     Ok(Ok(Redirect::to(&GetProjectUrl { id }.to_string())))
-}
-
-// Partials
-
-#[derive(Copy, Clone, Debug, Default, TypedPath)]
-#[typed_path("/partial/projects")]
-pub struct ListProjectsPartialUrl;
-
-async fn list_projects_partial(
-    url: ListProjectsPartialUrl,
-    State(repo): State<ProjectsRepository>,
-    WithRejection(Valid(Query(pager)), _): WithToastRejection<
-        Valid<Query<Pager<(OffsetDateTime, String)>>>,
-    >,
-) -> ToastResult<PaginatedResponse<ProjectPreview, ListProjectsPartialUrl, (OffsetDateTime, String)>>
-{
-    let items = repo.list(&pager).await?;
-    Ok(PaginatedResponse { items, url, pager })
 }

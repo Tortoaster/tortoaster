@@ -2,9 +2,7 @@ use sea_orm::ActiveValue::Set;
 use sqlx::types::time::OffsetDateTime;
 use validator::Validate;
 
-use crate::{
-    model::comments, template::comments::CommentComponent, utils::pagination::Paginatable,
-};
+use crate::model::comments;
 
 #[derive(Debug, Validate)]
 pub struct NewComment {
@@ -35,19 +33,6 @@ pub struct Comment {
     pub name: String,
     pub message: String,
     pub date_posted: OffsetDateTime,
-}
-
-impl Paginatable for Comment {
-    type Id = i32;
-    type Template = CommentComponent;
-
-    fn into_template(self) -> Self::Template {
-        CommentComponent { comment: self }
-    }
-
-    fn id(&self) -> Self::Id {
-        self.id
-    }
 }
 
 impl From<comments::Model> for Comment {

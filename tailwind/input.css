@@ -18,6 +18,10 @@
     font-display: swap;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 .htmx-indicator {
     display: none;
 }

@@ -1,0 +1,48 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE (date_posted, id) < ($1, $2) ORDER BY (date_posted, id) DESC LIMIT $3;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "preview",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "thumbnail_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "date_posted",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "18ab20bb788a04955f1ba66093c1869bc010bf79f846c9603e3d95cee048223d"
+}

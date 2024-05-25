@@ -20,7 +20,7 @@ use tower_sessions_sqlx_store::PostgresStore;
 use tracing::info;
 
 use crate::{
-    api::projects::ListProjectsUrl,
+    api::projects::GetProjectsUrl,
     config::{AppBucket, AppConfig},
     error::{AppError, PageError},
     state::AppState,
@@ -91,7 +91,7 @@ async fn main() {
         .merge(api::files::public_router())
         .route(
             "/",
-            get(|| async { Redirect::permanent(&ListProjectsUrl.to_string()) }),
+            get(|| async { Redirect::permanent(&GetProjectsUrl.to_string()) }),
         )
         .nest_service("/static", ServeDir::new("static"))
         .nest_service(

@@ -1,19 +1,21 @@
 use sea_orm::{
     DatabaseConnection, EntityTrait, Order, QueryOrder, QuerySelect, SqlxPostgresConnector,
 };
-use sqlx::{query, query_as, types::time::OffsetDateTime, PgPool};
+use sqlx::{query, query_as, PgPool};
 use uuid::Uuid;
 
 use crate::{
     config::AppBucket,
-    dto::projects::{NewProject, ProjectId, ProjectPreview, ProjectView, ProjectWithComments},
+    dto::projects::{
+        NewProject, ProjectId, ProjectIndex, ProjectPreview, ProjectView, ProjectWithComments,
+    },
     error::AppResult,
     model::{comments, projects},
     repository::files::FileRepository,
-    utils::pagination::Pager,
+    utils::pagination::{Page, Pager},
 };
 
-const DEFAULT_PROJECTS_PER_PAGE: i64 = 10;
+const DEFAULT_PROJECTS_PER_PAGE: i64 = 6;
 const DEFAULT_COMMENTS_PER_PAGE: i64 = 10;
 
 #[derive(Clone, Debug)]
@@ -32,23 +34,111 @@ impl ProjectsRepository {
         }
     }
 
-    pub async fn list(
-        &self,
-        pager: &Pager<(OffsetDateTime, String)>,
-    ) -> sqlx::Result<Vec<ProjectPreview>> {
-        let previews = query_as!(
-            ProjectPreview,
-            "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE \
-             COALESCE((date_posted, id) < ($1, $2), TRUE) ORDER BY (date_posted, id) DESC LIMIT \
-             $3;",
-            pager.after.as_ref().map(|columns| &columns.0),
-            pager.after.as_ref().map(|columns| &columns.1),
-            pager.items.unwrap_or(DEFAULT_PROJECTS_PER_PAGE),
-        )
-        .fetch_all(&self.pool)
-        .await?;
+    pub async fn list(&self, pager: &Pager<ProjectIndex>) -> sqlx::Result<Page<ProjectPreview>> {
+        let items = pager.items.unwrap_or(DEFAULT_PROJECTS_PER_PAGE);
 
-        Ok(previews)
+        let page = match (&pager.before, &pager.after) {
+            (Some(index), _) => {
+                let mut transaction = self.pool.begin().await?;
+
+                let mut previews = query_as!(
+                    ProjectPreview,
+                    "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE \
+                     (date_posted, id) > ($1, $2) ORDER BY (date_posted, id) LIMIT $3;",
+                    index.date_posted.as_offset(),
+                    &index.id,
+                    items + 1,
+                )
+                .fetch_all(&mut *transaction)
+                .await?;
+
+                let has_previous = previews.len() as i64 == items + 1;
+                let has_next = !previews.is_empty()
+                    && query!(
+                        "SELECT id FROM projects WHERE (date_posted, id) < ($1, $2) LIMIT 1;",
+                        index.date_posted.as_offset(),
+                        &index.id,
+                    )
+                    .fetch_optional(&mut *transaction)
+                    .await?
+                    .is_some();
+
+                if has_previous {
+                    previews.pop();
+                }
+
+                previews.reverse();
+
+                transaction.commit().await?;
+
+                Page {
+                    items: previews,
+                    has_previous,
+                    has_next,
+                }
+            }
+            (_, Some(index)) => {
+                let mut transaction = self.pool.begin().await?;
+
+                let mut previews = query_as!(
+                    ProjectPreview,
+                    "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE \
+                     (date_posted, id) < ($1, $2) ORDER BY (date_posted, id) DESC LIMIT $3;",
+                    index.date_posted.as_offset(),
+                    &index.id,
+                    items + 1,
+                )
+                .fetch_all(&mut *transaction)
+                .await?;
+
+                let has_previous = !previews.is_empty()
+                    && query!(
+                        "SELECT id FROM projects WHERE (date_posted, id) > ($1, $2) LIMIT 1;",
+                        index.date_posted.as_offset(),
+                        &index.id,
+                    )
+                    .fetch_optional(&mut *transaction)
+                    .await?
+                    .is_some();
+                let has_next = previews.len() as i64 == items + 1;
+
+                if has_next {
+                    previews.pop();
+                }
+
+                transaction.commit().await?;
+
+                Page {
+                    items: previews,
+                    has_previous,
+                    has_next,
+                }
+            }
+            (None, None) => {
+                let mut previews = query_as!(
+                    ProjectPreview,
+                    "SELECT id, name, preview, thumbnail_id, date_posted FROM projects ORDER BY \
+                     (date_posted, id) DESC LIMIT $1;",
+                    items + 1,
+                )
+                .fetch_all(&self.pool)
+                .await?;
+
+                let has_next = previews.len() as i64 == items + 1;
+
+                if has_next {
+                    previews.pop();
+                }
+
+                Page {
+                    items: previews,
+                    has_previous: false,
+                    has_next,
+                }
+            }
+        };
+
+        Ok(page)
     }
 
     pub async fn get(&self, id: &str) -> AppResult<ProjectView> {
