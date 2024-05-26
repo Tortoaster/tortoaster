@@ -1,5 +1,6 @@
 use sea_orm::{
-    DatabaseConnection, EntityTrait, Order, QueryOrder, QuerySelect, SqlxPostgresConnector,
+    ColumnTrait, DatabaseConnection, EntityTrait, Order, QueryFilter, QueryOrder, QuerySelect,
+    SqlxPostgresConnector,
 };
 use sqlx::{query, query_as, PgPool};
 use uuid::Uuid;
@@ -7,7 +8,8 @@ use uuid::Uuid;
 use crate::{
     config::AppBucket,
     dto::projects::{
-        NewProject, ProjectId, ProjectIndex, ProjectPreview, ProjectView, ProjectWithComments,
+        NewProject, ProjectData, ProjectId, ProjectIndex, ProjectName, ProjectPreview,
+        ProjectWithComments,
     },
     error::AppResult,
     model::{comments, projects},
@@ -43,8 +45,8 @@ impl ProjectsRepository {
 
                 let mut previews = query_as!(
                     ProjectPreview,
-                    "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE \
-                     (date_posted, id) > ($1, $2) ORDER BY (date_posted, id) LIMIT $3;",
+                    "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE NOT \
+                     deleted AND (date_posted, id) > ($1, $2) ORDER BY (date_posted, id) LIMIT $3;",
                     index.date_posted.as_offset(),
                     &index.id,
                     items + 1,
@@ -55,7 +57,8 @@ impl ProjectsRepository {
                 let has_previous = previews.len() as i64 == items + 1;
                 let has_next = !previews.is_empty()
                     && query!(
-                        "SELECT id FROM projects WHERE (date_posted, id) < ($1, $2) LIMIT 1;",
+                        "SELECT id FROM projects WHERE NOT deleted AND (date_posted, id) < ($1, \
+                         $2) LIMIT 1;",
                         index.date_posted.as_offset(),
                         &index.id,
                     )
@@ -82,8 +85,9 @@ impl ProjectsRepository {
 
                 let mut previews = query_as!(
                     ProjectPreview,
-                    "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE \
-                     (date_posted, id) < ($1, $2) ORDER BY (date_posted, id) DESC LIMIT $3;",
+                    "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE NOT \
+                     deleted AND (date_posted, id) < ($1, $2) ORDER BY (date_posted, id) DESC \
+                     LIMIT $3;",
                     index.date_posted.as_offset(),
                     &index.id,
                     items + 1,
@@ -93,7 +97,8 @@ impl ProjectsRepository {
 
                 let has_previous = !previews.is_empty()
                     && query!(
-                        "SELECT id FROM projects WHERE (date_posted, id) > ($1, $2) LIMIT 1;",
+                        "SELECT id FROM projects WHERE NOT deleted AND (date_posted, id) > ($1, \
+                         $2) LIMIT 1;",
                         index.date_posted.as_offset(),
                         &index.id,
                     )
@@ -117,8 +122,8 @@ impl ProjectsRepository {
             (None, None) => {
                 let mut previews = query_as!(
                     ProjectPreview,
-                    "SELECT id, name, preview, thumbnail_id, date_posted FROM projects ORDER BY \
-                     (date_posted, id) DESC LIMIT $1;",
+                    "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE NOT \
+                     deleted ORDER BY (date_posted, id) DESC LIMIT $1;",
                     items + 1,
                 )
                 .fetch_all(&self.pool)
@@ -141,7 +146,7 @@ impl ProjectsRepository {
         Ok(page)
     }
 
-    pub async fn get(&self, id: &str) -> AppResult<ProjectView> {
+    pub async fn get(&self, id: &str) -> AppResult<ProjectData> {
         struct NameUrl {
             name: String,
             thumbnail_id: Uuid,
@@ -154,7 +159,7 @@ impl ProjectsRepository {
             project_url,
         } = query_as!(
             NameUrl,
-            "SELECT name, thumbnail_id, project_url FROM projects WHERE id = $1;",
+            "SELECT name, thumbnail_id, project_url FROM projects WHERE NOT deleted AND id = $1;",
             id,
         )
         .fetch_one(&self.pool)
@@ -165,12 +170,24 @@ impl ProjectsRepository {
             .retrieve_markdown(id, AppBucket::Content)
             .await?;
 
-        Ok(ProjectView {
+        Ok(ProjectData {
             name,
             content,
             thumbnail_id,
             project_url,
         })
+    }
+
+    pub async fn get_name(&self, id: &str) -> AppResult<ProjectName> {
+        let name = query_as!(
+            ProjectName,
+            "SELECT name FROM projects WHERE NOT deleted AND id = $1;",
+            id,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(name)
     }
 
     pub async fn get_with_comments(
@@ -180,6 +197,7 @@ impl ProjectsRepository {
     ) -> AppResult<Option<ProjectWithComments>> {
         let mut result: Vec<(projects::Model, Vec<comments::Model>)> =
             projects::Entity::find_by_id(id)
+                .filter(projects::Column::Deleted.eq(false))
                 .find_with_related(comments::Entity)
                 // .filter(comments::Column::Id.gt(pager.after))
                 // Since the ID is serial, sorting by id or by post time is equivalent
@@ -246,6 +264,14 @@ impl ProjectsRepository {
             .await?;
 
         transaction.commit().await?;
+
+        Ok(())
+    }
+
+    pub async fn delete(&self, id: &str) -> AppResult<()> {
+        query!("UPDATE projects SET deleted = TRUE WHERE id = $1;", id)
+            .execute(&self.pool)
+            .await?;
 
         Ok(())
     }

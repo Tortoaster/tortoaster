@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE projects SET deleted = TRUE WHERE id = $1;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7824b4bd17b75e952bb405cb3b333e999ef08e9167b0edca20f93fe352f01469"
+}

@@ -5,9 +5,12 @@ use crate::{
     api::{
         auth::{LoginUrl, LogoutUrl},
         files::PostImageUrl,
-        projects::{GetProjectPostFormUrl, GetProjectsUrl, PostProjectUrl, PostPutProjectUrl},
+        projects::{
+            GetProjectDeleteFormUrl, GetProjectPostFormUrl, GetProjectPutFormUrl, GetProjectsUrl,
+            PostDeleteProjectUrl, PostProjectUrl, PostPutProjectUrl,
+        },
     },
-    dto::projects::{ProjectPreview, ProjectView, ProjectWithComments},
+    dto::projects::{ProjectData, ProjectName, ProjectPreview, ProjectWithComments},
     user::User,
     utils::pagination::Page,
 };
@@ -47,7 +50,7 @@ pub struct UpdateProjectFormPage {
     post_image_url: PostImageUrl,
     post_put_project_url: PostPutProjectUrl,
     errors: ValidationErrors,
-    project: ProjectView,
+    project: ProjectData,
 }
 
 impl UpdateProjectFormPage {
@@ -55,7 +58,7 @@ impl UpdateProjectFormPage {
         user: Option<User>,
         post_put_project_url: PostPutProjectUrl,
         errors: ValidationErrors,
-        project: ProjectView,
+        project: ProjectData,
     ) -> Self {
         Self {
             user,
@@ -64,6 +67,32 @@ impl UpdateProjectFormPage {
             post_image_url: PostImageUrl,
             post_put_project_url,
             errors,
+            project,
+        }
+    }
+}
+
+#[derive(Debug, Template)]
+#[template(path = "projects/form/delete_form_page.html")]
+pub struct DeleteProjectFormPage {
+    user: Option<User>,
+    login_url: LoginUrl,
+    logout_url: LogoutUrl,
+    post_delete_project_url: PostDeleteProjectUrl,
+    project: ProjectName,
+}
+
+impl DeleteProjectFormPage {
+    pub fn new(
+        user: Option<User>,
+        post_delete_project_url: PostDeleteProjectUrl,
+        project: ProjectName,
+    ) -> Self {
+        Self {
+            user,
+            login_url: LoginUrl,
+            logout_url: LogoutUrl,
+            post_delete_project_url,
             project,
         }
     }
@@ -103,6 +132,8 @@ pub struct GetProjectPage {
     user: Option<User>,
     login_url: LoginUrl,
     logout_url: LogoutUrl,
+    get_project_put_form_url: GetProjectPutFormUrl,
+    get_project_delete_form_url: GetProjectDeleteFormUrl,
     project: ProjectWithComments,
 }
 
@@ -112,17 +143,15 @@ impl GetProjectPage {
             user,
             login_url: LoginUrl,
             logout_url: LogoutUrl,
+            get_project_put_form_url: GetProjectPutFormUrl {
+                id: project.id.clone(),
+            },
+            get_project_delete_form_url: GetProjectDeleteFormUrl {
+                id: project.id.clone(),
+            },
             project,
         }
     }
-}
-
-// Partials
-
-#[derive(Debug, Template)]
-#[template(path = "projects/component.html")]
-pub struct ProjectComponent {
-    pub project: ProjectWithComments,
 }
 
 mod filters {

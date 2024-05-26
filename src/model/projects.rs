@@ -12,6 +12,7 @@ pub struct Model {
     pub thumbnail_id: Uuid,
     pub project_url: Option<String>,
     pub date_posted: TimeDateTimeWithTimeZone,
+    pub deleted: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

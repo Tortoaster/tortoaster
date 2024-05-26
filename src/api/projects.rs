@@ -13,13 +13,14 @@ use validator::{Validate, ValidationErrors};
 
 use crate::{
     config::AppBucket,
-    dto::projects::{NewProject, ProjectId, ProjectIndex, ProjectView},
+    dto::projects::{NewProject, ProjectData, ProjectId, ProjectIndex},
     error::{AppError, PageResult, WithPageRejection},
     repository::{files::FileRepository, projects::ProjectsRepository},
     state::AppState,
     template::{
         projects::{
-            CreateProjectFormPage, GetProjectPage, ListProjectsPage, UpdateProjectFormPage,
+            CreateProjectFormPage, DeleteProjectFormPage, GetProjectPage, ListProjectsPage,
+            UpdateProjectFormPage,
         },
         Render,
     },
@@ -37,20 +38,28 @@ pub fn protected_router() -> Router<AppState> {
     Router::new()
         .typed_get(get_project_post_form)
         .typed_get(get_project_put_form)
+        .typed_get(get_project_delete_form)
         .typed_post(post_project)
         .typed_post(post_put_project)
+        .typed_post(post_delete_project)
 }
 
 // Forms
 
 #[derive(Copy, Clone, Debug, TypedPath)]
-#[typed_path("/projects/form")]
+#[typed_path("/projects/create-form")]
 pub struct GetProjectPostFormUrl;
 
 #[derive(Clone, Debug, Deserialize, TypedPath)]
-#[typed_path("/projects/:id/form")]
+#[typed_path("/projects/:id/update-form")]
 pub struct GetProjectPutFormUrl {
-    id: String,
+    pub id: String,
+}
+
+#[derive(Clone, Debug, Deserialize, TypedPath)]
+#[typed_path("/projects/:id/delete-form")]
+pub struct GetProjectDeleteFormUrl {
+    pub id: String,
 }
 
 async fn get_project_post_form(
@@ -75,6 +84,20 @@ async fn get_project_put_form(
     )))
 }
 
+async fn get_project_delete_form(
+    GetProjectDeleteFormUrl { id }: GetProjectDeleteFormUrl,
+    State(repo): State<ProjectsRepository>,
+    user: Option<User>,
+) -> PageResult<Render<DeleteProjectFormPage>> {
+    let project = repo.get_name(&id).await?;
+
+    Ok(Render(DeleteProjectFormPage::new(
+        user,
+        PostDeleteProjectUrl { id },
+        project,
+    )))
+}
+
 // API Pages
 
 #[derive(Copy, Clone, Debug, TypedPath)]
@@ -94,6 +117,12 @@ pub struct PostProjectUrl;
 #[derive(Clone, Debug, Deserialize, TypedPath)]
 #[typed_path("/projects/:id/put")]
 pub struct PostPutProjectUrl {
+    pub id: String,
+}
+
+#[derive(Clone, Debug, Deserialize, TypedPath)]
+#[typed_path("/projects/:id/delete")]
+pub struct PostDeleteProjectUrl {
     pub id: String,
 }
 
@@ -151,7 +180,7 @@ async fn post_put_project(
     WithRejection(new_project, _): WithPageRejection<Form<NewProject>>,
 ) -> PageResult<Result<Redirect, Render<UpdateProjectFormPage>>> {
     if let Err(errors) = new_project.validate() {
-        let project = ProjectView {
+        let project = ProjectData {
             name: new_project.0.name,
             content: new_project.0.content,
             thumbnail_id: new_project.0.thumbnail_id,
@@ -168,4 +197,12 @@ async fn post_put_project(
     repo.update(&id, new_project.0).await?;
 
     Ok(Ok(Redirect::to(&GetProjectUrl { id }.to_string())))
+}
+
+async fn post_delete_project(
+    PostDeleteProjectUrl { id }: PostDeleteProjectUrl,
+    State(repo): State<ProjectsRepository>,
+) -> PageResult<Redirect> {
+    repo.delete(&id).await?;
+    Ok(Redirect::to(&GetProjectsUrl.to_string()))
 }

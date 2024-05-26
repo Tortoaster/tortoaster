@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, preview, thumbnail_id, date_posted FROM projects ORDER BY (date_posted, id) DESC LIMIT $1;",
+  "query": "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE NOT deleted AND (date_posted, id) > ($1, $2) ORDER BY (date_posted, id) LIMIT $3;",
   "describe": {
     "columns": [
       {
@@ -31,6 +31,8 @@
     ],
     "parameters": {
       "Left": [
+        "Timestamptz",
+        "Text",
         "Int8"
       ]
     },
@@ -42,5 +44,5 @@
       false
     ]
   },
-  "hash": "3b9c2a27e82018927d1bcfd2b8c93c38868bffe076f21945a8183e56310ae73b"
+  "hash": "2354a3f6ae1daed10cb9d52e5375c9bd90e7a65836bfc1a520ca6dc690084cdd"
 }

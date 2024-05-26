@@ -10,8 +10,10 @@ pub struct Model {
     pub project_id: String,
     pub name: String,
     pub email: String,
+    #[sea_orm(column_type = "Text")]
     pub message: String,
     pub date_posted: TimeDateTimeWithTimeZone,
+    pub deleted: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

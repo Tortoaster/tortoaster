@@ -78,7 +78,7 @@ impl NewProject {
 // Responses
 
 #[derive(Debug)]
-pub struct ProjectView {
+pub struct ProjectData {
     pub name: String,
     pub content: String,
     pub thumbnail_id: Uuid,
@@ -109,6 +109,11 @@ impl From<projects::Model> for ProjectPreview {
 #[derive(Debug)]
 pub struct ProjectId {
     pub id: String,
+}
+
+#[derive(Debug)]
+pub struct ProjectName {
+    pub name: String,
 }
 
 #[derive(Debug)]
