@@ -1,4 +1,9 @@
-<div>
-    <b>{{ comment.name }}</b>
-    <p>{{ comment.message }}</p>
+<div class="flex flex-col gap-4 border-4 border-stone-900 shadow-comic p-8 mt-8">
+    <div class="flex justify-between items-baseline">
+        <span class="text-lg text-stone-900 font-bold">{{ comment.user.name }}</span>
+        <span class="text-sm text-stone-500">{{ comment.date_posted|humantime }}</span>
+    </div>
+    <p class="m-0 overflow-scroll">
+        {{ comment.message }}
+    </p>
 </div>

@@ -24,7 +24,7 @@ use crate::{
     config::{AppBucket, AppConfig},
     error::{AppError, PageError},
     state::AppState,
-    user::AppClaims,
+    utils::claims::AppClaims,
 };
 
 mod api;
@@ -35,7 +35,6 @@ mod model;
 mod repository;
 mod state;
 mod template;
-mod user;
 mod utils;
 
 #[tokio::main]
@@ -81,11 +80,12 @@ async fn main() {
     let app = Router::new()
         // Login required
         .merge(api::projects::protected_router())
-        .typed_get(api::auth::login)
+        .typed_post(api::comments::post_comment)
+        .typed_get(api::users::login)
         .layer(oidc_login_service)
         // Login optional
         .merge(api::projects::public_router())
-        .typed_get(api::auth::logout)
+        .typed_get(api::users::logout)
         .layer(oidc_auth_service)
         // Publicly available
         .merge(api::files::public_router())

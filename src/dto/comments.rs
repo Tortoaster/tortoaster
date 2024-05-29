@@ -1,47 +1,40 @@
-use sea_orm::ActiveValue::Set;
-use sqlx::types::time::OffsetDateTime;
+use serde_with::serde_derive::Deserialize;
 use validator::Validate;
 
-use crate::model::comments;
+use crate::{
+    dto::{projects::ProjectTime, users::User},
+    model::{comments, user_entity},
+};
 
-#[derive(Debug, Validate)]
+// Requests
+
+#[derive(Debug, Deserialize, Validate)]
 pub struct NewComment {
-    pub project_id: String,
-    #[validate(length(min = 1, max = 32))]
-    pub name: String,
-    #[validate(email, length(max = 64))]
-    pub email: String,
-    #[validate(length(min = 1, max = 256))]
+    #[validate(length(min = 1, max = 4096))]
     pub message: String,
 }
 
-impl From<NewComment> for comments::ActiveModel {
-    fn from(value: NewComment) -> Self {
-        Self {
-            project_id: Set(value.project_id),
-            name: Set(value.name),
-            email: Set(value.email),
-            message: Set(value.message),
-            ..Default::default()
-        }
-    }
-}
+// Responses
 
 #[derive(Debug)]
 pub struct Comment {
     pub id: i32,
-    pub name: String,
+    pub user: User,
     pub message: String,
-    pub date_posted: OffsetDateTime,
+    pub date_posted: ProjectTime,
 }
 
-impl From<comments::Model> for Comment {
-    fn from(value: comments::Model) -> Self {
-        Self {
-            id: value.id,
-            name: value.name,
-            message: value.message,
-            date_posted: value.date_posted,
+impl Comment {
+    pub fn from_model(comment: comments::Model, user: Option<user_entity::Model>) -> Self {
+        let user = user
+            .and_then(|user| user.try_into().ok())
+            .unwrap_or_else(User::deleted);
+
+        Comment {
+            id: comment.id,
+            user,
+            message: comment.message,
+            date_posted: ProjectTime::from(comment.date_posted),
         }
     }
 }

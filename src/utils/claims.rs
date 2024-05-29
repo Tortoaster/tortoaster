@@ -9,11 +9,7 @@ use openidconnect::AdditionalClaims;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-#[derive(Debug)]
-pub struct User {
-    pub name: String,
-    pub is_admin: bool,
-}
+use crate::dto::users::User;
 
 #[async_trait]
 impl<S: Send + Sync> FromRequestParts<S> for User {
@@ -23,6 +19,7 @@ impl<S: Send + Sync> FromRequestParts<S> for User {
         let claims = OidcClaims::<AppClaims>::from_request_parts(parts, state).await?;
 
         let user = User {
+            id: claims.subject().parse()?,
             name: claims
                 .preferred_username()
                 .ok_or(UserRejection::NoName)?
@@ -38,6 +35,8 @@ impl<S: Send + Sync> FromRequestParts<S> for User {
 pub enum UserRejection {
     #[error("{0}")]
     Inner(#[from] ExtractorError),
+    #[error("invalid sub")]
+    Uuid(#[from] uuid::Error),
     #[error("user has no name")]
     NoName,
 }
@@ -50,6 +49,7 @@ impl IntoResponse for UserRejection {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AppClaims {
+    #[serde(default)]
     resource_access: ResourceAccess,
 }
 
@@ -63,12 +63,12 @@ impl AdditionalClaims for AppClaims {}
 
 impl axum_oidc::AdditionalClaims for AppClaims {}
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 struct ResourceAccess {
     tortoaster: Tortoaster,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 struct Tortoaster {
     roles: Vec<Role>,
 }

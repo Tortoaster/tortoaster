@@ -22,8 +22,6 @@ services:
         condition: service_completed_successfully
       object-store-migrate:
         condition: service_completed_successfully
-      iam-provider:
-        condition: service_started
       cache:
         condition: service_started
 
@@ -42,6 +40,7 @@ services:
   db:
     image: postgres:16.2
     ports: [ "5432:5432" ]
+    volumes: [ "./postgres:/docker-entrypoint-initdb.d:ro" ]
     environment:
       POSTGRES_USER: "tortoaster"
       POSTGRES_PASSWORD: "password"
@@ -61,7 +60,7 @@ services:
     environment:
       DATABASE_URL: "postgres://tortoaster:password@db/tortoaster"
     depends_on:
-      db:
+      iam-provider:
         condition: service_healthy
 
   object-store:
@@ -119,12 +118,17 @@ services:
       KC_DB_PASSWORD: "password"
       KC_DB_SCHEMA: "keycloak"
       KC_HTTP_PORT: "8003"
+      KC_HEALTH_ENABLED: "true"
     command: "start-dev --import-realm"
     depends_on:
-      db-migrate:
-        condition: service_completed_successfully
+      db:
+        condition: service_healthy
       smtp-server:
         condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8003;echo -e \"GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n\" >&3;grep \"HTTP/1.1 200 OK\" <&3" ]
+      interval: 5s
+      retries: 5
 
   cache:
     image: redis:alpine

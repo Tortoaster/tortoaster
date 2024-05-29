@@ -125,8 +125,16 @@ Should be run when:
 * New database migrations are created
 
 ```shell
+sea-orm-cli generate entity -o src/model -s keycloak -t user_entity
 sea-orm-cli generate entity -o src/model --date-time-crate time
 ```
+
+This requires a few manual steps, as `sea-orm` currently doesn't support targeting specific tables across multiple
+schemas:
+
+1. Delete `src/model/prelude.rs`
+2. Remove `mod prelude;` from `src/model/mod.rs`
+3. Add `mod user_entity;` to `src/model/mod.rs`
 
 #### Create a database dump
 

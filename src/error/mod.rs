@@ -35,6 +35,8 @@ pub enum AppError {
     MultipartError(#[from] axum::extract::multipart::MultipartError),
     #[error("Something seems to be wrong with your session, please try logging in again!")]
     Session(#[from] axum_oidc::error::MiddlewareError),
+    #[error("Something weird went wrong :(")]
+    Uuid(#[from] uuid::Error),
     #[error("Something went wrong while retrieving your file :(")]
     ObjectEncoding,
     #[error("I don't understand that type of file :(")]
@@ -50,7 +52,7 @@ pub enum AppError {
     #[error("Something went wrong logging you out :(")]
     Logout(#[from] axum_oidc::error::ExtractorError),
     #[error("Something seems to be wrong with your session, please try logging in again!")]
-    User(#[from] crate::user::UserRejection),
+    User(#[from] crate::utils::claims::UserRejection),
     #[error("Please change the following fields :3\n{0}")]
     Validate(#[from] axum_valid::ValidRejection<QueryRejection>),
 }
@@ -59,7 +61,7 @@ impl AppError {
     fn status_code(&self) -> StatusCode {
         match self {
             AppError::Database(_) | AppError::Orm(_) => StatusCode::SERVICE_UNAVAILABLE,
-            AppError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::Template(_) | AppError::Uuid(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::PutObject(_) => StatusCode::INSUFFICIENT_STORAGE,
             AppError::GetObject(_) | AppError::ObjectEncoding | AppError::NotFound => {
                 StatusCode::NOT_FOUND

@@ -13,7 +13,10 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    config::AppBucket, dto::comments::Comment, error::AppResult, model::projects,
+    config::AppBucket,
+    dto::comments::Comment,
+    error::AppResult,
+    model::{comments, projects, user_entity},
     repository::files::FileRepository,
 };
 
@@ -135,10 +138,15 @@ pub struct ProjectWithComments {
 
 impl ProjectWithComments {
     pub async fn from_model(
-        comments: Vec<Comment>,
         model: projects::Model,
+        comments: Vec<(comments::Model, Option<user_entity::Model>)>,
         file_repo: &FileRepository,
     ) -> AppResult<Self> {
+        let comments = comments
+            .into_iter()
+            .map(|(comment, user)| Comment::from_model(comment, user))
+            .collect();
+
         let content = file_repo
             .retrieve_markdown(&model.id, AppBucket::Content)
             .await?;

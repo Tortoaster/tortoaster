@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Sea-orm-cli generate" type="ShConfigurationType">
-    <option name="SCRIPT_TEXT" value="sea-orm-cli generate entity -o src/model --date-time-crate time" />
+    <option name="SCRIPT_TEXT" value="sea-orm-cli generate entity -o src/model -s keycloak -t user_entity; sea-orm-cli generate entity -o src/model --date-time-crate time" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />

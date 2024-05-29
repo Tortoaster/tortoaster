@@ -12,10 +12,9 @@ CREATE TABLE projects
 CREATE TABLE comments
 (
     id          SERIAL PRIMARY KEY,
-    project_id  VARCHAR(128) REFERENCES projects ON DELETE CASCADE NOT NULL,
-    name        VARCHAR(32)                                        NOT NULL,
-    email       VARCHAR(64)                                        NOT NULL,
-    message     TEXT                                               NOT NULL,
-    date_posted TIMESTAMP WITH TIME ZONE                           NOT NULL DEFAULT now(),
-    deleted     BOOLEAN                                            NOT NULL DEFAULT FALSE
+    user_id     VARCHAR(36) REFERENCES keycloak.user_entity ON DELETE CASCADE NOT NULL,
+    project_id  VARCHAR(128) REFERENCES projects ON DELETE CASCADE            NOT NULL,
+    message     TEXT                                                          NOT NULL,
+    date_posted TIMESTAMP WITH TIME ZONE                                      NOT NULL DEFAULT now(),
+    deleted     BOOLEAN                                                       NOT NULL DEFAULT FALSE
 );

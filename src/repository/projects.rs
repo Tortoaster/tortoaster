@@ -1,6 +1,6 @@
 use sea_orm::{
     ColumnTrait, DatabaseConnection, EntityTrait, Order, QueryFilter, QueryOrder, QuerySelect,
-    SqlxPostgresConnector,
+    SqlxPostgresConnector, TransactionTrait,
 };
 use sqlx::{query, query_as, PgPool};
 use uuid::Uuid;
@@ -12,7 +12,7 @@ use crate::{
         ProjectWithComments,
     },
     error::AppResult,
-    model::{comments, projects},
+    model::{comments, projects, user_entity},
     repository::files::FileRepository,
     utils::pagination::{Page, Pager},
 };
@@ -21,13 +21,13 @@ const DEFAULT_PROJECTS_PER_PAGE: i64 = 12;
 const DEFAULT_COMMENTS_PER_PAGE: i64 = 10;
 
 #[derive(Clone, Debug)]
-pub struct ProjectsRepository {
+pub struct ProjectRepository {
     pool: PgPool,
     conn: DatabaseConnection,
     file_repo: FileRepository,
 }
 
-impl ProjectsRepository {
+impl ProjectRepository {
     pub fn new(pool: PgPool, file_repo: FileRepository) -> Self {
         Self {
             conn: SqlxPostgresConnector::from_sqlx_postgres_pool(pool.clone()),
@@ -195,26 +195,32 @@ impl ProjectsRepository {
         id: &str,
         pager: &Pager<i32>,
     ) -> AppResult<Option<ProjectWithComments>> {
-        let mut result: Vec<(projects::Model, Vec<comments::Model>)> =
-            projects::Entity::find_by_id(id)
-                .filter(projects::Column::Deleted.eq(false))
-                .find_with_related(comments::Entity)
-                // .filter(comments::Column::Id.gt(pager.after))
-                // Since the ID is serial, sorting by id or by post time is equivalent
-                .order_by(comments::Column::Id, Order::Desc)
-                .limit(pager.items.unwrap_or(DEFAULT_COMMENTS_PER_PAGE) as u64)
-                .all(&self.conn)
-                .await?;
+        let transaction = self.conn.begin().await?;
 
-        match result.pop() {
-            None => Ok(None),
-            Some((project, comments)) => {
-                let comments = comments.into_iter().map(Into::into).collect();
-                let project =
-                    ProjectWithComments::from_model(comments, project, &self.file_repo).await?;
-                Ok(Some(project))
-            }
-        }
+        let project = match projects::Entity::find_by_id(id)
+            .filter(projects::Column::Deleted.eq(false))
+            .one(&transaction)
+            .await?
+        {
+            None => return Ok(None),
+            Some(project) => project,
+        };
+
+        let comments = comments::Entity::find()
+            .filter(comments::Column::ProjectId.eq(&project.id))
+            .find_also_related(user_entity::Entity)
+            // .filter(comments::Column::Id.gt(pager.after))
+            // Since the ID is serial, sorting by id or by post time is equivalent
+            .order_by(comments::Column::Id, Order::Desc)
+            .limit(pager.items.unwrap_or(DEFAULT_COMMENTS_PER_PAGE) as u64)
+            .all(&transaction)
+            .await?;
+
+        transaction.commit().await?;
+
+        let project = ProjectWithComments::from_model(project, comments, &self.file_repo).await?;
+
+        Ok(Some(project))
     }
 
     pub async fn create(&self, new_project: NewProject) -> AppResult<ProjectId> {

@@ -3,15 +3,19 @@ use validator::ValidationErrors;
 
 use crate::{
     api::{
-        auth::{LoginUrl, LogoutUrl},
+        comments::PostCommentUrl,
         files::PostImageUrl,
         projects::{
             GetProjectDeleteFormUrl, GetProjectPostFormUrl, GetProjectPutFormUrl, GetProjectsUrl,
             PostDeleteProjectUrl, PostProjectUrl, PostPutProjectUrl,
         },
+        users::{LoginUrl, LogoutUrl},
     },
-    dto::projects::{ProjectData, ProjectName, ProjectPreview, ProjectWithComments},
-    user::User,
+    dto::{
+        projects::{ProjectData, ProjectName, ProjectPreview, ProjectWithComments},
+        users::User,
+    },
+    template::filters,
     utils::pagination::Page,
 };
 
@@ -134,6 +138,7 @@ pub struct GetProjectPage {
     logout_url: LogoutUrl,
     get_project_put_form_url: GetProjectPutFormUrl,
     get_project_delete_form_url: GetProjectDeleteFormUrl,
+    post_comment_url: PostCommentUrl,
     project: ProjectWithComments,
 }
 
@@ -149,32 +154,10 @@ impl GetProjectPage {
             get_project_delete_form_url: GetProjectDeleteFormUrl {
                 id: project.id.clone(),
             },
+            post_comment_url: PostCommentUrl {
+                project_id: project.id.clone(),
+            },
             project,
         }
-    }
-}
-
-mod filters {
-    use std::convert::Infallible;
-
-    use time_humanize::HumanTime;
-
-    use crate::dto::projects::ProjectTime;
-
-    pub fn humantime(time: &ProjectTime) -> Result<String, Infallible> {
-        let human_time =
-            HumanTime::from_duration_since_timestamp(time.as_offset().unix_timestamp() as u64)
-                - HumanTime::now();
-
-        Ok(human_time.to_string())
-    }
-
-    pub fn markdown(s: impl AsRef<str>) -> Result<String, Infallible> {
-        let parser = pulldown_cmark::Parser::new(s.as_ref());
-        let mut html = String::new();
-
-        pulldown_cmark::html::push_html(&mut html, parser);
-
-        Ok(html)
     }
 }

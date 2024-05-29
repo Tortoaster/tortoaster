@@ -7,9 +7,8 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
+    pub user_id: String,
     pub project_id: String,
-    pub name: String,
-    pub email: String,
     #[sea_orm(column_type = "Text")]
     pub message: String,
     pub date_posted: TimeDateTimeWithTimeZone,
@@ -26,11 +25,25 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Projects,
+    #[sea_orm(
+        belongs_to = "super::user_entity::Entity",
+        from = "Column::UserId",
+        to = "super::user_entity::Column::Id",
+        on_update = "NoAction",
+        on_delete = "Cascade"
+    )]
+    UserEntity,
 }
 
 impl Related<super::projects::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Projects.def()
+    }
+}
+
+impl Related<super::user_entity::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::UserEntity.def()
     }
 }
 

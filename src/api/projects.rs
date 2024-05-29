@@ -13,9 +13,12 @@ use validator::{Validate, ValidationErrors};
 
 use crate::{
     config::AppBucket,
-    dto::projects::{NewProject, ProjectData, ProjectId, ProjectIndex},
+    dto::{
+        projects::{NewProject, ProjectData, ProjectId, ProjectIndex},
+        users::User,
+    },
     error::{AppError, PageResult, WithPageRejection},
-    repository::{files::FileRepository, projects::ProjectsRepository},
+    repository::{files::FileRepository, projects::ProjectRepository},
     state::AppState,
     template::{
         projects::{
@@ -24,7 +27,6 @@ use crate::{
         },
         Render,
     },
-    user::User,
     utils::pagination::Pager,
 };
 
@@ -71,7 +73,7 @@ async fn get_project_post_form(
 
 async fn get_project_put_form(
     GetProjectPutFormUrl { id }: GetProjectPutFormUrl,
-    State(repo): State<ProjectsRepository>,
+    State(repo): State<ProjectRepository>,
     user: Option<User>,
 ) -> PageResult<Render<UpdateProjectFormPage>> {
     let project = repo.get(&id).await?;
@@ -86,7 +88,7 @@ async fn get_project_put_form(
 
 async fn get_project_delete_form(
     GetProjectDeleteFormUrl { id }: GetProjectDeleteFormUrl,
-    State(repo): State<ProjectsRepository>,
+    State(repo): State<ProjectRepository>,
     user: Option<User>,
 ) -> PageResult<Render<DeleteProjectFormPage>> {
     let project = repo.get_name(&id).await?;
@@ -128,7 +130,7 @@ pub struct PostDeleteProjectUrl {
 
 async fn list_projects(
     _: GetProjectsUrl,
-    State(repo): State<ProjectsRepository>,
+    State(repo): State<ProjectRepository>,
     State(file_repo): State<FileRepository>,
     user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<ProjectIndex>>>>,
@@ -146,7 +148,7 @@ async fn list_projects(
 
 async fn get_project(
     GetProjectUrl { id }: GetProjectUrl,
-    State(repo): State<ProjectsRepository>,
+    State(repo): State<ProjectRepository>,
     user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<i32>>>>,
 ) -> PageResult<Render<GetProjectPage>> {
@@ -160,7 +162,7 @@ async fn get_project(
 
 async fn post_project(
     _: PostProjectUrl,
-    State(repo): State<ProjectsRepository>,
+    State(repo): State<ProjectRepository>,
     user: Option<User>,
     WithRejection(new_project, _): WithPageRejection<Form<NewProject>>,
 ) -> PageResult<Result<Redirect, Render<CreateProjectFormPage>>> {
@@ -175,7 +177,7 @@ async fn post_project(
 
 async fn post_put_project(
     PostPutProjectUrl { id }: PostPutProjectUrl,
-    State(repo): State<ProjectsRepository>,
+    State(repo): State<ProjectRepository>,
     user: Option<User>,
     WithRejection(new_project, _): WithPageRejection<Form<NewProject>>,
 ) -> PageResult<Result<Redirect, Render<UpdateProjectFormPage>>> {
@@ -201,7 +203,7 @@ async fn post_put_project(
 
 async fn post_delete_project(
     PostDeleteProjectUrl { id }: PostDeleteProjectUrl,
-    State(repo): State<ProjectsRepository>,
+    State(repo): State<ProjectRepository>,
 ) -> PageResult<Redirect> {
     repo.delete(&id).await?;
     Ok(Redirect::to(&GetProjectsUrl.to_string()))

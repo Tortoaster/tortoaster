@@ -11,8 +11,11 @@ use tracing::{info, warn};
 
 use crate::{
     config::{AppBucket, AppConfig},
-    repository::{files::FileRepository, projects::ProjectsRepository},
-    user::AppClaims,
+    repository::{
+        comments::CommentRepository, files::FileRepository, projects::ProjectRepository,
+        users::UserRepository,
+    },
+    utils::claims::AppClaims,
 };
 
 #[derive(Clone, Debug)]
@@ -133,14 +136,26 @@ impl AppState {
     }
 }
 
-impl FromRef<AppState> for ProjectsRepository {
+impl FromRef<AppState> for ProjectRepository {
     fn from_ref(input: &AppState) -> Self {
         Self::new(input.pool.clone(), FileRepository::from_ref(input))
+    }
+}
+
+impl FromRef<AppState> for CommentRepository {
+    fn from_ref(input: &AppState) -> Self {
+        Self::new(input.pool.clone(), UserRepository::from_ref(input))
     }
 }
 
 impl FromRef<AppState> for FileRepository {
     fn from_ref(input: &AppState) -> Self {
         Self::new(input.s3_client.clone(), input.redis_pool.clone())
+    }
+}
+
+impl FromRef<AppState> for UserRepository {
+    fn from_ref(input: &AppState) -> Self {
+        Self::new(input.pool.clone())
     }
 }

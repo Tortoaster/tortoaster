@@ -2,8 +2,8 @@ use askama::Template;
 use axum::http::StatusCode;
 
 use crate::{
-    api::auth::{LoginUrl, LogoutUrl},
-    user::User,
+    api::users::{LoginUrl, LogoutUrl},
+    dto::users::User,
 };
 
 #[derive(Debug, Template)]

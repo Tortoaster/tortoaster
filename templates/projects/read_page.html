@@ -34,6 +34,7 @@
 <div class="prose prose-stone mx-auto">
     {{ project.content|markdown|e("none") }}
     <h2>Comments</h2>
+    {% include "../comments/form/create_form_partial.html" %}
     {% for comment in project.comments %}
     {% include "../comments/comment.html" %}
     {% endfor %}
