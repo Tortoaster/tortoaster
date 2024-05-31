@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::model::user_entity;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct User {
     pub id: Uuid,
     pub name: String,

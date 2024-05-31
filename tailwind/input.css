@@ -22,6 +22,11 @@ html {
     scroll-behavior: smooth;
 }
 
+dialog::backdrop {
+    background-color: #00000080;
+    backdrop-filter: blur(12pt);
+}
+
 .htmx-indicator {
     display: none;
 }

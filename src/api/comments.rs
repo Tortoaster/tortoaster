@@ -36,7 +36,10 @@ pub async fn post_comment(
     let comment = repo.create(user.id, &url.project_id, &new_comment).await?;
 
     Ok(Ok(RenderBoth(
-        CreateCommentFormPartial::new(Some(user), url),
-        CommentPartial { comment },
+        CreateCommentFormPartial::new(Some(user.clone()), url),
+        CommentPartial {
+            user: Some(user),
+            comment,
+        },
     )))
 }

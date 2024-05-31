@@ -5,7 +5,7 @@
         <div class="aspect-[3/2] p-8 overflow-hidden relative">
             <div class="flex justify-between items-baseline">
                 <h3 class="text-stone-900 text-xl font-bold">{{ project.name }}</h3>
-                <span class="text-stone-500 text-sm">{{ project.date_posted|humantime }}</span>
+                <span class="text-stone-500 text-sm">{{ project.date_posted|humandtime }}</span>
             </div>
             <br/>
             <div class="text-stone-900 text-balance">{{ project.preview|e("none") }}</div>

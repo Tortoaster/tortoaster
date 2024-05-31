@@ -10,6 +10,7 @@ use crate::{
 #[derive(Debug, Template)]
 #[template(path = "comments/comment.html")]
 pub struct CommentPartial {
+    pub user: Option<User>,
     pub comment: Comment,
 }
 
