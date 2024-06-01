@@ -30,7 +30,7 @@ services:
       dockerfile: "Dockerfile"
       target: "tailwindcss"
     working_dir: "/app"
-    command: [ "-i", "./input.css", "-o", "./static/style.css", "-m" ]
+    command: [ "-i", "./input.css", "-o", "./static/style.css", "-m", "-w", "always" ]
     volumes:
       - "./tailwind:/app"
       - "./templates:/app/templates:ro"
