@@ -1,22 +1,22 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT username FROM keycloak.user_entity WHERE id = $1;",
+  "query": "SELECT user_id FROM comments WHERE NOT deleted AND id = $1;",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "username",
+        "name": "user_id",
         "type_info": "Varchar"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Int4"
       ]
     },
     "nullable": [
-      true
+      false
     ]
   },
-  "hash": "913db2c956864616153f873f047fefcb7f20a8c3f4388664e5ac35c506353688"
+  "hash": "2373cd03b28e72284e3d2c429ebcaa1b694f3226eb79e957739cf3e2cf18da12"
 }

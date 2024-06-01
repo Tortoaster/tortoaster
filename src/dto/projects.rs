@@ -12,14 +12,6 @@ use time::format_description::well_known;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{
-    config::AppBucket,
-    dto::comments::Comment,
-    error::AppResult,
-    model::{comments, projects, user_entity},
-    repository::files::FileRepository,
-};
-
 // Requests
 
 #[serde_as]
@@ -97,18 +89,6 @@ pub struct ProjectPreview {
     pub date_posted: ProjectTime,
 }
 
-impl From<projects::Model> for ProjectPreview {
-    fn from(value: projects::Model) -> Self {
-        Self {
-            id: value.id,
-            name: value.name,
-            preview: value.preview,
-            thumbnail_id: value.thumbnail_id,
-            date_posted: ProjectTime(value.date_posted),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct ProjectId {
     pub id: String,
@@ -125,43 +105,13 @@ pub struct ProjectThumbnailId {
 }
 
 #[derive(Debug)]
-pub struct ProjectWithComments {
+pub struct Project {
     pub id: String,
     pub name: String,
     pub preview: String,
-    pub content: String,
     pub thumbnail_id: Uuid,
     pub project_url: Option<String>,
     pub date_posted: ProjectTime,
-    pub comments: Vec<Comment>,
-}
-
-impl ProjectWithComments {
-    pub async fn from_model(
-        model: projects::Model,
-        comments: Vec<(comments::Model, Option<user_entity::Model>)>,
-        file_repo: &FileRepository,
-    ) -> AppResult<Self> {
-        let comments = comments
-            .into_iter()
-            .map(|(comment, user)| Comment::from_model(comment, user))
-            .collect();
-
-        let content = file_repo
-            .retrieve_markdown(&model.id, AppBucket::Content)
-            .await?;
-
-        Ok(Self {
-            id: model.id,
-            name: model.name,
-            preview: model.preview,
-            content,
-            thumbnail_id: model.thumbnail_id,
-            project_url: model.project_url,
-            date_posted: ProjectTime(model.date_posted),
-            comments,
-        })
-    }
 }
 
 #[derive(Debug, DeserializeFromStr)]

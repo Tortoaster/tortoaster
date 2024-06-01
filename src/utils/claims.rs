@@ -19,11 +19,10 @@ impl<S: Send + Sync> FromRequestParts<S> for User {
         let claims = OidcClaims::<AppClaims>::from_request_parts(parts, state).await?;
 
         let user = User {
-            id: claims.subject().parse()?,
+            id: claims.subject().to_string(),
             name: claims
                 .preferred_username()
-                .ok_or(UserRejection::NoName)?
-                .to_string(),
+                .map(|username| username.to_string()),
             is_admin: claims.additional_claims().is_admin(),
         };
 
@@ -35,10 +34,6 @@ impl<S: Send + Sync> FromRequestParts<S> for User {
 pub enum UserRejection {
     #[error("{0}")]
     Inner(#[from] ExtractorError),
-    #[error("invalid sub")]
-    Uuid(#[from] uuid::Error),
-    #[error("user has no name")]
-    NoName,
 }
 
 impl IntoResponse for UserRejection {

@@ -5,7 +5,7 @@ use validator::Validate;
 
 use crate::{
     dto::{comments::NewComment, users::User},
-    error::{ToastResult, WithToastRejection},
+    error::{AppError, ToastResult, WithToastRejection},
     repository::comments::CommentRepository,
     template::{
         comments::{CommentPartial, CreateCommentFormPartial},
@@ -17,6 +17,12 @@ use crate::{
 #[typed_path("/projects/:project_id/comments")]
 pub struct PostCommentUrl {
     pub project_id: String,
+}
+
+#[derive(Clone, Debug, Deserialize, TypedPath)]
+#[typed_path("/comments/:comment_id/delete")]
+pub struct PostDeleteCommentUrl {
+    pub comment_id: i32,
 }
 
 pub async fn post_comment(
@@ -33,7 +39,7 @@ pub async fn post_comment(
         )));
     }
 
-    let comment = repo.create(user.id, &url.project_id, &new_comment).await?;
+    let comment = repo.create(&user.id, &url.project_id, &new_comment).await?;
 
     Ok(Ok(RenderBoth(
         CreateCommentFormPartial::new(Some(user.clone()), url),
@@ -42,4 +48,17 @@ pub async fn post_comment(
             comment,
         },
     )))
+}
+
+pub async fn post_delete_comment(
+    PostDeleteCommentUrl { comment_id }: PostDeleteCommentUrl,
+    State(repo): State<CommentRepository>,
+    user: User,
+) -> ToastResult<()> {
+    if user.is_admin || user.id == repo.read_user_id(comment_id).await? {
+        repo.delete(comment_id).await?;
+        Ok(())
+    } else {
+        Err(AppError::Unauthorized.into())
+    }
 }

@@ -37,11 +37,11 @@
 <img class="max-w-full mx-auto my-8 border-stone-900 border-4 shadow-comic" alt="Thumbnail"
      src="/thumbnails/{{ project.thumbnail_id }}">
 <div class="prose prose-stone mx-auto">
-    {{ project.content|markdown|e("none") }}
+    {{ content|markdown|e("none") }}
     <h2>Comments</h2>
     {% include "../comments/form/create_form_partial.html" %}
-    {% for comment in project.comments %}
-    {% include "../comments/comment.html" %}
+    {% for comment in comments %}
+    {% include "../comments/component.html" %}
     {% endfor %}
 </div>
 {% endblock %}

@@ -1,13 +1,13 @@
 <div id="comment-{{ comment.id }}" class="flex flex-col gap-4 border-4 border-stone-900 shadow-comic p-8 mt-8">
     <div class="flex justify-between items-baseline">
-        <span class="text-lg text-stone-900 font-bold">{{ comment.user.name }}</span>
+        <span class="text-lg text-stone-900 font-bold">{% if let Some(name) = comment.name %}{{ name }}{% else %}anonymous{% endif %}</span>
         <span class="text-sm text-stone-500" title="{{ comment.date_posted|humantime }}">{{ comment.date_posted|humandtime }}</span>
     </div>
     <p class="m-0 overflow-scroll">
         {{ comment.message }}
     </p>
     {% if let Some(user) = user %}
-    {% if user.is_admin || user.id == comment.user.id %}
+    {% if user.is_admin || user.id == comment.user_id %}
     <div class="flex justify-end items-center gap-2">
         <a class="block size-8 p-2 rounded-full text-stone-300 hover:bg-stone-300 hover:text-stone-100 transition-colors">
             {% include "icons/pencil.svg" %}
@@ -17,19 +17,22 @@
             {% include "icons/trash-can.svg" %}
         </button>
         <dialog id="delete-comment-{{ comment.id }}" class="bg-stone-100 border-4 border-stone-900 shadow-comic p-8">
-            <form hx-target="#comment-{{ comment.id }}" hx-swap="outerHTML">
-                <p class="m-0 mb-4 text-stone-900">Are you sure you want to delete this comment?</p>
-                <div class="flex justify-around">
+            <p class="m-0 mb-4 text-stone-900">Are you sure you want to delete this comment?</p>
+            <div class="flex justify-around">
+                <form method="dialog">
                     <button class="py-4 px-8 bg-blue-500 hover:bg-blue-300 border-stone-900 border-4 shadow-comic text-stone-100 font-bold text-xl no-underline"
-                            formmethod="dialog" type="submit">
+                            type="submit">
                         Cancel
                     </button>
+                </form>
+                <form hx-post="/comments/{{ comment.id }}/delete" hx-target="#comment-{{ comment.id }}"
+                      hx-swap="outerHTML">
                     <button class="py-4 px-8 bg-red-500 hover:bg-red-300 border-stone-900 border-4 shadow-comic text-stone-100 font-bold text-xl no-underline"
                             type="submit">
                         Delete
                     </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </dialog>
     </div>
     {% endif %}

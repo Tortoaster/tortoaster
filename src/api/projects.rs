@@ -18,7 +18,7 @@ use crate::{
         users::User,
     },
     error::{AppError, PageResult, WithPageRejection},
-    repository::{files::FileRepository, projects::ProjectRepository},
+    repository::{comments::CommentRepository, files::FileRepository, projects::ProjectRepository},
     state::AppState,
     template::{
         projects::{
@@ -76,7 +76,7 @@ async fn get_project_put_form(
     State(repo): State<ProjectRepository>,
     user: Option<User>,
 ) -> PageResult<Render<UpdateProjectFormPage>> {
-    let project = repo.get(&id).await?;
+    let project = repo.read_data(&id).await?;
 
     Ok(Render(UpdateProjectFormPage::new(
         user,
@@ -91,7 +91,7 @@ async fn get_project_delete_form(
     State(repo): State<ProjectRepository>,
     user: Option<User>,
 ) -> PageResult<Render<DeleteProjectFormPage>> {
-    let project = repo.get_name(&id).await?;
+    let project = repo.read_name(&id).await?;
 
     Ok(Render(DeleteProjectFormPage::new(
         user,
@@ -148,16 +148,18 @@ async fn list_projects(
 
 async fn get_project(
     GetProjectUrl { id }: GetProjectUrl,
-    State(repo): State<ProjectRepository>,
+    State(project_repo): State<ProjectRepository>,
+    State(comment_repo): State<CommentRepository>,
+    State(file_repo): State<FileRepository>,
     user: Option<User>,
-    WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<i32>>>>,
 ) -> PageResult<Render<GetProjectPage>> {
-    let project = repo
-        .get_with_comments(&id, &pager)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    let project = project_repo.read(&id).await?.ok_or(AppError::NotFound)?;
+    let comments = comment_repo.list(&id).await?;
+    let content = file_repo.retrieve_markdown(&id, AppBucket::Content).await?;
 
-    Ok(Render(GetProjectPage::new(user, project)))
+    Ok(Render(GetProjectPage::new(
+        user, project, content, comments,
+    )))
 }
 
 async fn post_project(

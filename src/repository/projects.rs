@@ -1,39 +1,27 @@
-use sea_orm::{
-    ColumnTrait, DatabaseConnection, EntityTrait, Order, QueryFilter, QueryOrder, QuerySelect,
-    SqlxPostgresConnector, TransactionTrait,
-};
 use sqlx::{query, query_as, PgPool};
 use uuid::Uuid;
 
 use crate::{
     config::AppBucket,
     dto::projects::{
-        NewProject, ProjectData, ProjectId, ProjectIndex, ProjectName, ProjectPreview,
-        ProjectWithComments,
+        NewProject, Project, ProjectData, ProjectId, ProjectIndex, ProjectName, ProjectPreview,
     },
     error::AppResult,
-    model::{comments, projects, user_entity},
     repository::files::FileRepository,
     utils::pagination::{Page, Pager},
 };
 
 const DEFAULT_PROJECTS_PER_PAGE: i64 = 12;
-const DEFAULT_COMMENTS_PER_PAGE: i64 = 10;
 
 #[derive(Clone, Debug)]
 pub struct ProjectRepository {
     pool: PgPool,
-    conn: DatabaseConnection,
     file_repo: FileRepository,
 }
 
 impl ProjectRepository {
     pub fn new(pool: PgPool, file_repo: FileRepository) -> Self {
-        Self {
-            conn: SqlxPostgresConnector::from_sqlx_postgres_pool(pool.clone()),
-            pool,
-            file_repo,
-        }
+        Self { pool, file_repo }
     }
 
     pub async fn list(&self, pager: &Pager<ProjectIndex>) -> sqlx::Result<Page<ProjectPreview>> {
@@ -146,7 +134,7 @@ impl ProjectRepository {
         Ok(page)
     }
 
-    pub async fn get(&self, id: &str) -> AppResult<ProjectData> {
+    pub async fn read_data(&self, id: &str) -> AppResult<ProjectData> {
         struct NameUrl {
             name: String,
             thumbnail_id: Uuid,
@@ -178,7 +166,7 @@ impl ProjectRepository {
         })
     }
 
-    pub async fn get_name(&self, id: &str) -> AppResult<ProjectName> {
+    pub async fn read_name(&self, id: &str) -> AppResult<ProjectName> {
         let name = query_as!(
             ProjectName,
             "SELECT name FROM projects WHERE NOT deleted AND id = $1;",
@@ -190,37 +178,17 @@ impl ProjectRepository {
         Ok(name)
     }
 
-    pub async fn get_with_comments(
-        &self,
-        id: &str,
-        pager: &Pager<i32>,
-    ) -> AppResult<Option<ProjectWithComments>> {
-        let transaction = self.conn.begin().await?;
+    pub async fn read(&self, id: &str) -> AppResult<Option<Project>> {
+        let project = query_as!(
+            Project,
+            "SELECT id, name, preview, thumbnail_id, project_url, date_posted FROM projects WHERE \
+             NOT deleted AND id = $1;",
+            id
+        )
+        .fetch_optional(&self.pool)
+        .await?;
 
-        let project = match projects::Entity::find_by_id(id)
-            .filter(projects::Column::Deleted.eq(false))
-            .one(&transaction)
-            .await?
-        {
-            None => return Ok(None),
-            Some(project) => project,
-        };
-
-        let comments = comments::Entity::find()
-            .filter(comments::Column::ProjectId.eq(&project.id))
-            .find_also_related(user_entity::Entity)
-            // .filter(comments::Column::Id.gt(pager.after))
-            // Since the ID is serial, sorting by id or by post time is equivalent
-            .order_by(comments::Column::Id, Order::Desc)
-            .limit(pager.items.unwrap_or(DEFAULT_COMMENTS_PER_PAGE) as u64)
-            .all(&transaction)
-            .await?;
-
-        transaction.commit().await?;
-
-        let project = ProjectWithComments::from_model(project, comments, &self.file_repo).await?;
-
-        Ok(Some(project))
+        Ok(project)
     }
 
     pub async fn create(&self, new_project: NewProject) -> AppResult<ProjectId> {

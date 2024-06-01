@@ -23,11 +23,10 @@ config = "0.14.0"
 openidconnect = { version = "3.5.0", default-features = false }
 pulldown-cmark = "0.11.0"
 regex = "1.10.4"
-sea-orm = { version = "0.12.15", default-features = false, features = ["macros", "runtime-tokio-rustls", "sqlx-postgres", "with-time", "with-uuid"] }
 serde = { version = "1.0.196", features = ["derive"] }
 serde-inline-default = "0.2.0"
 serde_with = "3.8.1"
-sqlx = { version = "0.7.3", features = ["runtime-tokio-rustls", "postgres", "time"] }
+sqlx = { version = "0.7.3", features = ["runtime-tokio-rustls", "postgres", "time", "uuid"] }
 strum = { version = "0.26.2", features = ["derive"] }
 thiserror = "1.0.56"
 time = { version = "=0.3.34", features = ["parsing", "serde"] }

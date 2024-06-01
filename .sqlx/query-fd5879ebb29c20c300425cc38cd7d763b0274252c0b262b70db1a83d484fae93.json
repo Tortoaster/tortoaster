@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, name, preview, thumbnail_id, project_url, date_posted FROM projects WHERE NOT deleted AND id = $1;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "preview",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "thumbnail_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "project_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "date_posted",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "fd5879ebb29c20c300425cc38cd7d763b0274252c0b262b70db1a83d484fae93"
+}

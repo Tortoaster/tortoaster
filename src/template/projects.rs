@@ -12,7 +12,8 @@ use crate::{
         users::{LoginUrl, LogoutUrl},
     },
     dto::{
-        projects::{ProjectData, ProjectName, ProjectPreview, ProjectWithComments},
+        comments::CommentWithUser,
+        projects::{Project, ProjectData, ProjectName, ProjectPreview},
         users::User,
     },
     template::filters,
@@ -139,11 +140,18 @@ pub struct GetProjectPage {
     get_project_put_form_url: GetProjectPutFormUrl,
     get_project_delete_form_url: GetProjectDeleteFormUrl,
     post_comment_url: PostCommentUrl,
-    project: ProjectWithComments,
+    project: Project,
+    content: String,
+    comments: Vec<CommentWithUser>,
 }
 
 impl GetProjectPage {
-    pub fn new(user: Option<User>, project: ProjectWithComments) -> Self {
+    pub fn new(
+        user: Option<User>,
+        project: Project,
+        content: String,
+        comments: Vec<CommentWithUser>,
+    ) -> Self {
         Self {
             user,
             login_url: LoginUrl,
@@ -158,6 +166,8 @@ impl GetProjectPage {
                 project_id: project.id.clone(),
             },
             project,
+            content,
+            comments,
         }
     }
 }

@@ -1,10 +1,7 @@
 use serde_with::serde_derive::Deserialize;
 use validator::Validate;
 
-use crate::{
-    dto::{projects::ProjectTime, users::User},
-    model::{comments, user_entity},
-};
+use crate::dto::{projects::ProjectTime, users::UserId};
 
 // Requests
 
@@ -17,24 +14,10 @@ pub struct NewComment {
 // Responses
 
 #[derive(Debug)]
-pub struct Comment {
+pub struct CommentWithUser {
     pub id: i32,
-    pub user: User,
+    pub user_id: UserId,
+    pub name: Option<String>,
     pub message: String,
     pub date_posted: ProjectTime,
-}
-
-impl Comment {
-    pub fn from_model(comment: comments::Model, user: Option<user_entity::Model>) -> Self {
-        let user = user
-            .and_then(|user| user.try_into().ok())
-            .unwrap_or_else(User::deleted);
-
-        Comment {
-            id: comment.id,
-            user,
-            message: comment.message,
-            date_posted: ProjectTime::from(comment.date_posted),
-        }
-    }
 }

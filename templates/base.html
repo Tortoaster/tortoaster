@@ -37,7 +37,8 @@
         <div class="absolute right-0 top-0 text-stone-900 text-sm text-right p-8">
             {% match user %}
             {% when Some with (user) %}
-            Logged in as {{ user.name }} | <a href="{{ logout_url }}">Log out</a>
+            Logged in as {% if let Some(name) = user.name %}{{ name }}{% else %}anonymous{% endif %} | <a
+                href="{{ logout_url }}">Log out</a>
             {% when None %}
             Viewing as guest | <a href="{{ login_url }}">Log in</a>
             {% endmatch %}<br/>

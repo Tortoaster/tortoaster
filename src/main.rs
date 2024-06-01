@@ -31,7 +31,6 @@ mod api;
 mod config;
 mod dto;
 mod error;
-mod model;
 mod repository;
 mod state;
 mod template;
@@ -81,6 +80,7 @@ async fn main() {
         // Login required
         .merge(api::projects::protected_router())
         .typed_post(api::comments::post_comment)
+        .typed_post(api::comments::post_delete_comment)
         .typed_get(api::users::login)
         .layer(oidc_login_service)
         // Login optional

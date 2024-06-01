@@ -19,8 +19,6 @@ pub type AppResult<T> = Result<T, AppError>;
 pub enum AppError {
     #[error("I couldn't access the database! :(")]
     Database(#[from] sqlx::Error),
-    #[error("I couldn't access the database! :(")]
-    Orm(#[from] sea_orm::DbErr),
     #[error("I couldn't display this page :(")]
     Template(#[from] askama::Error),
     #[error("Something went wrong while uploading your file :(")]
@@ -35,8 +33,6 @@ pub enum AppError {
     MultipartError(#[from] axum::extract::multipart::MultipartError),
     #[error("Something seems to be wrong with your session, please try logging in again!")]
     Session(#[from] axum_oidc::error::MiddlewareError),
-    #[error("Something weird went wrong :(")]
-    Uuid(#[from] uuid::Error),
     #[error("Something went wrong while retrieving your file :(")]
     ObjectEncoding,
     #[error("I don't understand that type of file :(")]
@@ -45,6 +41,8 @@ pub enum AppError {
     FileMissing,
     #[error("I couldn't find the page you're looking for! :(")]
     NotFound,
+    #[error("You're not allowed to do that!")]
+    Unauthorized,
     #[error("Please fill out all the fields!")]
     Form(#[from] FormRejection),
     #[error("Something weird went wrong :(")]
@@ -60,8 +58,8 @@ pub enum AppError {
 impl AppError {
     fn status_code(&self) -> StatusCode {
         match self {
-            AppError::Database(_) | AppError::Orm(_) => StatusCode::SERVICE_UNAVAILABLE,
-            AppError::Template(_) | AppError::Uuid(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::Database(_) => StatusCode::SERVICE_UNAVAILABLE,
+            AppError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::PutObject(_) => StatusCode::INSUFFICIENT_STORAGE,
             AppError::GetObject(_) | AppError::ObjectEncoding | AppError::NotFound => {
                 StatusCode::NOT_FOUND
@@ -72,9 +70,10 @@ impl AppError {
             | AppError::Validate(_)
             | AppError::FileType
             | AppError::FileMissing => StatusCode::BAD_REQUEST,
-            AppError::Session(_) | AppError::Logout(_) | AppError::User(_) => {
-                StatusCode::UNAUTHORIZED
-            }
+            AppError::Session(_)
+            | AppError::Logout(_)
+            | AppError::User(_)
+            | AppError::Unauthorized => StatusCode::UNAUTHORIZED,
         }
     }
 }

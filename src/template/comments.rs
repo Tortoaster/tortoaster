@@ -3,15 +3,15 @@ use validator::ValidationErrors;
 
 use crate::{
     api::{comments::PostCommentUrl, users::LoginUrl},
-    dto::{comments::Comment, users::User},
+    dto::{comments::CommentWithUser, users::User},
     template::filters,
 };
 
 #[derive(Debug, Template)]
-#[template(path = "comments/comment.html")]
+#[template(path = "comments/component.html")]
 pub struct CommentPartial {
     pub user: Option<User>,
-    pub comment: Comment,
+    pub comment: CommentWithUser,
 }
 
 #[derive(Debug, Template)]

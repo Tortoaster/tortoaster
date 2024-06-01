@@ -1,7 +1,9 @@
 use sqlx::{query_as, PgPool};
-use uuid::Uuid;
 
-use crate::{dto::users::User, error::AppResult};
+use crate::{
+    dto::users::{User, UserId},
+    error::AppResult,
+};
 
 #[derive(Clone, Debug)]
 pub struct UserRepository {
@@ -9,22 +11,23 @@ pub struct UserRepository {
 }
 
 impl UserRepository {
-    pub async fn get(&self, id: Uuid) -> AppResult<User> {
-        struct Username {
-            username: Option<String>,
+    pub async fn get(&self, id: &UserId) -> AppResult<User> {
+        struct PartialUser {
+            id: UserId,
+            name: Option<String>,
         }
 
-        let Username { username } = query_as!(
-            Username,
-            "SELECT username FROM keycloak.user_entity WHERE id = $1;",
-            id.to_string()
+        let PartialUser { id, name } = query_as!(
+            PartialUser,
+            "SELECT id, username AS name FROM keycloak.user_entity WHERE id = $1;",
+            id,
         )
         .fetch_one(&self.pool)
         .await?;
 
         let user = User {
             id,
-            name: username.unwrap_or_else(|| "[unknown user]".to_owned()),
+            name,
             // TODO: Retrieve admin status
             is_admin: false,
         };
