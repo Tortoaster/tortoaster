@@ -2,8 +2,7 @@ use sqlx::{query, query_as, PgPool};
 
 use crate::{
     dto::{
-        comments::{CommentWithUser, NewComment},
-        projects::ProjectTime,
+        comments::{CommentMessage, CommentUserId, CommentWithUser, NewComment},
         users::UserId,
     },
     error::AppResult,
@@ -27,13 +26,6 @@ impl CommentRepository {
         project_id: &str,
         comment: &NewComment,
     ) -> AppResult<CommentWithUser> {
-        pub struct CommentUserId {
-            id: i32,
-            user_id: String,
-            message: String,
-            date_posted: ProjectTime,
-        }
-
         let CommentUserId {
             id,
             user_id,
@@ -93,6 +85,46 @@ impl CommentRepository {
         .await?;
 
         Ok(user_id)
+    }
+
+    pub async fn read_message(&self, id: i32) -> sqlx::Result<CommentMessage> {
+        query_as!(
+            CommentMessage,
+            "SELECT message FROM comments WHERE NOT deleted AND id = $1;",
+            id
+        )
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    pub async fn update(&self, id: i32, comment: &NewComment) -> AppResult<CommentWithUser> {
+        let CommentUserId {
+            id,
+            user_id,
+            message,
+            date_posted,
+        } = query_as!(
+            CommentUserId,
+            "UPDATE comments SET message = $1 WHERE NOT deleted AND id = $2 RETURNING id, \
+             user_id, message, date_posted;",
+            &comment.message,
+            id,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        // TODO: Transaction
+        let user = self.user_repo.get(&user_id).await?;
+
+        let comment = CommentWithUser {
+            id,
+            user_id: user.id,
+            name: user.name,
+            message,
+            date_posted,
+        };
+
+        Ok(comment)
     }
 
     pub async fn delete(&self, id: i32) -> AppResult<()> {

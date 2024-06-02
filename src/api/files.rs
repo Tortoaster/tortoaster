@@ -15,6 +15,7 @@ use crate::{
     repository::files::FileRepository,
     state::AppState,
     template::{files::ImageWithId, Render},
+    utils::claims::Admin,
 };
 
 pub fn public_router() -> Router<AppState> {
@@ -29,6 +30,7 @@ pub struct PostImageUrl;
 
 async fn upload_image(
     _: PostImageUrl,
+    _: Admin,
     State(file_repo): State<FileRepository>,
     WithRejection(mut parts, _): WithToastRejection<Multipart>,
 ) -> ToastResult<Render<ImageWithId>> {

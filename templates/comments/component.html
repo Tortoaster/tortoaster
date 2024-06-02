@@ -9,9 +9,12 @@
     {% if let Some(user) = user %}
     {% if user.is_admin || user.id == comment.user_id %}
     <div class="flex justify-end items-center gap-2">
-        <a class="block size-8 p-2 rounded-full text-stone-300 hover:bg-stone-300 hover:text-stone-100 transition-colors">
+        <button hx-get="/comments/{{ comment.id }}/update-form"
+                hx-target="#comment-{{ comment.id }}"
+                hx-swap="outerHTML"
+                class="size-8 p-2 rounded-full text-stone-300 hover:bg-stone-300 hover:text-stone-100 transition-colors">
             {% include "icons/pencil.svg" %}
-        </a>
+        </button>
         <button class="size-8 p-2 rounded-full text-stone-300 hover:bg-red-300 hover:text-stone-100 transition-colors"
                 onclick="document.getElementById('delete-comment-{{ comment.id }}').showModal()">
             {% include "icons/trash-can.svg" %}

@@ -1,3 +1,5 @@
+use std::ops::{Deref, DerefMut};
+
 use axum::{
     async_trait,
     extract::FromRequestParts,
@@ -30,10 +32,50 @@ impl<S: Send + Sync> FromRequestParts<S> for User {
     }
 }
 
+#[derive(Debug)]
+pub struct Admin(User);
+
+impl Admin {
+    pub fn into_user(self) -> User {
+        self.0
+    }
+}
+
+impl Deref for Admin {
+    type Target = User;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Admin {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+#[async_trait]
+impl<S: Send + Sync> FromRequestParts<S> for Admin {
+    type Rejection = UserRejection;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let user = User::from_request_parts(parts, state).await?;
+
+        if user.is_admin {
+            Ok(Admin(user))
+        } else {
+            Err(UserRejection::Permission)
+        }
+    }
+}
+
 #[derive(Debug, Error)]
 pub enum UserRejection {
     #[error("{0}")]
     Inner(#[from] ExtractorError),
+    #[error("insufficient permissions")]
+    Permission,
 }
 
 impl IntoResponse for UserRejection {

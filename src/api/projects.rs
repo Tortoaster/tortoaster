@@ -27,7 +27,7 @@ use crate::{
         },
         Render,
     },
-    utils::pagination::Pager,
+    utils::{claims::Admin, pagination::Pager},
 };
 
 pub fn public_router() -> Router<AppState> {
@@ -165,11 +165,14 @@ async fn get_project(
 async fn post_project(
     _: PostProjectUrl,
     State(repo): State<ProjectRepository>,
-    user: Option<User>,
+    admin: Admin,
     WithRejection(new_project, _): WithPageRejection<Form<NewProject>>,
 ) -> PageResult<Result<Redirect, Render<CreateProjectFormPage>>> {
     if let Err(errors) = new_project.validate() {
-        return Ok(Err(Render(CreateProjectFormPage::new(user, errors))));
+        return Ok(Err(Render(CreateProjectFormPage::new(
+            Some(admin.into_user()),
+            errors,
+        ))));
     }
 
     let ProjectId { id } = repo.create(new_project.0).await?;
@@ -180,7 +183,7 @@ async fn post_project(
 async fn post_put_project(
     PostPutProjectUrl { id }: PostPutProjectUrl,
     State(repo): State<ProjectRepository>,
-    user: Option<User>,
+    admin: Admin,
     WithRejection(new_project, _): WithPageRejection<Form<NewProject>>,
 ) -> PageResult<Result<Redirect, Render<UpdateProjectFormPage>>> {
     if let Err(errors) = new_project.validate() {
@@ -191,7 +194,7 @@ async fn post_put_project(
             project_url: new_project.0.project_url,
         };
         return Ok(Err(Render(UpdateProjectFormPage::new(
-            user,
+            Some(admin.into_user()),
             PostPutProjectUrl { id },
             errors,
             project,
@@ -206,6 +209,7 @@ async fn post_put_project(
 async fn post_delete_project(
     PostDeleteProjectUrl { id }: PostDeleteProjectUrl,
     State(repo): State<ProjectRepository>,
+    _: Admin,
 ) -> PageResult<Redirect> {
     repo.delete(&id).await?;
     Ok(Redirect::to(&GetProjectsUrl.to_string()))

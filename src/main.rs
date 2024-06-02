@@ -79,8 +79,7 @@ async fn main() {
     let app = Router::new()
         // Login required
         .merge(api::projects::protected_router())
-        .typed_post(api::comments::post_comment)
-        .typed_post(api::comments::post_delete_comment)
+        .merge(api::comments::protected_router())
         .typed_get(api::users::login)
         .layer(oidc_login_service)
         // Login optional
