@@ -73,6 +73,14 @@ services:
       MINIO_HOST: "0.0.0.0"
       MINIO_ROOT_USER: "tortoaster"
       MINIO_ROOT_PASSWORD: "password"
+      MINIO_IDENTITY_OPENID_CONFIG_URL: "http://iam-provider:8003/realms/master/.well-known/openid-configuration"
+      MINIO_IDENTITY_OPENID_CLIENT_ID: "minio"
+      MINIO_IDENTITY_OPENID_CLIENT_SECRET: "pNvFwKbjguoTGCibt9ErDdgwHYif1pN4"
+      MINIO_IDENTITY_OPENID_DISPLAY_NAME: "KeyCloak Admin"
+      MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: "on"
+    depends_on:
+      iam-provider:
+        condition: service_healthy
     healthcheck:
       test: "curl -I http://localhost:9000/minio/health/live"
       interval: 1s
@@ -110,8 +118,6 @@ services:
     volumes: [ "./keycloak:/opt/keycloak/data/import:ro" ]
     ports: [ "8003:8003" ]
     environment:
-      KEYCLOAK_ADMIN: "tortoaster"
-      KEYCLOAK_ADMIN_PASSWORD: "password"
       KC_DB: "postgres"
       KC_DB_URL: "jdbc:postgresql://db/tortoaster"
       KC_DB_USERNAME: "tortoaster"
@@ -119,7 +125,12 @@ services:
       KC_DB_SCHEMA: "keycloak"
       KC_HTTP_PORT: "8003"
       KC_HEALTH_ENABLED: "true"
-    command: "start-dev --import-realm"
+    # Entrypoint used to import master realm separately, as doing so directly is unsupported
+    entrypoint: >
+      /bin/sh -c " \
+        /opt/keycloak/bin/kc.sh import --file /opt/keycloak/data/import/master-realm.json && \
+        /opt/keycloak/bin/kc.sh start-dev --import-realm
+      "
     depends_on:
       db:
         condition: service_healthy
