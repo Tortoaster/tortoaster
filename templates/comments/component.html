@@ -1,6 +1,12 @@
 <div id="comment-{{ comment.id }}" class="flex flex-col gap-4 border-4 border-stone-900 shadow-comic p-8 mt-8">
     <div class="flex justify-between items-baseline">
-        <span class="text-lg text-stone-900 font-bold">{% if let Some(name) = comment.name %}{{ name }}{% else %}anonymous{% endif %}</span>
+        <span class="text-lg font-bold {% if comment.is_admin %}text-blue-500{% else %}text-stone-900{% endif %}">
+            {%- if let Some(name) = comment.name -%}
+                {{ name }}
+            {%- else -%}
+                &lt;anonymous&gt;
+            {%- endif -%}
+        </span>
         <span class="text-sm text-stone-500" title="{{ comment.date_posted|humantime }}">{{ comment.date_posted|humandtime }}</span>
     </div>
     <p class="m-0 overflow-scroll">

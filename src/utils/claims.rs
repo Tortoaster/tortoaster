@@ -2,31 +2,48 @@ use std::ops::{Deref, DerefMut};
 
 use axum::{
     async_trait,
-    extract::FromRequestParts,
+    extract::{FromRef, FromRequestParts},
     http::{request::Parts, StatusCode},
     response::{IntoResponse, Response},
 };
 use axum_oidc::{error::ExtractorError, OidcClaims};
 use openidconnect::AdditionalClaims;
 use serde::{Deserialize, Serialize};
+use sqlx::{query, PgPool};
 use thiserror::Error;
 
 use crate::dto::users::User;
 
 #[async_trait]
-impl<S: Send + Sync> FromRequestParts<S> for User {
+impl<S: Send + Sync> FromRequestParts<S> for User
+where
+    PgPool: FromRef<S>,
+{
     type Rejection = UserRejection;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let claims = OidcClaims::<AppClaims>::from_request_parts(parts, state).await?;
+        let pool = PgPool::from_ref(state);
 
         let user = User {
-            id: claims.subject().to_string(),
+            id: claims.subject().parse()?,
             name: claims
                 .preferred_username()
                 .map(|username| username.to_string()),
             is_admin: claims.additional_claims().is_admin(),
         };
+
+        // Update user data in local table
+        // TODO: Only do this once at login
+        query!(
+            "INSERT INTO users (id, name, is_admin) VALUES ($1, $2, $3) ON CONFLICT (id) DO \
+             UPDATE SET name = $2, is_admin = $3;",
+            user.id,
+            user.name.as_deref().unwrap_or("<anonymous>"),
+            user.is_admin,
+        )
+        .execute(&pool)
+        .await?;
 
         Ok(user)
     }
@@ -56,7 +73,10 @@ impl DerefMut for Admin {
 }
 
 #[async_trait]
-impl<S: Send + Sync> FromRequestParts<S> for Admin {
+impl<S: Send + Sync> FromRequestParts<S> for Admin
+where
+    PgPool: FromRef<S>,
+{
     type Rejection = UserRejection;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
@@ -74,6 +94,10 @@ impl<S: Send + Sync> FromRequestParts<S> for Admin {
 pub enum UserRejection {
     #[error("{0}")]
     Inner(#[from] ExtractorError),
+    #[error("identity provider returned invalid id")]
+    Id(#[from] uuid::Error),
+    #[error("user not found")]
+    Database(#[from] sqlx::Error),
     #[error("insufficient permissions")]
     Permission,
 }

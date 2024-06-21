@@ -1,8 +1,8 @@
-pub type UserId = String;
+use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub struct User {
-    pub id: UserId,
+    pub id: Uuid,
     pub name: Option<String>,
     pub is_admin: bool,
 }

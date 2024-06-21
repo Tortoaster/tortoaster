@@ -9,12 +9,19 @@ CREATE TABLE projects
     deleted      BOOLEAN                  NOT NULL DEFAULT FALSE
 );
 
+CREATE TABLE users
+(
+    id       UUID PRIMARY KEY,
+    name     VARCHAR(128) NOT NULL,
+    is_admin BOOLEAN      NOT NULL
+);
+
 CREATE TABLE comments
 (
     id          SERIAL PRIMARY KEY,
-    user_id     VARCHAR(36) REFERENCES keycloak.user_entity ON DELETE CASCADE NOT NULL,
-    project_id  VARCHAR(128) REFERENCES projects ON DELETE CASCADE            NOT NULL,
-    message     TEXT                                                          NOT NULL,
-    date_posted TIMESTAMP WITH TIME ZONE                                      NOT NULL DEFAULT now(),
-    deleted     BOOLEAN                                                       NOT NULL DEFAULT FALSE
+    user_id     UUID REFERENCES users (id) ON DELETE CASCADE       NOT NULL,
+    project_id  VARCHAR(128) REFERENCES projects ON DELETE CASCADE NOT NULL,
+    message     TEXT                                               NOT NULL,
+    date_posted TIMESTAMP WITH TIME ZONE                           NOT NULL DEFAULT now(),
+    deleted     BOOLEAN                                            NOT NULL DEFAULT FALSE
 );

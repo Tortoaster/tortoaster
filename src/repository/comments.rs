@@ -1,10 +1,8 @@
 use sqlx::{query, query_as, PgPool};
+use uuid::Uuid;
 
 use crate::{
-    dto::{
-        comments::{CommentMessage, CommentUserId, CommentWithUser, NewComment},
-        users::UserId,
-    },
+    dto::comments::{CommentMessage, CommentUserId, CommentWithUser, NewComment},
     error::AppResult,
     repository::users::UserRepository,
 };
@@ -22,7 +20,7 @@ impl CommentRepository {
 
     pub async fn create(
         &self,
-        user_id: &UserId,
+        user_id: Uuid,
         project_id: &str,
         comment: &NewComment,
     ) -> AppResult<CommentWithUser> {
@@ -43,12 +41,13 @@ impl CommentRepository {
         .await?;
 
         // TODO: Transaction
-        let user = self.user_repo.get(&user_id).await?;
+        let user = self.user_repo.get(user_id).await?;
 
         let comment = CommentWithUser {
             id,
             user_id: user.id,
             name: user.name,
+            is_admin: user.is_admin,
             message,
             date_posted,
         };
@@ -59,10 +58,9 @@ impl CommentRepository {
     pub async fn list(&self, project_id: &str) -> AppResult<Vec<CommentWithUser>> {
         let comments = query_as!(
             CommentWithUser,
-            "SELECT comments.id, comments.user_id, users.username AS name, comments.message, \
-             comments.date_posted FROM comments INNER JOIN keycloak.user_entity AS users ON \
-             comments.user_id = users.id WHERE NOT deleted AND comments.project_id = $1 ORDER BY \
-             comments.id DESC;",
+            "SELECT comments.id, comments.user_id, users.name, users.is_admin, comments.message, \
+             comments.date_posted FROM comments INNER JOIN users ON comments.user_id = users.id \
+             WHERE NOT deleted AND comments.project_id = $1 ORDER BY comments.id DESC;",
             project_id,
         )
         .fetch_all(&self.pool)
@@ -71,9 +69,9 @@ impl CommentRepository {
         Ok(comments)
     }
 
-    pub async fn read_user_id(&self, id: i32) -> AppResult<UserId> {
+    pub async fn read_user_id(&self, id: i32) -> AppResult<Uuid> {
         pub struct UserWithId {
-            user_id: UserId,
+            user_id: Uuid,
         }
 
         let UserWithId { user_id } = query_as!(
@@ -114,12 +112,13 @@ impl CommentRepository {
         .await?;
 
         // TODO: Transaction
-        let user = self.user_repo.get(&user_id).await?;
+        let user = self.user_repo.get(user_id).await?;
 
         let comment = CommentWithUser {
             id,
             user_id: user.id,
             name: user.name,
+            is_admin: user.is_admin,
             message,
             date_posted,
         };

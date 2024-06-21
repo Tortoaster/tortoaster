@@ -1,7 +1,8 @@
 use serde_with::serde_derive::Deserialize;
+use uuid::Uuid;
 use validator::Validate;
 
-use crate::dto::{projects::ProjectTime, users::UserId};
+use crate::dto::projects::ProjectTime;
 
 // Requests
 
@@ -16,7 +17,7 @@ pub struct NewComment {
 #[derive(Debug)]
 pub struct CommentUserId {
     pub id: i32,
-    pub user_id: String,
+    pub user_id: Uuid,
     pub message: String,
     pub date_posted: ProjectTime,
 }
@@ -26,8 +27,9 @@ pub struct CommentUserId {
 #[derive(Debug)]
 pub struct CommentWithUser {
     pub id: i32,
-    pub user_id: UserId,
+    pub user_id: Uuid,
     pub name: Option<String>,
+    pub is_admin: bool,
     pub message: String,
     pub date_posted: ProjectTime,
 }

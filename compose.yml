@@ -119,10 +119,9 @@ services:
     ports: [ "8003:8003" ]
     environment:
       KC_DB: "postgres"
-      KC_DB_URL: "jdbc:postgresql://db/tortoaster"
+      KC_DB_URL: "jdbc:postgresql://db/keycloak"
       KC_DB_USERNAME: "tortoaster"
       KC_DB_PASSWORD: "password"
-      KC_DB_SCHEMA: "keycloak"
       KC_HTTP_PORT: "8003"
       KC_HEALTH_ENABLED: "true"
     # Entrypoint used to import master realm separately, as doing so directly is unsupported

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO users (id, name, is_admin) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET name = $2, is_admin = $3;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "50caa5e634119b7d3f9f295f52547c1013b7c61506c1caf4eaa529c30681554e"
+}

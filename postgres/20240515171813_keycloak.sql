@@ -1,1 +1,1 @@
-CREATE SCHEMA keycloak;
+CREATE DATABASE keycloak;

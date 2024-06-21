@@ -136,6 +136,12 @@ impl AppState {
     }
 }
 
+impl FromRef<AppState> for PgPool {
+    fn from_ref(input: &AppState) -> Self {
+        input.pool.clone()
+    }
+}
+
 impl FromRef<AppState> for ProjectRepository {
     fn from_ref(input: &AppState) -> Self {
         Self::new(input.pool.clone(), FileRepository::from_ref(input))

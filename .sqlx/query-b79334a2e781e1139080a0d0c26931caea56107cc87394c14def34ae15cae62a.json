@@ -1,28 +1,34 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, username AS name FROM keycloak.user_entity WHERE id = $1;",
+  "query": "SELECT id, name, is_admin FROM users WHERE id = $1;",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
         "name": "id",
-        "type_info": "Varchar"
+        "type_info": "Uuid"
       },
       {
         "ordinal": 1,
         "name": "name",
         "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "is_admin",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
       false,
-      true
+      false,
+      false
     ]
   },
-  "hash": "576a914aa07fb04d86e19ad3fd768eb39cb2a63fde04f53f936d96e229171e24"
+  "hash": "b79334a2e781e1139080a0d0c26931caea56107cc87394c14def34ae15cae62a"
 }
