@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, preview, thumbnail_id, project_url, date_posted FROM projects WHERE NOT deleted AND id = $1;",
+  "query": "SELECT id, name, thumbnail_id, project_url, date_posted FROM projects WHERE NOT deleted AND id = $1;",
   "describe": {
     "columns": [
       {
@@ -15,21 +15,16 @@
       },
       {
         "ordinal": 2,
-        "name": "preview",
-        "type_info": "Varchar"
-      },
-      {
-        "ordinal": 3,
         "name": "thumbnail_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 4,
+        "ordinal": 3,
         "name": "project_url",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "date_posted",
         "type_info": "Timestamptz"
       }
@@ -43,10 +38,9 @@
       false,
       false,
       false,
-      false,
       true,
       false
     ]
   },
-  "hash": "fd5879ebb29c20c300425cc38cd7d763b0274252c0b262b70db1a83d484fae93"
+  "hash": "f35a10dbeb0c6f60964cb820d4f63734f883beb17e3ca329f2f011761c13e2f1"
 }

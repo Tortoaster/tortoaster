@@ -108,7 +108,6 @@ pub struct ProjectThumbnailId {
 pub struct Project {
     pub id: String,
     pub name: String,
-    pub preview: String,
     pub thumbnail_id: Uuid,
     pub project_url: Option<String>,
     pub date_posted: ProjectTime,

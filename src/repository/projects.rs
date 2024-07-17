@@ -181,8 +181,8 @@ impl ProjectRepository {
     pub async fn read(&self, id: &str) -> AppResult<Option<Project>> {
         let project = query_as!(
             Project,
-            "SELECT id, name, preview, thumbnail_id, project_url, date_posted FROM projects WHERE \
-             NOT deleted AND id = $1;",
+            "SELECT id, name, thumbnail_id, project_url, date_posted FROM projects WHERE NOT \
+             deleted AND id = $1;",
             id
         )
         .fetch_optional(&self.pool)
