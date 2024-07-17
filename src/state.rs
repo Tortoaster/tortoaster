@@ -32,7 +32,7 @@ impl AppState {
         let pool = backoff::future::retry_notify(
             ExponentialBackoff::default(),
             || async {
-                let pool = PgPool::connect(config.database_url()).await?;
+                let pool = PgPool::connect_with(config.pg_connect_options()).await?;
                 Ok(pool)
             },
             |error, duration: Duration| {

@@ -10,6 +10,7 @@ use aws_sdk_s3::config::Credentials;
 use config::Config;
 use serde::Deserialize;
 use serde_inline_default::serde_inline_default;
+use sqlx::postgres::PgConnectOptions;
 use strum::EnumIter;
 use tower_sessions_redis_store::fred::prelude::{RedisConfig, Server, ServerConfig};
 use tracing_subscriber::EnvFilter;
@@ -53,8 +54,18 @@ impl AppConfig {
         EnvFilter::new(&self.rust_log)
     }
 
-    pub fn database_url(&self) -> &str {
-        &self.database.url
+    pub fn pg_connect_options(&self) -> PgConnectOptions {
+        let mut options = self
+            .database
+            .url
+            .parse::<PgConnectOptions>()
+            .expect("invalid database url");
+
+        if let Some(password) = self.database.password.as_deref() {
+            options = options.password(password);
+        }
+
+        options
     }
 
     pub async fn s3_config(&self) -> SdkConfig {
@@ -85,6 +96,7 @@ impl AppConfig {
 #[derive(Debug, Deserialize)]
 struct DatabaseConfig {
     url: String,
+    password: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
