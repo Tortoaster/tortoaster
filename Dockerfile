@@ -5,16 +5,14 @@ ARG TARGETARCH
 WORKDIR /app
 
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
-        export RELEASE=tailwindcss-linux-x64; \
+        curl -sL -o tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64; \
     elif [ "$TARGETARCH" = "arm64" ]; then \
-        export RELEASE=tailwindcss-linux-arm64; \
+        curl -sL -o tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-arm64; \
     else \
         echo "Unsupported architecture: $TARGETARCH"; \
         exit 1; \
     fi
 
-RUN curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/$RELEASE
-RUN mv $RELEASE tailwindcss
 RUN chmod +x tailwindcss
 
 FROM debian:bookworm-slim AS tailwindcss
