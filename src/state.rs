@@ -39,11 +39,10 @@ impl AppState {
         );
 
         let (pool_ok, pool_err) = split(pool);
-        let (s3_client_ok, s3_client_err) = split(s3_client);
         let (oidc_auth_layer_ok, oidc_auth_layer_err) = split(oidc_auth_layer);
         let (redis_pool_ok, redis_pool_err) = split(redis_pool);
 
-        let errors = [pool_err, s3_client_err, oidc_auth_layer_err, redis_pool_err]
+        let errors = [pool_err, oidc_auth_layer_err, redis_pool_err]
             .iter()
             .flatten()
             .copied()
@@ -55,7 +54,6 @@ impl AppState {
         }
 
         let pool = pool_ok.unwrap();
-        let s3_client = s3_client_ok.unwrap();
         let oidc_auth_layer = oidc_auth_layer_ok.unwrap();
         let (redis_pool, redis_handle) = redis_pool_ok.unwrap();
 
@@ -96,48 +94,12 @@ async fn init_pool(config: &AppConfig) -> Result<PgPool, &'static str> {
     Ok(pool)
 }
 
-async fn init_s3_client(config: &AppConfig) -> Result<aws_sdk_s3::Client, &'static str> {
-    let s3_client = aws_sdk_s3::Client::from_conf(
+async fn init_s3_client(config: &AppConfig) -> aws_sdk_s3::Client {
+    aws_sdk_s3::Client::from_conf(
         aws_sdk_s3::config::Builder::from(&config.s3_config().await)
             .force_path_style(true)
             .build(),
-    );
-
-    let output = backoff::future::retry_notify(
-        backoff_config(),
-        || async {
-            let exists = s3_client.list_buckets().send().await?;
-            Ok(exists)
-        },
-        |error, duration: Duration| {
-            warn!("failed to find s3 instance: {error:?}");
-            warn!("retrying in {} seconds", duration.as_secs());
-        },
     )
-    .await
-    .map_err(|_| "failed to find s3 instance")?;
-    let buckets = output.buckets();
-
-    info!(
-        "found s3 instance with {} bucket(s): {}",
-        buckets.len(),
-        buckets
-            .iter()
-            .map(|bucket| bucket.name.as_deref().unwrap_or("<unnamed>"))
-            .collect::<Vec<_>>()
-            .join(", ")
-    );
-
-    for app_bucket in AppBucket::iter() {
-        if !buckets
-            .iter()
-            .any(|bucket| bucket.name() == Some(&app_bucket))
-        {
-            return Err("not all necessary buckets found");
-        }
-    }
-
-    Ok(s3_client)
 }
 
 async fn init_oidc_auth_layer(
