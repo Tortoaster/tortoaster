@@ -3800,7 +3800,7 @@ dependencies = [
 
 [[package]]
 name = "tortoaster"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "askama",
  "aws-config",
