@@ -9,6 +9,7 @@ services:
       HOST: "0.0.0.0"
       RUST_LOG: "tortoaster=info,warn"
       DATABASE__URL: "postgres://tortoaster:password@db/tortoaster"
+      S3__REGION: "eu-central-1"
       S3__ENDPOINT_URL: "http://object-store:9000/"
       S3__ACCESS_KEY_ID: "tortoaster"
       S3__SECRET_ACCESS_KEY: "password"

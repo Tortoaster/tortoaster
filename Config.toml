@@ -6,6 +6,7 @@ rust_log = "tortoaster=trace,warn" # default: info
 url = "postgres://tortoaster:password@localhost/tortoaster"
 
 [s3]
+region = "eu-central-1"
 endpoint_url = "http://localhost:9000"
 access_key_id = "tortoaster"
 secret_access_key = "password"

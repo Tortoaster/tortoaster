@@ -5,7 +5,7 @@ use std::{
     sync::OnceLock,
 };
 
-use aws_config::{BehaviorVersion, SdkConfig};
+use aws_config::{BehaviorVersion, Region, SdkConfig};
 use aws_sdk_s3::config::Credentials;
 use config::Config;
 use serde::Deserialize;
@@ -70,7 +70,7 @@ impl AppConfig {
 
     pub async fn s3_config(&self) -> SdkConfig {
         aws_config::defaults(BehaviorVersion::v2023_11_09())
-            .region("eu-central-1")
+            .region(Region::new(self.s3.region.clone()))
             .endpoint_url(&self.s3.endpoint_url)
             .credentials_provider(Credentials::new(
                 &self.s3.access_key_id,
@@ -101,6 +101,7 @@ struct DatabaseConfig {
 
 #[derive(Debug, Deserialize)]
 struct S3Config {
+    region: String,
     endpoint_url: String,
     access_key_id: String,
     secret_access_key: String,
