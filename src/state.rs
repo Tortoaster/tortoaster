@@ -4,7 +4,6 @@ use axum::extract::FromRef;
 use axum_oidc::OidcAuthLayer;
 use backoff::{ExponentialBackoff, ExponentialBackoffBuilder};
 use sqlx::PgPool;
-use strum::IntoEnumIterator;
 use tokio::{join, task::AbortHandle};
 use tower_sessions_redis_store::fred::{
     clients::RedisPool, interfaces::ClientLike, types::ConnectHandle,
@@ -12,7 +11,7 @@ use tower_sessions_redis_store::fred::{
 use tracing::{info, warn};
 
 use crate::{
-    config::{AppBucket, AppConfig},
+    config::AppConfig,
     repository::{
         comments::CommentRepository, files::FileRepository, projects::ProjectRepository,
         users::UserRepository,
