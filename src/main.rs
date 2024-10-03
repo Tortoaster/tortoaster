@@ -80,6 +80,7 @@ async fn main() {
         // Login required
         .merge(api::projects::protected_router())
         .merge(api::comments::protected_router())
+        .merge(api::files::public_router())
         .typed_get(api::users::login)
         .layer(oidc_login_service)
         // Login optional
@@ -87,7 +88,6 @@ async fn main() {
         .typed_get(api::users::logout)
         .layer(oidc_auth_service)
         // Publicly available
-        .merge(api::files::public_router())
         .route(
             "/",
             get(|| async { Redirect::permanent(&GetProjectsUrl.to_string()) }),
