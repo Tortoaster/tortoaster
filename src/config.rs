@@ -5,7 +5,7 @@ use std::{
     sync::OnceLock,
 };
 
-use aws_config::{BehaviorVersion, Region, SdkConfig};
+use aws_config::{BehaviorVersion, Region};
 use aws_sdk_s3::config::Credentials;
 use config::Config;
 use serde::Deserialize;
@@ -68,8 +68,8 @@ impl AppConfig {
         options
     }
 
-    pub async fn s3_config(&self) -> SdkConfig {
-        aws_config::defaults(BehaviorVersion::v2023_11_09())
+    pub async fn s3_config(&self) -> aws_sdk_s3::Config {
+        let sdk_config = aws_config::defaults(BehaviorVersion::v2023_11_09())
             .region(Region::new(self.s3.region.clone()))
             .endpoint_url(&self.s3.endpoint_url)
             .credentials_provider(Credentials::new(
@@ -80,7 +80,12 @@ impl AppConfig {
                 "tortoaster-credential-provider",
             ))
             .load()
-            .await
+            .await;
+
+        aws_sdk_s3::config::Builder::from(&sdk_config)
+            // Required by MinIO
+            .force_path_style(true)
+            .build()
     }
 
     pub fn cache_config(&self) -> RedisConfig {

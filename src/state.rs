@@ -21,9 +21,9 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct AppState {
-    pub pool: PgPool,
-    pub s3_client: aws_sdk_s3::Client,
-    pub redis_pool: RedisPool,
+    pub(super) pool: PgPool,
+    pub(super) s3_client: aws_sdk_s3::Client,
+    pub(super) redis_pool: RedisPool,
 }
 
 impl AppState {
@@ -94,11 +94,7 @@ async fn init_pool(config: &AppConfig) -> Result<PgPool, &'static str> {
 }
 
 async fn init_s3_client(config: &AppConfig) -> aws_sdk_s3::Client {
-    aws_sdk_s3::Client::from_conf(
-        aws_sdk_s3::config::Builder::from(&config.s3_config().await)
-            .force_path_style(true)
-            .build(),
-    )
+    aws_sdk_s3::Client::from_conf(config.s3_config().await)
 }
 
 async fn init_oidc_auth_layer(
