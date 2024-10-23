@@ -8,7 +8,6 @@ use axum::{
 };
 use axum_extra::routing::RouterExt;
 use axum_oidc::{error::MiddlewareError, OidcLoginLayer};
-use axum_s3::ServeBucket;
 use tokio::{net::TcpListener, signal, task::AbortHandle};
 use tower::ServiceBuilder;
 use tower_http::services::ServeDir;
@@ -21,7 +20,7 @@ use tracing::info;
 
 use crate::{
     api::projects::GetProjectsUrl,
-    config::{AppBucket, AppConfig},
+    config::AppConfig,
     error::{AppError, PageError},
     state::AppState,
     utils::claims::AppClaims,
@@ -93,10 +92,6 @@ async fn main() {
             get(|| async { Redirect::permanent(&GetProjectsUrl.to_string()) }),
         )
         .nest_service("/static", ServeDir::new("static"))
-        .nest_service(
-            "/thumbnails",
-            ServeBucket::new(state.s3_client.clone(), AppBucket::Thumbnails.to_string()),
-        )
         .fallback(|| async { PageError(AppError::NotFound) })
         .layer(session_layer)
         .with_state(state);

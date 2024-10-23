@@ -622,21 +622,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "axum-s3"
-version = "0.1.0"
-dependencies = [
- "aws-sdk-s3",
- "aws-smithy-types",
- "axum-core",
- "bytes",
- "futures-core",
- "http 1.1.0",
- "percent-encoding",
- "tower-service",
- "tracing",
-]
-
-[[package]]
 name = "axum-valid"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3732,7 +3717,6 @@ dependencies = [
  "axum",
  "axum-extra",
  "axum-oidc",
- "axum-s3",
  "axum-valid",
  "backoff",
  "bytes",

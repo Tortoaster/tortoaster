@@ -2,6 +2,6 @@
         id="{{ project.thumbnail_id }}"
         class="max-w-full mx-auto border-stone-900 border-4 shadow-comic"
         alt="Thumbnail"
-        src="/thumbnails/{{ project.thumbnail_id }}"
+        src="{{ thumbnail_bucket_url }}/{{ project.thumbnail_id }}"
 />
 <input type="hidden" name="thumbnail-id" value="{{ project.thumbnail_id }}"/>

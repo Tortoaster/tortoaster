@@ -88,6 +88,10 @@ impl AppConfig {
             .build()
     }
 
+    pub fn s3_thumbnail_bucket_url(&self) -> &str {
+        &self.s3.thumbnail_bucket_url
+    }
+
     pub fn cache_config(&self) -> RedisConfig {
         RedisConfig {
             server: ServerConfig::Centralized {
@@ -114,6 +118,7 @@ struct S3Config {
     session_token: Option<String>,
     #[serde(default)]
     bucket: BucketConfig,
+    thumbnail_bucket_url: String,
 }
 
 #[serde_inline_default]

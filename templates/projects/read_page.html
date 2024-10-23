@@ -35,7 +35,7 @@
     <span class="text-sm text-stone-500">{{ project.date_posted|humantime }}</span>
 </div>
 <img class="max-w-full mx-auto my-8 border-stone-900 border-4 shadow-comic" alt="Thumbnail"
-     src="/thumbnails/{{ project.thumbnail_id }}">
+     src="{{ thumbnail_bucket_url }}/{{ project.thumbnail_id }}">
 <div class="prose prose-stone mx-auto">
     {{ content|markdown|e("none") }}
     <h2>Comments</h2>

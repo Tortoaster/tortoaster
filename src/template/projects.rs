@@ -11,6 +11,7 @@ use crate::{
         },
         users::{LoginUrl, LogoutUrl},
     },
+    config::AppConfig,
     dto::{
         comments::CommentWithUser,
         projects::{Project, ProjectData, ProjectName, ProjectPreview},
@@ -19,7 +20,6 @@ use crate::{
     template::filters,
     utils::pagination::Page,
 };
-
 // Forms
 
 #[derive(Debug, Template)]
@@ -54,6 +54,7 @@ pub struct UpdateProjectFormPage {
     logout_url: LogoutUrl,
     post_image_url: PostImageUrl,
     post_put_project_url: PostPutProjectUrl,
+    thumbnail_bucket_url: String,
     errors: ValidationErrors,
     project: ProjectData,
 }
@@ -71,6 +72,7 @@ impl UpdateProjectFormPage {
             logout_url: LogoutUrl,
             post_image_url: PostImageUrl,
             post_put_project_url,
+            thumbnail_bucket_url: AppConfig::get().s3_thumbnail_bucket_url().to_owned(),
             errors,
             project,
         }
@@ -113,6 +115,7 @@ pub struct ListProjectsPage {
     logout_url: LogoutUrl,
     get_project_post_form_url: GetProjectPostFormUrl,
     get_projects_url: GetProjectsUrl,
+    thumbnail_bucket_url: String,
     about: String,
     page: Page<ProjectPreview>,
 }
@@ -125,6 +128,7 @@ impl ListProjectsPage {
             logout_url: LogoutUrl,
             get_project_post_form_url: GetProjectPostFormUrl,
             get_projects_url: GetProjectsUrl,
+            thumbnail_bucket_url: AppConfig::get().s3_thumbnail_bucket_url().to_owned(),
             about,
             page,
         }
@@ -140,6 +144,7 @@ pub struct GetProjectPage {
     get_project_put_form_url: GetProjectPutFormUrl,
     get_project_delete_form_url: GetProjectDeleteFormUrl,
     post_comment_url: PostCommentUrl,
+    thumbnail_bucket_url: String,
     project: Project,
     content: String,
     comments: Vec<CommentWithUser>,
@@ -165,6 +170,7 @@ impl GetProjectPage {
             post_comment_url: PostCommentUrl {
                 project_id: project.id.clone(),
             },
+            thumbnail_bucket_url: AppConfig::get().s3_thumbnail_bucket_url().to_owned(),
             project,
             content,
             comments,
