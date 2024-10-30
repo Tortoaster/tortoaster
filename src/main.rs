@@ -8,6 +8,7 @@ use axum::{
 };
 use axum_extra::routing::RouterExt;
 use axum_oidc::{error::MiddlewareError, OidcLoginLayer};
+use axum_prometheus::PrometheusMetricLayerBuilder;
 use tokio::{net::TcpListener, signal, task::AbortHandle};
 use tower::ServiceBuilder;
 use tower_http::services::ServeDir;
@@ -42,6 +43,11 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(config.env_filter())
         .init();
+
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayerBuilder::new()
+        .with_prefix("tortoaster")
+        .with_default_metrics()
+        .build_pair();
 
     let (state, oidc_auth_layer, abort_handle) = AppState::new().await;
 
@@ -87,13 +93,15 @@ async fn main() {
         .typed_get(api::users::logout)
         .layer(oidc_auth_service)
         // Publicly available
+        .layer(session_layer)
         .route(
             "/",
             get(|| async { Redirect::permanent(&GetProjectsUrl.to_string()) }),
         )
         .nest_service("/static", ServeDir::new("static"))
         .fallback(|| async { PageError(AppError::NotFound) })
-        .layer(session_layer)
+        .route("/metrics", get(|| async move { metric_handle.render() }))
+        .layer(prometheus_layer)
         .with_state(state);
 
     let addr = config.socket_addr();
