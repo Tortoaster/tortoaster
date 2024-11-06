@@ -31,12 +31,3 @@ pub fn humantime(time: &ProjectTime) -> Result<String, askama::Error> {
         .format(format)
         .map_err(|error| askama::Error::Custom(Box::new(error)))
 }
-
-pub fn markdown(s: impl AsRef<str>) -> Result<String, Infallible> {
-    let parser = pulldown_cmark::Parser::new(s.as_ref());
-    let mut html = String::new();
-
-    pulldown_cmark::html::push_html(&mut html, parser);
-
-    Ok(html)
-}

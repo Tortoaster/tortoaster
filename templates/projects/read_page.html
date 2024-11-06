@@ -2,10 +2,6 @@
 
 {% block title %}{{ project.name }} - Tortoaster{% endblock %}
 
-{% block head %}
-<script src="/static/modal.js"></script>
-{% endblock %}
-
 {% block nav %}
 {% match user %}
 {% when Some with (user) %}
@@ -35,9 +31,9 @@
     <span class="text-sm text-stone-500">{{ project.date_posted|humantime }}</span>
 </div>
 <img class="max-w-full mx-auto my-8 border-stone-900 border-4 shadow-comic" alt="Thumbnail"
-     src="{{ thumbnail_bucket_url }}/{{ project.thumbnail_id }}">
+     src="{{ bucket_url }}/thumbnails/{{ project.thumbnail_id }}">
 <div class="prose prose-stone mx-auto">
-    {{ content|markdown|e("none") }}
+    <div hx-get="{{ bucket_url }}/content/{{ project.id }}.md" hx-trigger="load" hx-swap="outerHTML"></div>
     <h2>Comments</h2>
     {% include "../comments/form/create_form_partial.html" %}
     {% for comment in comments %}

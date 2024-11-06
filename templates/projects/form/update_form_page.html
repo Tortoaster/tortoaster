@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content_value %}
-{{- project.content -}}
+<div hx-get="{{ bucket_url }}/content/{{ project.id }}.md" hx-trigger="load" hx-swap="outerHTML"></div>
 {% endblock %}
 
 {% block project_url_value %}
