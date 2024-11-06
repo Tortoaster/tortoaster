@@ -74,8 +74,8 @@ impl NewProject {
 
 #[derive(Debug)]
 pub struct ProjectData {
+    pub id: String,
     pub name: String,
-    pub content: String,
     pub thumbnail_id: Uuid,
     pub project_url: Option<String>,
 }

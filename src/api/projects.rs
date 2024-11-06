@@ -12,13 +12,12 @@ use serde::Deserialize;
 use validator::{Validate, ValidationErrors};
 
 use crate::{
-    config::AppBucket,
     dto::{
         projects::{NewProject, ProjectData, ProjectId, ProjectIndex},
         users::User,
     },
     error::{AppError, PageResult, WithPageRejection},
-    repository::{comments::CommentRepository, files::FileRepository, projects::ProjectRepository},
+    repository::{comments::CommentRepository, projects::ProjectRepository},
     state::AppState,
     template::{
         projects::{
@@ -131,35 +130,24 @@ pub struct PostDeleteProjectUrl {
 async fn list_projects(
     _: GetProjectsUrl,
     State(repo): State<ProjectRepository>,
-    State(file_repo): State<FileRepository>,
     user: Option<User>,
     WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<ProjectIndex>>>>,
 ) -> PageResult<Render<ListProjectsPage>> {
-    const ABOUT_KEY: &str = "projects";
-
-    let about = file_repo
-        .retrieve_markdown(ABOUT_KEY, AppBucket::System)
-        .await?;
-
     let page = repo.list(&pager).await?;
 
-    Ok(Render(ListProjectsPage::new(user, about, page)))
+    Ok(Render(ListProjectsPage::new(user, page)))
 }
 
 async fn get_project(
     GetProjectUrl { id }: GetProjectUrl,
     State(project_repo): State<ProjectRepository>,
     State(comment_repo): State<CommentRepository>,
-    State(file_repo): State<FileRepository>,
     user: Option<User>,
 ) -> PageResult<Render<GetProjectPage>> {
     let project = project_repo.read(&id).await?.ok_or(AppError::NotFound)?;
     let comments = comment_repo.list(&id).await?;
-    let content = file_repo.retrieve_markdown(&id, AppBucket::Content).await?;
 
-    Ok(Render(GetProjectPage::new(
-        user, project, content, comments,
-    )))
+    Ok(Render(GetProjectPage::new(user, project, comments)))
 }
 
 async fn post_project(
@@ -188,8 +176,8 @@ async fn post_put_project(
 ) -> PageResult<Result<Redirect, Render<UpdateProjectFormPage>>> {
     if let Err(errors) = new_project.validate() {
         let project = ProjectData {
+            id: id.clone(),
             name: new_project.0.name,
-            content: new_project.0.content,
             thumbnail_id: new_project.0.thumbnail_id,
             project_url: new_project.0.project_url,
         };

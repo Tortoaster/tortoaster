@@ -33,8 +33,6 @@ pub enum AppError {
     MultipartError(#[from] axum::extract::multipart::MultipartError),
     #[error("Something seems to be wrong with your session, please try logging in again!")]
     Session(#[from] axum_oidc::error::MiddlewareError),
-    #[error("Something went wrong while retrieving your file :(")]
-    ObjectEncoding,
     #[error("I don't understand that type of file :(")]
     FileType,
     #[error("Please add an image for the project! :3")]
@@ -61,9 +59,7 @@ impl AppError {
             AppError::Database(_) => StatusCode::SERVICE_UNAVAILABLE,
             AppError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::PutObject(_) => StatusCode::INSUFFICIENT_STORAGE,
-            AppError::GetObject(_) | AppError::ObjectEncoding | AppError::NotFound => {
-                StatusCode::NOT_FOUND
-            }
+            AppError::GetObject(_) | AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::Form(_)
             | AppError::MultipartError(_)
             | AppError::MultipartRejection(_)

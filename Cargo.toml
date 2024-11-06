@@ -24,7 +24,6 @@ serde = { version = "1.0.196", features = ["derive"] }
 serde-inline-default = "0.2.0"
 serde_with = "3.8.1"
 sqlx = { version = "0.8.2", features = ["runtime-tokio-rustls", "postgres", "time", "uuid"] }
-strum = { version = "0.26.2", features = ["derive"] }
 thiserror = "2.0.11"
 time = { version = "0.3.36", features = ["parsing", "serde"] }
 time-humanize = "0.1.3"

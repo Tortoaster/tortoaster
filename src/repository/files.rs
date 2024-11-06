@@ -8,11 +8,9 @@ use aws_sdk_s3::primitives::{ByteStream, SdkBody};
 use bytes::Bytes;
 use thiserror::Error;
 use tracing::error;
+use uuid::Uuid;
 
-use crate::{
-    config::AppBucket,
-    error::{AppError, AppResult},
-};
+use crate::{config::AppConfig, error::AppResult};
 
 #[derive(Clone, Debug)]
 pub struct FileRepository {
@@ -28,7 +26,6 @@ impl FileRepository {
         &self,
         id: impl Into<String>,
         content: T,
-        bucket: AppBucket,
         content_type: impl Into<String>,
     ) -> AppResult<()>
     where
@@ -38,7 +35,7 @@ impl FileRepository {
     {
         self.client
             .put_object()
-            .bucket(bucket.to_string())
+            .bucket(AppConfig::get().s3_bucket_name())
             .key(id)
             .content_type(content_type)
             .content_length(content.len() as i64)
@@ -49,57 +46,24 @@ impl FileRepository {
         Ok(())
     }
 
-    pub async fn store_image(
+    pub async fn store_thumbnail(
         &self,
-        id: impl Into<String>,
-        bucket: AppBucket,
+        id: Uuid,
         bytes: Bytes,
         content_type: ImageContentType,
     ) -> AppResult<()> {
-        let id = id.into();
+        let id = format!("thumbnails/{}", id);
 
-        self.store(&id, bytes, bucket, content_type.to_string())
-            .await?;
-
-        Ok(())
-    }
-
-    pub async fn store_markdown(
-        &self,
-        id: impl Display,
-        bucket: AppBucket,
-        content: &str,
-    ) -> AppResult<()> {
-        let id = format!("{id}.md");
-
-        self.store(&id, content, bucket, "text/markdown").await?;
+        self.store(&id, bytes, content_type.to_string()).await?;
 
         Ok(())
     }
 
-    pub async fn retrieve_markdown(
-        &self,
-        id: impl Display,
-        bucket: AppBucket,
-    ) -> AppResult<String> {
-        let id = format!("{id}.md");
+    pub async fn store_content(&self, id: impl Display, content: &str) -> AppResult<()> {
+        let id = format!("content/{id}.md");
 
-        let content = String::from_utf8(
-            self.client
-                .get_object()
-                .bucket(bucket.to_string())
-                .key(&id)
-                .send()
-                .await?
-                .body
-                .collect()
-                .await
-                .map_err(|_| AppError::ObjectEncoding)?
-                .to_vec(),
-        )
-        .map_err(|_| AppError::ObjectEncoding)?;
-
-        Ok(content)
+        self.store(&id, content, "text/markdown").await?;
+        Ok(())
     }
 }
 

@@ -17,7 +17,7 @@
 <div class="flex flex-col gap-8">
     <div class="bg-blue-500 border-stone-900 border-4 md:shadow-comic mx-[calc(-2rem_-_4px)] md:mx-[calc(-4rem_-_4px)]">
         <div class="prose prose-lg prose-stone !prose-invert text-stone-100 py-8 px-12 md:px-24">
-            {{ about|markdown|e("none") }}
+            <div hx-get="{{ bucket_url }}/system/projects.md" hx-trigger="load" hx-swap="outerHTML"></div>
         </div>
     </div>
     <div id="project-list" hx-boost="true" class="flex flex-wrap gap-8">

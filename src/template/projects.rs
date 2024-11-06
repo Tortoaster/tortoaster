@@ -54,7 +54,7 @@ pub struct UpdateProjectFormPage {
     logout_url: LogoutUrl,
     post_image_url: PostImageUrl,
     post_put_project_url: PostPutProjectUrl,
-    thumbnail_bucket_url: String,
+    bucket_url: String,
     errors: ValidationErrors,
     project: ProjectData,
 }
@@ -72,7 +72,7 @@ impl UpdateProjectFormPage {
             logout_url: LogoutUrl,
             post_image_url: PostImageUrl,
             post_put_project_url,
-            thumbnail_bucket_url: AppConfig::get().s3_thumbnail_bucket_url().to_owned(),
+            bucket_url: AppConfig::get().s3_bucket_url().to_owned(),
             errors,
             project,
         }
@@ -115,21 +115,19 @@ pub struct ListProjectsPage {
     logout_url: LogoutUrl,
     get_project_post_form_url: GetProjectPostFormUrl,
     get_projects_url: GetProjectsUrl,
-    thumbnail_bucket_url: String,
-    about: String,
+    bucket_url: String,
     page: Page<ProjectPreview>,
 }
 
 impl ListProjectsPage {
-    pub fn new(user: Option<User>, about: String, page: Page<ProjectPreview>) -> Self {
+    pub fn new(user: Option<User>, page: Page<ProjectPreview>) -> Self {
         Self {
             user,
             login_url: LoginUrl,
             logout_url: LogoutUrl,
             get_project_post_form_url: GetProjectPostFormUrl,
             get_projects_url: GetProjectsUrl,
-            thumbnail_bucket_url: AppConfig::get().s3_thumbnail_bucket_url().to_owned(),
-            about,
+            bucket_url: AppConfig::get().s3_bucket_url().to_owned(),
             page,
         }
     }
@@ -144,19 +142,13 @@ pub struct GetProjectPage {
     get_project_put_form_url: GetProjectPutFormUrl,
     get_project_delete_form_url: GetProjectDeleteFormUrl,
     post_comment_url: PostCommentUrl,
-    thumbnail_bucket_url: String,
+    bucket_url: String,
     project: Project,
-    content: String,
     comments: Vec<CommentWithUser>,
 }
 
 impl GetProjectPage {
-    pub fn new(
-        user: Option<User>,
-        project: Project,
-        content: String,
-        comments: Vec<CommentWithUser>,
-    ) -> Self {
+    pub fn new(user: Option<User>, project: Project, comments: Vec<CommentWithUser>) -> Self {
         Self {
             user,
             login_url: LoginUrl,
@@ -170,9 +162,8 @@ impl GetProjectPage {
             post_comment_url: PostCommentUrl {
                 project_id: project.id.clone(),
             },
-            thumbnail_bucket_url: AppConfig::get().s3_thumbnail_bucket_url().to_owned(),
+            bucket_url: AppConfig::get().s3_bucket_url().to_owned(),
             project,
-            content,
             comments,
         }
     }

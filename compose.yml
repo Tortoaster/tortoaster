@@ -14,7 +14,7 @@ services:
       S3__ENDPOINT_URL: "http://object-store:9000/"
       S3__ACCESS_KEY_ID: "tortoaster"
       S3__SECRET_ACCESS_KEY: "password"
-      S3__THUMBNAIL_BUCKET_URL: "http://object-store:9000/tortoaster-thumbnails"
+      S3__BUCKET_URL: "http://object-store:9000/tortoaster"
       OIDC__CLIENT_ID: "tortoaster"
       OIDC__CLIENT_SECRET: "UzuoAuMFtHuf4USSl2CVGmgXockttxxh"
       OIDC__ISSUER_URL: "http://iam-provider:8003/realms/tortoaster"
@@ -24,8 +24,6 @@ services:
         condition: service_completed_successfully
       object-store-migrate:
         condition: service_completed_successfully
-      cache:
-        condition: service_started
 
   tailwindcss:
     build:
@@ -97,15 +95,9 @@ services:
     entrypoint: >
       /bin/sh -c " \
         /usr/bin/mc alias set myminio http://object-store:9000 tortoaster password && \
-        /usr/bin/mc mb --ignore-existing --region "eu-central-1" --with-versioning myminio/tortoaster-content && \
-        /usr/bin/mc mb --ignore-existing --region "eu-central-1" myminio/tortoaster-thumbnails && \
-        /usr/bin/mc mb --ignore-existing --region "eu-central-1" --with-versioning myminio/tortoaster-system && \
-        /usr/bin/mc anonymous set public myminio/tortoaster-content && \
-        /usr/bin/mc anonymous set download myminio/tortoaster-thumbnails && \
-        /usr/bin/mc anonymous set public myminio/tortoaster-system && \
-        /usr/bin/mc mirror --overwrite /app/content myminio/tortoaster-content && \
-        /usr/bin/mc mirror --overwrite /app/thumbnails myminio/tortoaster-thumbnails && \
-        /usr/bin/mc mirror --overwrite /app/system myminio/tortoaster-system \
+        /usr/bin/mc mb --ignore-existing --region "eu-central-1" --with-versioning myminio/tortoaster && \
+        /usr/bin/mc anonymous set download myminio/tortoaster && \
+        /usr/bin/mc mirror --overwrite /app myminio/tortoaster \
       "
 
   smtp-server:
@@ -141,7 +133,3 @@ services:
       test: [ "CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8003;echo -e \"GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n\" >&3;grep \"HTTP/1.1 200 OK\" <&3" ]
       interval: 5s
       retries: 5
-
-  cache:
-    image: redis:alpine
-    ports: [ "6379:6379" ]
