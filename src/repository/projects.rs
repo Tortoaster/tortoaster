@@ -1,8 +1,6 @@
 use sqlx::{query, query_as, PgPool};
-use uuid::Uuid;
 
 use crate::{
-    config::AppBucket,
     dto::projects::{
         NewProject, Project, ProjectData, ProjectId, ProjectIndex, ProjectName, ProjectPreview,
     },
@@ -135,35 +133,14 @@ impl ProjectRepository {
     }
 
     pub async fn read_data(&self, id: &str) -> AppResult<ProjectData> {
-        struct NameUrl {
-            name: String,
-            thumbnail_id: Uuid,
-            project_url: Option<String>,
-        }
-
-        let NameUrl {
-            name,
-            thumbnail_id,
-            project_url,
-        } = query_as!(
-            NameUrl,
-            "SELECT name, thumbnail_id, project_url FROM projects WHERE NOT deleted AND id = $1;",
+        Ok(query_as!(
+            ProjectData,
+            "SELECT id, name, thumbnail_id, project_url FROM projects WHERE NOT deleted AND id = \
+             $1;",
             id,
         )
         .fetch_one(&self.pool)
-        .await?;
-
-        let content = self
-            .file_repo
-            .retrieve_markdown(id, AppBucket::Content)
-            .await?;
-
-        Ok(ProjectData {
-            name,
-            content,
-            thumbnail_id,
-            project_url,
-        })
+        .await?)
     }
 
     pub async fn read_name(&self, id: &str) -> AppResult<ProjectName> {
@@ -210,7 +187,7 @@ impl ProjectRepository {
         .await?;
 
         self.file_repo
-            .store_markdown(&id, AppBucket::Content, &new_project.content)
+            .store_content(&id, &new_project.content)
             .await?;
 
         transaction.commit().await?;
@@ -234,7 +211,7 @@ impl ProjectRepository {
         .await?;
 
         self.file_repo
-            .store_markdown(id, AppBucket::Content, &new_project.content)
+            .store_content(id, &new_project.content)
             .await?;
 
         transaction.commit().await?;

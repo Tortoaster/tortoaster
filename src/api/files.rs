@@ -9,7 +9,7 @@ use axum_extra::{
 use uuid::Uuid;
 
 use crate::{
-    config::{AppBucket, AppConfig},
+    config::AppConfig,
     dto::projects::ProjectThumbnailId,
     error::{AppError, ToastResult, WithToastRejection},
     repository::files::FileRepository,
@@ -44,10 +44,10 @@ async fn upload_image(
     if !bytes.is_empty() {
         let thumbnail_id = Uuid::new_v4();
         file_repo
-            .store_image(thumbnail_id, AppBucket::Thumbnails, bytes, content_type)
+            .store_thumbnail(thumbnail_id, bytes, content_type)
             .await?;
         Ok(Render(ImageWithId {
-            thumbnail_bucket_url: AppConfig::get().s3_thumbnail_bucket_url().to_owned(),
+            bucket_url: AppConfig::get().s3_bucket_url().to_owned(),
             project: ProjectThumbnailId { thumbnail_id },
         }))
     } else {
