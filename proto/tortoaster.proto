@@ -1,0 +1,19 @@
+syntax = "proto3";
+package tortoaster;
+
+import "google/protobuf/timestamp.proto";
+
+service Comments {
+  rpc Comment (NewComment) returns (NewCommentResponse);
+}
+
+message NewComment {
+  string message = 1;
+}
+
+message NewCommentResponse {
+  oneof result {
+    int32 ok = 1;
+    string err = 2;
+  }
+}

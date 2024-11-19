@@ -7,20 +7,12 @@ use axum::{
 };
 use thiserror::Error;
 
-mod page;
-mod toast;
-
-pub use page::{PageError, PageResult, WithPageRejection};
-pub use toast::{ToastResult, WithToastRejection};
-
 pub type AppResult<T> = Result<T, AppError>;
 
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("I couldn't access the database! :(")]
     Database(#[from] sqlx::Error),
-    #[error("I couldn't display this page :(")]
-    Template(#[from] askama::Error),
     #[error("Something went wrong while uploading your file :(")]
     PutObject(
         #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::put_object::PutObjectError>,
@@ -57,7 +49,6 @@ impl AppError {
     fn status_code(&self) -> StatusCode {
         match self {
             AppError::Database(_) => StatusCode::SERVICE_UNAVAILABLE,
-            AppError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::PutObject(_) => StatusCode::INSUFFICIENT_STORAGE,
             AppError::GetObject(_) | AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::Form(_)

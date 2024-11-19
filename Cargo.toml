@@ -1,12 +1,11 @@
 [package]
-name = "tortoaster"
+name = "tortoaster_backend"
 version = "1.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-askama = { git = "https://github.com/djc/askama.git", rev = "c1366e0" }
 aws-config = "1.3.0"
 aws-sdk-s3 = "1.25.0"
 axum = { version = "0.7.4", features = ["macros", "multipart"] }
@@ -18,6 +17,7 @@ backoff = { version = "0.4.0", features = ["tokio"] }
 bytes = "1.6.0"
 config = "0.14.0"
 openidconnect = { version = "3.5.0", default-features = false }
+prost = "0.13.3"
 pulldown-cmark = "0.12.2"
 regex = "1.10.4"
 serde = { version = "1.0.196", features = ["derive"] }
@@ -29,6 +29,7 @@ time = { version = "0.3.36", features = ["parsing", "serde"] }
 time-humanize = "0.1.3"
 tokio = { version = "1.36.0", features = ["macros", "rt-multi-thread", "signal"] }
 toml = "0.8.10"
+tonic = "0.12.3"
 tower = "0.5.1"
 tower-http = { version = "0.6.1", features = ["fs"] }
 tower-sessions = { version = "0.13.0", default-features = false, features = ["axum-core"] }
@@ -37,3 +38,6 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 uuid = { version = "1.8.0", features = ["fast-rng", "serde", "v4"] }
 validator = { version = "0.19.0", features = ["derive"] }
+
+[build-dependencies]
+tonic-build = "0.12.3"

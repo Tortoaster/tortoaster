@@ -1,11 +1,6 @@
 use std::time::Duration;
 
-use axum::{
-    error_handling::HandleErrorLayer,
-    response::{IntoResponse, Redirect},
-    routing::get,
-    Router,
-};
+use axum::{error_handling::HandleErrorLayer, response::Redirect, routing::get, Router};
 use axum_extra::routing::RouterExt;
 use axum_oidc::{error::MiddlewareError, OidcLoginLayer};
 use axum_prometheus::PrometheusMetricLayerBuilder;
@@ -17,10 +12,7 @@ use tower_sessions_sqlx_store::PostgresStore;
 use tracing::info;
 
 use crate::{
-    api::projects::GetProjectsUrl,
-    config::AppConfig,
-    error::{AppError, PageError},
-    state::AppState,
+    api::projects::GetProjectsUrl, config::AppConfig, error::AppError, state::AppState,
     utils::claims::AppClaims,
 };
 
@@ -28,9 +20,9 @@ mod api;
 mod config;
 mod dto;
 mod error;
+mod proto;
 mod repository;
 mod state;
-mod template;
 mod utils;
 
 #[tokio::main]
@@ -42,7 +34,7 @@ async fn main() {
         .init();
 
     let (prometheus_layer, metric_handle) = PrometheusMetricLayerBuilder::new()
-        .with_prefix("tortoaster")
+        .with_prefix("tortoaster_backend")
         .with_default_metrics()
         .build_pair();
 

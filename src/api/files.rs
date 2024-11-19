@@ -9,13 +9,8 @@ use axum_extra::{
 use uuid::Uuid;
 
 use crate::{
-    config::AppConfig,
-    dto::projects::ProjectThumbnailId,
-    error::{AppError, ToastResult, WithToastRejection},
-    repository::files::FileRepository,
-    state::AppState,
-    template::{files::ImageWithId, Render},
-    utils::claims::Admin,
+    config::AppConfig, dto::projects::ProjectThumbnailId, error::AppError,
+    repository::files::FileRepository, state::AppState, utils::claims::Admin,
 };
 
 pub fn public_router() -> Router<AppState> {
