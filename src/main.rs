@@ -17,10 +17,7 @@ use tower_sessions_sqlx_store::PostgresStore;
 use tracing::info;
 
 use crate::{
-    api::projects::GetProjectsUrl,
-    config::AppConfig,
-    error::{AppError, PageError},
-    state::AppState,
+    api::projects::GetProjectsUrl, config::AppConfig, error::AppError, state::AppState,
     utils::claims::AppClaims,
 };
 
@@ -30,7 +27,6 @@ mod dto;
 mod error;
 mod repository;
 mod state;
-mod template;
 mod utils;
 
 #[tokio::main]
@@ -42,7 +38,7 @@ async fn main() {
         .init();
 
     let (prometheus_layer, metric_handle) = PrometheusMetricLayerBuilder::new()
-        .with_prefix("tortoaster")
+        .with_prefix("tortoaster_backend")
         .with_default_metrics()
         .build_pair();
 
@@ -65,9 +61,8 @@ async fn main() {
         .with_same_site(SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(time::Duration::minutes(30)));
 
-    let tortoaster_handle_error_layer = HandleErrorLayer::new(|e: MiddlewareError| async {
-        PageError(AppError::Session(e)).into_response()
-    });
+    let tortoaster_handle_error_layer =
+        HandleErrorLayer::new(|e: MiddlewareError| async { AppError::Session(e).into_response() });
 
     let oidc_login_service = ServiceBuilder::new()
         .layer(tortoaster_handle_error_layer.clone())
@@ -95,7 +90,7 @@ async fn main() {
             get(|| async { Redirect::permanent(&GetProjectsUrl.to_string()) }),
         )
         .nest_service("/static", ServeDir::new("static"))
-        .fallback(|| async { PageError(AppError::NotFound) })
+        .fallback(|| async { AppError::NotFound })
         .route("/metrics", get(|| async move { metric_handle.render() }))
         .layer(prometheus_layer)
         .with_state(state);
