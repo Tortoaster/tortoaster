@@ -9,23 +9,16 @@ use axum_extra::{
 };
 use axum_valid::Valid;
 use serde::Deserialize;
-use validator::{Validate, ValidationErrors};
+use validator::ValidationErrors;
 
 use crate::{
     dto::{
         projects::{NewProject, ProjectData, ProjectId, ProjectIndex},
         users::User,
     },
-    error::{AppError, PageResult, WithPageRejection},
+    error::AppError,
     repository::{comments::CommentRepository, projects::ProjectRepository},
     state::AppState,
-    template::{
-        projects::{
-            CreateProjectFormPage, DeleteProjectFormPage, GetProjectPage, ListProjectsPage,
-            UpdateProjectFormPage,
-        },
-        Render,
-    },
     utils::{claims::Admin, pagination::Pager},
 };
 

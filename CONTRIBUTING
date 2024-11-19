@@ -5,7 +5,7 @@
 ## Launch Project
 
 ```shell
-docker compose up -d tortoaster
+docker compose --profile full up -d
 ```
 
 ## Navigation
@@ -17,15 +17,7 @@ docker compose up -d tortoaster
 
 ## Set-Up for Local Development or Debugging
 
-### Install dependencies
-
-#### Tailwind CSS CLI
-
-```shell
-curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64
-sudo chmod +x tailwindcss-linux-x64
-sudo mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
-```
+### Install tools
 
 #### sqlx
 
@@ -33,23 +25,7 @@ sudo mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
 cargo install sqlx-cli --no-default-features --features rustls,postgres
 ```
 
-#### cargo-watch
-
-(Optional)
-
-```shell
-cargo install cargo-watch
-```
-
-### Useful commands
-
-#### Run dependencies
-
-```shell
-docker compose up -d
-```
-
-#### Run database migrations
+### Run database migrations
 
 Should be run when:
 
@@ -63,28 +39,13 @@ export DATABASE_URL=postgres://tortoaster:password@localhost/tortoaster
 sqlx migrate run
 ```
 
-#### Run Tailwind CSS
-
-Should be run when:
-
-* First deploying the project
-* New templates are created, edited, or deleted
-* `input.css` is updated
-* `tailwind.config.js` is updated
-
-> `compose.yml` performs this step automatically
+### Run dependencies
 
 ```shell
-tailwindcss -i ./input.css -o ./static/style.css -m
+docker compose up -d
 ```
 
-Alternatively, to regenerate CSS automatically on change:
-
-```shell
-tailwindcss -i ./input.css -o ./static/style.css -m -w
-```
-
-#### Run the project
+### Run backend
 
 > See `Config.toml` for build options (these can be overridden with environment variables)
 
@@ -92,17 +53,13 @@ tailwindcss -i ./input.css -o ./static/style.css -m -w
 cargo run
 ```
 
-Alternatively, to re-run automatically on change:
-
-```shell
-cargo watch -x run -w src -w templates
-```
+## Useful commands
 
 #### Prepare compile-time checked queries
 
 Should be run when:
 
-* Creating new compile-time checked queries
+* New compile-time checked queries are created
 * New database migrations are created
 
 ```shell

@@ -4,47 +4,20 @@ use axum_extra::{
     routing::{RouterExt, TypedPath},
 };
 use serde::Deserialize;
-use validator::Validate;
 
 use crate::{
     dto::{comments::NewComment, users::User},
-    error::{AppError, ToastResult, WithToastRejection},
+    error::{AppError, AppResult},
     repository::comments::CommentRepository,
     state::AppState,
-    template::{
-        comments::{CommentPartial, CreateCommentFormPartial, UpdateCommentFormPartial},
-        Render, RenderBoth,
-    },
 };
 
 pub fn protected_router() -> Router<AppState> {
     Router::new()
-        .typed_get(get_comment_put_form_partial)
         .typed_post(post_comment)
         .typed_post(post_put_comment)
         .typed_post(post_delete_comment)
 }
-
-// Forms
-
-#[derive(Clone, Debug, Deserialize, TypedPath)]
-#[typed_path("/comments/:comment_id/update-form")]
-pub struct GetCommentPutFormPartialUrl {
-    pub comment_id: i32,
-}
-
-async fn get_comment_put_form_partial(
-    GetCommentPutFormPartialUrl { comment_id }: GetCommentPutFormPartialUrl,
-    State(repo): State<CommentRepository>,
-) -> ToastResult<Render<UpdateCommentFormPartial>> {
-    let comment = repo.read_message(comment_id).await?;
-    Ok(Render(UpdateCommentFormPartial::new(
-        comment,
-        PostPutCommentUrl { comment_id },
-    )))
-}
-
-// API Pages
 
 #[derive(Clone, Debug, Deserialize, TypedPath)]
 #[typed_path("/projects/:project_id/comments")]
@@ -69,7 +42,7 @@ async fn post_comment(
     State(repo): State<CommentRepository>,
     user: User,
     WithRejection(new_comment, _): WithToastRejection<Form<NewComment>>,
-) -> ToastResult<
+) -> AppResult<
     Result<RenderBoth<CreateCommentFormPartial, CommentPartial>, Render<CreateCommentFormPartial>>,
 > {
     if let Err(errors) = new_comment.validate() {

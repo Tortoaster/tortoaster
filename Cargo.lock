@@ -116,46 +116,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d902e3d592a523def97af8f317b08ce16b7ab854c1985a0c671e6f15cebc236"
 
 [[package]]
-name = "askama"
-version = "0.13.0"
-source = "git+https://github.com/djc/askama.git?rev=c1366e0#c1366e0fd8b0d3c1c3c7ef53900129e23a52a46c"
-dependencies = [
- "askama_derive",
- "askama_escape",
- "humansize",
- "num-traits",
- "percent-encoding",
-]
-
-[[package]]
-name = "askama_derive"
-version = "0.13.0"
-source = "git+https://github.com/djc/askama.git?rev=c1366e0#c1366e0fd8b0d3c1c3c7ef53900129e23a52a46c"
-dependencies = [
- "askama_parser",
- "basic-toml",
- "mime",
- "mime_guess",
- "proc-macro2",
- "quote",
- "serde",
- "syn",
-]
-
-[[package]]
-name = "askama_escape"
-version = "0.11.0"
-source = "git+https://github.com/djc/askama.git?rev=c1366e0#c1366e0fd8b0d3c1c3c7ef53900129e23a52a46c"
-
-[[package]]
-name = "askama_parser"
-version = "0.2.1"
-source = "git+https://github.com/djc/askama.git?rev=c1366e0#c1366e0fd8b0d3c1c3c7ef53900129e23a52a46c"
-dependencies = [
- "nom",
-]
-
-[[package]]
 name = "async-trait"
 version = "0.1.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -830,15 +790,6 @@ name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
-
-[[package]]
-name = "basic-toml"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "823388e228f614e9558c6804262db37960ec8821856535f5c3f59913140558f8"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "bitflags"
@@ -1882,15 +1833,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
-name = "humansize"
-version = "2.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cb51c9a029ddc91b07a787f1d86b53ccfa49b0e86688c946ebe8d3555685dd7"
-dependencies = [
- "libm",
-]
-
-[[package]]
 name = "hyper"
 version = "0.14.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2375,12 +2317,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "minimal-lexical"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
-
-[[package]]
 name = "miniz_oxide"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2415,16 +2351,6 @@ dependencies = [
  "mime",
  "spin",
  "version_check",
-]
-
-[[package]]
-name = "nom"
-version = "7.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a"
-dependencies = [
- "memchr",
- "minimal-lexical",
 ]
 
 [[package]]
@@ -4170,7 +4096,6 @@ dependencies = [
 name = "tortoaster"
 version = "1.0.0"
 dependencies = [
- "askama",
  "aws-config",
  "aws-sdk-s3",
  "axum 0.7.9",

@@ -4,23 +4,19 @@ use axum::{
         rejection::{FormRejection, QueryRejection},
     },
     http::StatusCode,
+    response::{IntoResponse, Response},
 };
+use axum_extra::extract::WithRejection;
 use thiserror::Error;
 
-mod page;
-mod toast;
-
-pub use page::{PageError, PageResult, WithPageRejection};
-pub use toast::{ToastResult, WithToastRejection};
-
 pub type AppResult<T> = Result<T, AppError>;
+
+pub type WithAppRejection<E> = WithRejection<E, AppError>;
 
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("I couldn't access the database! :(")]
     Database(#[from] sqlx::Error),
-    #[error("I couldn't display this page :(")]
-    Template(#[from] askama::Error),
     #[error("Something went wrong while uploading your file :(")]
     PutObject(
         #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::put_object::PutObjectError>,
@@ -57,7 +53,6 @@ impl AppError {
     fn status_code(&self) -> StatusCode {
         match self {
             AppError::Database(_) => StatusCode::SERVICE_UNAVAILABLE,
-            AppError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::PutObject(_) => StatusCode::INSUFFICIENT_STORAGE,
             AppError::GetObject(_) | AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::Form(_)
@@ -71,5 +66,11 @@ impl AppError {
             | AppError::User(_)
             | AppError::Unauthorized => StatusCode::UNAUTHORIZED,
         }
+    }
+}
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        (self.status_code(), self.to_string()).into_response()
     }
 }

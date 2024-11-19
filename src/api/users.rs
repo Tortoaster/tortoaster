@@ -2,7 +2,7 @@ use axum::response::Redirect;
 use axum_extra::{extract::WithRejection, routing::TypedPath};
 use axum_oidc::OidcRpInitiatedLogout;
 
-use crate::{api::projects::GetProjectsUrl, config::AppConfig, error::WithPageRejection};
+use crate::{api::projects::GetProjectsUrl, config::AppConfig, error::WithAppRejection};
 
 #[derive(Copy, Clone, Debug, Default, TypedPath)]
 #[typed_path("/login")]
@@ -18,7 +18,7 @@ pub struct LogoutUrl;
 
 pub async fn logout(
     _: LogoutUrl,
-    WithRejection(logout, _): WithPageRejection<OidcRpInitiatedLogout>,
+    WithRejection(logout, _): WithAppRejection<OidcRpInitiatedLogout>,
 ) -> OidcRpInitiatedLogout {
     logout.with_post_logout_redirect(AppConfig::get().oidc.redirect_url.parse().unwrap())
 }
