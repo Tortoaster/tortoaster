@@ -2,14 +2,14 @@ use axum::response::Redirect;
 use axum_extra::{extract::WithRejection, routing::TypedPath};
 use axum_oidc::OidcRpInitiatedLogout;
 
-use crate::{api::projects::GetProjectsUrl, config::AppConfig, error::WithAppRejection};
+use crate::{api::projects::ProjectsUrl, config::AppConfig, error::WithAppRejection};
 
 #[derive(Copy, Clone, Debug, Default, TypedPath)]
 #[typed_path("/login")]
 pub struct LoginUrl;
 
 pub async fn login(_: LoginUrl) -> Redirect {
-    Redirect::temporary(&GetProjectsUrl.to_string())
+    Redirect::temporary(&ProjectsUrl.to_string())
 }
 
 #[derive(Copy, Clone, Debug, Default, TypedPath)]

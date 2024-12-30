@@ -1,14 +1,9 @@
-use std::{
-    fmt::{Display, Formatter},
-    str::FromStr,
-    sync::OnceLock,
-};
+use std::sync::OnceLock;
 
 use regex::Regex;
-use serde::Deserialize;
-use serde_with::{serde_as, DeserializeFromStr, NoneAsEmptyString};
+use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, NoneAsEmptyString};
 use sqlx::types::time::OffsetDateTime;
-use time::format_description::well_known;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -70,95 +65,45 @@ impl NewProject {
     }
 }
 
-// Responses
-
-#[derive(Debug)]
-pub struct ProjectData {
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct ProjectIndex {
+    #[serde(with = "time::serde::rfc3339")]
+    pub date_posted: OffsetDateTime,
     pub id: String,
-    pub name: String,
-    pub thumbnail_id: Uuid,
-    pub project_url: Option<String>,
 }
 
-#[derive(Debug)]
+// Responses
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ProjectPreview {
     pub id: String,
     pub name: String,
     pub preview: String,
     pub thumbnail_id: Uuid,
-    pub date_posted: ProjectTime,
+    #[serde(with = "time::serde::rfc3339")]
+    pub date_posted: OffsetDateTime,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct ProjectId {
     pub id: String,
 }
 
-#[derive(Debug)]
-pub struct ProjectName {
-    pub name: String,
-}
-
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ProjectThumbnailId {
     pub thumbnail_id: Uuid,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Project {
     pub id: String,
     pub name: String,
     pub thumbnail_id: Uuid,
     pub project_url: Option<String>,
-    pub date_posted: ProjectTime,
-}
-
-#[derive(Debug, DeserializeFromStr)]
-pub struct ProjectIndex {
-    pub date_posted: ProjectTime,
-    pub id: String,
-}
-
-impl FromStr for ProjectIndex {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (date_posted, id) = s.split_once(',').ok_or("invalid project index")?;
-
-        let index = ProjectIndex {
-            date_posted: date_posted.parse().map_err(|_| "invalid date syntax")?,
-            id: id.to_owned(),
-        };
-
-        Ok(index)
-    }
-}
-
-#[derive(Debug, DeserializeFromStr)]
-pub struct ProjectTime(OffsetDateTime);
-
-impl ProjectTime {
-    pub fn as_offset(&self) -> &OffsetDateTime {
-        &self.0
-    }
-}
-
-impl From<OffsetDateTime> for ProjectTime {
-    fn from(value: OffsetDateTime) -> Self {
-        Self(value)
-    }
-}
-
-impl Display for ProjectTime {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.format(&well_known::Rfc3339).unwrap())
-    }
-}
-
-impl FromStr for ProjectTime {
-    type Err = time::error::Parse;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(ProjectTime(OffsetDateTime::parse(s, &well_known::Rfc3339)?))
-    }
+    #[serde(with = "time::serde::rfc3339")]
+    pub date_posted: OffsetDateTime,
 }

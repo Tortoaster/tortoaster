@@ -86,10 +86,6 @@ impl AppConfig {
     pub fn s3_bucket_name(&self) -> &str {
         &self.s3.bucket_name
     }
-
-    pub fn s3_bucket_url(&self) -> &str {
-        &self.s3.bucket_url
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -109,7 +105,6 @@ struct S3Config {
     session_token: Option<String>,
     #[serde_inline_default("tortoaster".to_owned())]
     bucket_name: String,
-    bucket_url: String,
 }
 
 #[derive(Debug, Deserialize)]

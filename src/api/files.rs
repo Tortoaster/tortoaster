@@ -1,6 +1,6 @@
 use axum::{
     extract::{DefaultBodyLimit, Multipart, State},
-    Router,
+    Json, Router,
 };
 use axum_extra::{
     extract::WithRejection,
@@ -9,26 +9,29 @@ use axum_extra::{
 use uuid::Uuid;
 
 use crate::{
-    config::AppConfig, dto::projects::ProjectThumbnailId, error::AppError,
-    repository::files::FileRepository, state::AppState, utils::claims::Admin,
+    dto::projects::ProjectThumbnailId,
+    error::{AppError, AppResult, WithAppRejection},
+    repository::files::FileRepository,
+    state::AppState,
+    utils::claims::Admin,
 };
 
 pub fn public_router() -> Router<AppState> {
     Router::new()
-        .typed_post(upload_image)
+        .typed_post(post_image)
         .layer(DefaultBodyLimit::max(1024 * 1024 * 10))
 }
 
 #[derive(Copy, Clone, Debug, Default, TypedPath)]
 #[typed_path("/uploads")]
-pub struct PostImageUrl;
+pub struct ImagesUrl;
 
-async fn upload_image(
-    _: PostImageUrl,
+async fn post_image(
+    _: ImagesUrl,
     _: Admin,
     State(file_repo): State<FileRepository>,
-    WithRejection(mut parts, _): WithToastRejection<Multipart>,
-) -> ToastResult<Render<ImageWithId>> {
+    WithRejection(mut parts, _): WithAppRejection<Multipart>,
+) -> AppResult<Json<ProjectThumbnailId>> {
     let field = parts.next_field().await?.ok_or(AppError::FileMissing)?;
     let content_type = field
         .content_type()
@@ -41,11 +44,8 @@ async fn upload_image(
         file_repo
             .store_thumbnail(thumbnail_id, bytes, content_type)
             .await?;
-        Ok(Render(ImageWithId {
-            bucket_url: AppConfig::get().s3_bucket_url().to_owned(),
-            project: ProjectThumbnailId { thumbnail_id },
-        }))
+        Ok(Json(ProjectThumbnailId { thumbnail_id }))
     } else {
-        Err(AppError::FileMissing.into())
+        Err(AppError::FileMissing)
     }
 }

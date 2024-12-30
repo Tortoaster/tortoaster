@@ -1,9 +1,7 @@
 use sqlx::{query, query_as, PgPool};
 
 use crate::{
-    dto::projects::{
-        NewProject, Project, ProjectData, ProjectId, ProjectIndex, ProjectName, ProjectPreview,
-    },
+    dto::projects::{NewProject, Project, ProjectId, ProjectIndex, ProjectPreview},
     error::AppResult,
     repository::files::FileRepository,
     utils::pagination::{Page, Pager},
@@ -33,7 +31,7 @@ impl ProjectRepository {
                     ProjectPreview,
                     "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE NOT \
                      deleted AND (date_posted, id) > ($1, $2) ORDER BY (date_posted, id) LIMIT $3;",
-                    index.date_posted.as_offset(),
+                    &index.date_posted,
                     &index.id,
                     items + 1,
                 )
@@ -45,7 +43,7 @@ impl ProjectRepository {
                     && query!(
                         "SELECT id FROM projects WHERE NOT deleted AND (date_posted, id) < ($1, \
                          $2) LIMIT 1;",
-                        index.date_posted.as_offset(),
+                        &index.date_posted,
                         &index.id,
                     )
                     .fetch_optional(&mut *transaction)
@@ -74,7 +72,7 @@ impl ProjectRepository {
                     "SELECT id, name, preview, thumbnail_id, date_posted FROM projects WHERE NOT \
                      deleted AND (date_posted, id) < ($1, $2) ORDER BY (date_posted, id) DESC \
                      LIMIT $3;",
-                    index.date_posted.as_offset(),
+                    &index.date_posted,
                     &index.id,
                     items + 1,
                 )
@@ -85,7 +83,7 @@ impl ProjectRepository {
                     && query!(
                         "SELECT id FROM projects WHERE NOT deleted AND (date_posted, id) > ($1, \
                          $2) LIMIT 1;",
-                        index.date_posted.as_offset(),
+                        &index.date_posted,
                         &index.id,
                     )
                     .fetch_optional(&mut *transaction)
@@ -130,29 +128,6 @@ impl ProjectRepository {
         };
 
         Ok(page)
-    }
-
-    pub async fn read_data(&self, id: &str) -> AppResult<ProjectData> {
-        Ok(query_as!(
-            ProjectData,
-            "SELECT id, name, thumbnail_id, project_url FROM projects WHERE NOT deleted AND id = \
-             $1;",
-            id,
-        )
-        .fetch_one(&self.pool)
-        .await?)
-    }
-
-    pub async fn read_name(&self, id: &str) -> AppResult<ProjectName> {
-        let name = query_as!(
-            ProjectName,
-            "SELECT name FROM projects WHERE NOT deleted AND id = $1;",
-            id,
-        )
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(name)
     }
 
     pub async fn read(&self, id: &str) -> AppResult<Option<Project>> {
