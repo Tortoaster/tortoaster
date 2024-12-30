@@ -13,7 +13,6 @@ access_key_id = "tortoaster"
 secret_access_key = "password"
 # session_token = "" # default: None
 # bucket_name = "tortoaster" # default: tortoaster
-bucket_url = "http://localhost:9000/tortoaster"
 
 [oidc]
 client_id = "tortoaster"

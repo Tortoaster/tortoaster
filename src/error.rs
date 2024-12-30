@@ -46,7 +46,9 @@ pub enum AppError {
     #[error("Something seems to be wrong with your session, please try logging in again!")]
     User(#[from] crate::utils::claims::UserRejection),
     #[error("Please change the following fields :3\n{0}")]
-    Validate(#[from] axum_valid::ValidRejection<QueryRejection>),
+    ValidateForm(#[from] axum_valid::ValidRejection<FormRejection>),
+    #[error("Please change the following fields :3\n{0}")]
+    ValidateQuery(#[from] axum_valid::ValidRejection<QueryRejection>),
 }
 
 impl AppError {
@@ -58,7 +60,8 @@ impl AppError {
             AppError::Form(_)
             | AppError::MultipartError(_)
             | AppError::MultipartRejection(_)
-            | AppError::Validate(_)
+            | AppError::ValidateForm(_)
+            | AppError::ValidateQuery(_)
             | AppError::FileType
             | AppError::FileMissing => StatusCode::BAD_REQUEST,
             AppError::Session(_)

@@ -1,7 +1,6 @@
 use axum::{
     extract::{Query, State},
-    response::Redirect,
-    Form, Router,
+    Form, Json, Router,
 };
 use axum_extra::{
     extract::WithRejection,
@@ -9,17 +8,16 @@ use axum_extra::{
 };
 use axum_valid::Valid;
 use serde::Deserialize;
-use validator::ValidationErrors;
 
 use crate::{
-    dto::{
-        projects::{NewProject, ProjectData, ProjectId, ProjectIndex},
-        users::User,
-    },
-    error::AppError,
-    repository::{comments::CommentRepository, projects::ProjectRepository},
+    dto::projects::{NewProject, Project, ProjectId, ProjectIndex, ProjectPreview},
+    error::{AppError, AppResult, WithAppRejection},
+    repository::projects::ProjectRepository,
     state::AppState,
-    utils::{claims::Admin, pagination::Pager},
+    utils::{
+        claims::Admin,
+        pagination::{Page, Pager},
+    },
 };
 
 pub fn public_router() -> Router<AppState> {
@@ -30,168 +28,63 @@ pub fn public_router() -> Router<AppState> {
 
 pub fn protected_router() -> Router<AppState> {
     Router::new()
-        .typed_get(get_project_post_form)
-        .typed_get(get_project_put_form)
-        .typed_get(get_project_delete_form)
         .typed_post(post_project)
-        .typed_post(post_put_project)
-        .typed_post(post_delete_project)
+        .typed_put(put_project)
+        .typed_delete(delete_project)
 }
-
-// Forms
-
-#[derive(Copy, Clone, Debug, TypedPath)]
-#[typed_path("/projects/create-form")]
-pub struct GetProjectPostFormUrl;
-
-#[derive(Clone, Debug, Deserialize, TypedPath)]
-#[typed_path("/projects/:id/update-form")]
-pub struct GetProjectPutFormUrl {
-    pub id: String,
-}
-
-#[derive(Clone, Debug, Deserialize, TypedPath)]
-#[typed_path("/projects/:id/delete-form")]
-pub struct GetProjectDeleteFormUrl {
-    pub id: String,
-}
-
-async fn get_project_post_form(
-    _: GetProjectPostFormUrl,
-    user: Option<User>,
-) -> Render<CreateProjectFormPage> {
-    Render(CreateProjectFormPage::new(user, ValidationErrors::new()))
-}
-
-async fn get_project_put_form(
-    GetProjectPutFormUrl { id }: GetProjectPutFormUrl,
-    State(repo): State<ProjectRepository>,
-    user: Option<User>,
-) -> PageResult<Render<UpdateProjectFormPage>> {
-    let project = repo.read_data(&id).await?;
-
-    Ok(Render(UpdateProjectFormPage::new(
-        user,
-        PostPutProjectUrl { id },
-        ValidationErrors::new(),
-        project,
-    )))
-}
-
-async fn get_project_delete_form(
-    GetProjectDeleteFormUrl { id }: GetProjectDeleteFormUrl,
-    State(repo): State<ProjectRepository>,
-    user: Option<User>,
-) -> PageResult<Render<DeleteProjectFormPage>> {
-    let project = repo.read_name(&id).await?;
-
-    Ok(Render(DeleteProjectFormPage::new(
-        user,
-        PostDeleteProjectUrl { id },
-        project,
-    )))
-}
-
-// API Pages
 
 #[derive(Copy, Clone, Debug, TypedPath)]
 #[typed_path("/projects")]
-pub struct GetProjectsUrl;
+pub struct ProjectsUrl;
 
 #[derive(Clone, Debug, Deserialize, TypedPath)]
 #[typed_path("/projects/:id")]
-pub struct GetProjectUrl {
-    pub id: String,
-}
-
-#[derive(Copy, Clone, Debug, TypedPath)]
-#[typed_path("/projects")]
-pub struct PostProjectUrl;
-
-#[derive(Clone, Debug, Deserialize, TypedPath)]
-#[typed_path("/projects/:id/put")]
-pub struct PostPutProjectUrl {
-    pub id: String,
-}
-
-#[derive(Clone, Debug, Deserialize, TypedPath)]
-#[typed_path("/projects/:id/delete")]
-pub struct PostDeleteProjectUrl {
+pub struct ProjectUrl {
     pub id: String,
 }
 
 async fn list_projects(
-    _: GetProjectsUrl,
+    _: ProjectsUrl,
     State(repo): State<ProjectRepository>,
-    user: Option<User>,
-    WithRejection(Valid(Query(pager)), _): WithPageRejection<Valid<Query<Pager<ProjectIndex>>>>,
-) -> PageResult<Render<ListProjectsPage>> {
+    WithRejection(Valid(Query(pager)), _): WithAppRejection<Valid<Query<Pager<ProjectIndex>>>>,
+) -> AppResult<Json<Page<ProjectPreview>>> {
     let page = repo.list(&pager).await?;
-
-    Ok(Render(ListProjectsPage::new(user, page)))
+    Ok(Json(page))
 }
 
 async fn get_project(
-    GetProjectUrl { id }: GetProjectUrl,
+    ProjectUrl { id }: ProjectUrl,
     State(project_repo): State<ProjectRepository>,
-    State(comment_repo): State<CommentRepository>,
-    user: Option<User>,
-) -> PageResult<Render<GetProjectPage>> {
+) -> AppResult<Json<Project>> {
     let project = project_repo.read(&id).await?.ok_or(AppError::NotFound)?;
-    let comments = comment_repo.list(&id).await?;
-
-    Ok(Render(GetProjectPage::new(user, project, comments)))
+    Ok(Json(project))
 }
 
 async fn post_project(
-    _: PostProjectUrl,
-    State(repo): State<ProjectRepository>,
-    admin: Admin,
-    WithRejection(new_project, _): WithPageRejection<Form<NewProject>>,
-) -> PageResult<Result<Redirect, Render<CreateProjectFormPage>>> {
-    if let Err(errors) = new_project.validate() {
-        return Ok(Err(Render(CreateProjectFormPage::new(
-            Some(admin.into_user()),
-            errors,
-        ))));
-    }
-
-    let ProjectId { id } = repo.create(new_project.0).await?;
-
-    Ok(Ok(Redirect::to(&GetProjectUrl { id }.to_string())))
-}
-
-async fn post_put_project(
-    PostPutProjectUrl { id }: PostPutProjectUrl,
-    State(repo): State<ProjectRepository>,
-    admin: Admin,
-    WithRejection(new_project, _): WithPageRejection<Form<NewProject>>,
-) -> PageResult<Result<Redirect, Render<UpdateProjectFormPage>>> {
-    if let Err(errors) = new_project.validate() {
-        let project = ProjectData {
-            id: id.clone(),
-            name: new_project.0.name,
-            thumbnail_id: new_project.0.thumbnail_id,
-            project_url: new_project.0.project_url,
-        };
-        return Ok(Err(Render(UpdateProjectFormPage::new(
-            Some(admin.into_user()),
-            PostPutProjectUrl { id },
-            errors,
-            project,
-        ))));
-    }
-
-    repo.update(&id, new_project.0).await?;
-
-    Ok(Ok(Redirect::to(&GetProjectUrl { id }.to_string())))
-}
-
-async fn post_delete_project(
-    PostDeleteProjectUrl { id }: PostDeleteProjectUrl,
-    State(repo): State<ProjectRepository>,
+    _: ProjectsUrl,
     _: Admin,
-) -> PageResult<Redirect> {
+    State(repo): State<ProjectRepository>,
+    WithRejection(Valid(Form(new_project)), _): WithAppRejection<Valid<Form<NewProject>>>,
+) -> AppResult<Json<ProjectId>> {
+    let project = repo.create(new_project).await?;
+    Ok(Json(project))
+}
+
+async fn put_project(
+    ProjectUrl { id }: ProjectUrl,
+    _: Admin,
+    State(repo): State<ProjectRepository>,
+    WithRejection(Valid(Form(new_project)), _): WithAppRejection<Valid<Form<NewProject>>>,
+) -> AppResult<()> {
+    repo.update(&id, new_project).await?;
+    Ok(())
+}
+
+async fn delete_project(
+    ProjectUrl { id }: ProjectUrl,
+    _: Admin,
+    State(repo): State<ProjectRepository>,
+) -> AppResult<()> {
     repo.delete(&id).await?;
-    Ok(Redirect::to(&GetProjectsUrl.to_string()))
+    Ok(())
 }

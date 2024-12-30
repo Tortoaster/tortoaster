@@ -2,7 +2,7 @@ use sqlx::{query, query_as, PgPool};
 use uuid::Uuid;
 
 use crate::{
-    dto::comments::{CommentMessage, CommentUserId, CommentWithUser, NewComment},
+    dto::comments::{CommentUserId, CommentWithUser, NewComment},
     error::AppResult,
     repository::users::UserRepository,
 };
@@ -83,16 +83,6 @@ impl CommentRepository {
         .await?;
 
         Ok(user_id)
-    }
-
-    pub async fn read_message(&self, id: i32) -> sqlx::Result<CommentMessage> {
-        query_as!(
-            CommentMessage,
-            "SELECT message FROM comments WHERE NOT deleted AND id = $1;",
-            id
-        )
-        .fetch_one(&self.pool)
-        .await
     }
 
     pub async fn update(&self, id: i32, comment: &NewComment) -> AppResult<CommentWithUser> {

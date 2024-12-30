@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 #[derive(Debug, Default, Deserialize, Validate)]
@@ -9,7 +9,7 @@ pub struct Pager<Id> {
     pub items: Option<i64>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Page<T> {
     pub items: Vec<T>,
     pub has_previous: bool,

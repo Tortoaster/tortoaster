@@ -14,7 +14,7 @@ services:
       S3__ENDPOINT_URL: "http://object-store:9000/"
       S3__ACCESS_KEY_ID: "tortoaster"
       S3__SECRET_ACCESS_KEY: "password"
-      S3__BUCKET_URL: "http://object-store:9000/tortoaster"
+      #      S3__BUCKET_URL: "http://object-store:9000/tortoaster"
       OIDC__CLIENT_ID: "tortoaster"
       OIDC__CLIENT_SECRET: "UzuoAuMFtHuf4USSl2CVGmgXockttxxh"
       OIDC__ISSUER_URL: "http://iam-provider:8003/realms/tortoaster"

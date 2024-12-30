@@ -1,8 +1,8 @@
+use serde::Serialize;
 use serde_with::serde_derive::Deserialize;
+use time::OffsetDateTime;
 use uuid::Uuid;
 use validator::Validate;
-
-use crate::dto::projects::ProjectTime;
 
 // Requests
 
@@ -19,30 +19,19 @@ pub struct CommentUserId {
     pub id: i32,
     pub user_id: Uuid,
     pub message: String,
-    pub date_posted: ProjectTime,
+    pub date_posted: OffsetDateTime,
 }
 
 // Responses
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CommentWithUser {
     pub id: i32,
     pub user_id: Uuid,
     pub name: Option<String>,
     pub is_admin: bool,
     pub message: String,
-    pub date_posted: ProjectTime,
-}
-
-#[derive(Debug)]
-pub struct CommentMessage {
-    pub message: String,
-}
-
-impl From<NewComment> for CommentMessage {
-    fn from(value: NewComment) -> Self {
-        Self {
-            message: value.message,
-        }
-    }
+    #[serde(with = "time::serde::rfc3339")]
+    pub date_posted: OffsetDateTime,
 }

@@ -52,12 +52,6 @@ where
 #[derive(Debug)]
 pub struct Admin(User);
 
-impl Admin {
-    pub fn into_user(self) -> User {
-        self.0
-    }
-}
-
 impl Deref for Admin {
     type Target = User;
 

@@ -1,25 +1,17 @@
 use std::time::Duration;
 
-use axum::{
-    error_handling::HandleErrorLayer,
-    response::{IntoResponse, Redirect},
-    routing::get,
-    Router,
-};
+use axum::{error_handling::HandleErrorLayer, response::IntoResponse, routing::get, Router};
 use axum_extra::routing::RouterExt;
 use axum_oidc::{error::MiddlewareError, OidcLoginLayer};
 use axum_prometheus::PrometheusMetricLayerBuilder;
 use tokio::{net::TcpListener, signal, task::AbortHandle};
 use tower::ServiceBuilder;
-use tower_http::services::ServeDir;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower_sessions::{cookie::SameSite, ExpiredDeletion, Expiry, SessionManagerLayer};
 use tower_sessions_sqlx_store::PostgresStore;
 use tracing::info;
 
-use crate::{
-    api::projects::GetProjectsUrl, config::AppConfig, error::AppError, state::AppState,
-    utils::claims::AppClaims,
-};
+use crate::{config::AppConfig, error::AppError, state::AppState, utils::claims::AppClaims};
 
 mod api;
 mod config;
@@ -81,18 +73,16 @@ async fn main() {
         .layer(oidc_login_service)
         // Login optional
         .merge(api::projects::public_router())
+        .merge(api::comments::public_router())
         .typed_get(api::users::logout)
         .layer(oidc_auth_service)
         // Publicly available
         .layer(session_layer)
-        .route(
-            "/",
-            get(|| async { Redirect::permanent(&GetProjectsUrl.to_string()) }),
-        )
-        .nest_service("/static", ServeDir::new("static"))
         .fallback(|| async { AppError::NotFound })
         .route("/metrics", get(|| async move { metric_handle.render() }))
         .layer(prometheus_layer)
+        .layer(TraceLayer::new_for_http())
+        .layer(CorsLayer::permissive())
         .with_state(state);
 
     let addr = config.socket_addr();
