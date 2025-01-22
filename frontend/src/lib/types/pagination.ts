@@ -1,5 +1,5 @@
 export interface Page<T> {
-    items: T[],
-    hasPrevious: boolean,
-    hasNext: boolean,
+  items: T[];
+  hasPrevious: boolean;
+  hasNext: boolean;
 }
