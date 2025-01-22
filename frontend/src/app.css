@@ -71,6 +71,7 @@
         /* Layout */
 
         --border-thickness: 5pt;
+        --border-radius: 1rem;
 
         --spacing: 2rem;
 
