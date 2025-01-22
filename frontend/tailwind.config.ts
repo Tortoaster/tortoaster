@@ -5,7 +5,6 @@ export default {
     content: ['./src/**/*.{html,js,svelte,ts}', './static/svg/*.svg'],
 
     theme: {
-
         aspectRatio: {
             'square': '1 / 1',
             '2/1': '2 / 1',
@@ -18,7 +17,7 @@ export default {
             DEFAULT: 'var(--border-thickness)',
         },
         borderRadius: {
-            DEFAULT: '1rem',
+            DEFAULT: 'var(--border-radius)',
         },
         colors: {
             transparent: 'transparent',
@@ -83,6 +82,7 @@ export default {
         },
 
         width: {
+            'border': 'var(--border-thickness)',
             'spacing-half': '1rem',
             'spacing': '2rem',
             'spacing-double': '4rem',
@@ -91,6 +91,7 @@ export default {
             'full': '100%',
         },
         height: {
+            'border': 'var(--border-thickness)',
             'spacing-half': '1rem',
             'spacing': '2rem',
             'spacing-double': '4rem',

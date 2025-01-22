@@ -22,7 +22,7 @@
     </div>
 </Overlay>
 
-<div class="flex flex-wrap p-half">
+<main class="flex flex-wrap p-half">
     {#await data.projects}
         <Throbber class="text-black-darker"/>
     {:then projects}
@@ -34,4 +34,4 @@
             <p class="text-black-darker text-lg font-bold p w-full text-center">Nothing here yet!</p>
         {/each}
     {/await}
-</div>
+</main>
