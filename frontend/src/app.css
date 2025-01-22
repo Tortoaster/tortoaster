@@ -1,86 +1,85 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 @font-face {
-    font-family: "JetBrains Mono";
-    font-stretch: normal;
-    font-style: normal;
-    font-weight: normal;
-    src: url("fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-family: "JetBrains Mono";
+  font-stretch: normal;
+  font-style: normal;
+  font-weight: normal;
+  src: url("fonts/JetBrainsMono-Regular.woff2") format("woff2");
 }
 
 @font-face {
-    font-family: "JetBrains Mono";
-    font-stretch: normal;
-    font-style: italic;
-    font-weight: normal;
-    src: url("fonts/JetBrainsMono-Italic.woff2") format("woff2");
+  font-family: "JetBrains Mono";
+  font-stretch: normal;
+  font-style: italic;
+  font-weight: normal;
+  src: url("fonts/JetBrainsMono-Italic.woff2") format("woff2");
 }
 
 @font-face {
-    font-family: "JetBrains Mono";
-    font-stretch: normal;
-    font-style: normal;
-    font-weight: bold;
-    src: url("fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-family: "JetBrains Mono";
+  font-stretch: normal;
+  font-style: normal;
+  font-weight: bold;
+  src: url("fonts/JetBrainsMono-Bold.woff2") format("woff2");
 }
 
 @font-face {
-    font-family: "JetBrains Mono";
-    font-stretch: normal;
-    font-style: italic;
-    font-weight: bold;
-    src: url("fonts/JetBrainsMono-BoldItalic.woff2") format("woff2");
+  font-family: "JetBrains Mono";
+  font-stretch: normal;
+  font-style: italic;
+  font-weight: bold;
+  src: url("fonts/JetBrainsMono-BoldItalic.woff2") format("woff2");
 }
 
 @layer base {
-    :root {
-        /* Colors */
+  :root {
+    /* Colors */
 
-        --background: rgb(40 44 52);
-        --black: rgb(63 68 81);
-        --bright-black: rgb(79 86 102);
-        --gray: rgb(84 88 98);
-        --bright-gray: rgb(145 150 161);
-        --foreground: rgb(171 178 191);
-        --white: rgb(230 230 230);
-        --bright-white: rgb(255 255 255);
-        --red: rgb(224 85 97);
-        --orange: rgb(209 143 82);
-        --yellow: rgb(230 185 101);
-        --green: rgb(140 194 101);
-        --cyan: rgb(66 179 194);
-        --blue: rgb(74 165 240);
-        --purple: rgb(193 98 222);
-        --brown: rgb(191 64 52);
-        --darker-black: rgb(33 37 43);
-        --darkest-black: rgb(24 26 31);
-        --bright-red: rgb(255 97 110);
-        --bright-yellow: rgb(240 164 93);
-        --bright-green: rgb(165 224 117);
-        --bright-cyan: rgb(76 209 224);
-        --bright-blue: rgb(77 196 255);
-        --bright-purple: rgb(222 115 255);
+    --background: rgb(40 44 52);
+    --black: rgb(63 68 81);
+    --bright-black: rgb(79 86 102);
+    --gray: rgb(84 88 98);
+    --bright-gray: rgb(145 150 161);
+    --foreground: rgb(171 178 191);
+    --white: rgb(230 230 230);
+    --bright-white: rgb(255 255 255);
+    --red: rgb(224 85 97);
+    --orange: rgb(209 143 82);
+    --yellow: rgb(230 185 101);
+    --green: rgb(140 194 101);
+    --cyan: rgb(66 179 194);
+    --blue: rgb(74 165 240);
+    --purple: rgb(193 98 222);
+    --brown: rgb(191 64 52);
+    --darker-black: rgb(33 37 43);
+    --darkest-black: rgb(24 26 31);
+    --bright-red: rgb(255 97 110);
+    --bright-yellow: rgb(240 164 93);
+    --bright-green: rgb(165 224 117);
+    --bright-cyan: rgb(76 209 224);
+    --bright-blue: rgb(77 196 255);
+    --bright-purple: rgb(222 115 255);
 
-        /* Sizes */
+    /* Sizes */
 
-        --text-size-subheader: 1.5rem;
-        --text-size-hint: 0.8rem;
+    --text-size-subheader: 1.5rem;
+    --text-size-hint: 0.8rem;
 
-        /* Layout */
+    /* Layout */
 
-        --border-thickness: 5pt;
-        --border-radius: 1rem;
+    --border-thickness: 5pt;
+    --border-radius: 1rem;
 
-        --spacing: 2rem;
+    --spacing: 2rem;
 
-        interpolate-size: allow-keywords;
-    }
+    interpolate-size: allow-keywords;
+  }
 }
 
-
 body {
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--bright-white);
+  font-family: "JetBrains Mono", monospace;
+  color: var(--bright-white);
 }
