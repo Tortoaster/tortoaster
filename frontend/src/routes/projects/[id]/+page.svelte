@@ -33,7 +33,7 @@
         <a class="btn btn-black text-lg mx-auto" href={data.project.projectUrl}>Visit project page &#x2197;</a>
     {/if}
 
-    <div class="prose lg:prose-lg xl:prose-xl prose-invert mx-auto">
+    <div class="prose prose-white sm:prose-sm lg:prose-lg xl:prose-xl mx-auto">
         {#await data.content}
             <Throbber class="text-black-darker"/>
         {:then content}
@@ -49,7 +49,7 @@
 {#await data.comments}
     <Throbber class="text-black-darker"/>
 {:then comments}
-    <div class="prose mx-auto flex flex-col gap p">
+    <div class="prose prose-white sm:prose-sm lg:prose-lg xl:prose-xl mx-auto flex flex-col gap p">
         <form class="flex flex-col gap-half">
             <SpeechBubble class="bg-gray-bright hover:bg-foreground transition-colors">
                 <textarea

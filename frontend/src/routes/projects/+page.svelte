@@ -17,7 +17,7 @@
 </svelte:head>
 
 <Overlay>
-    <div class="prose prose-invert">
+    <div class="prose prose-white sm:prose-sm lg:prose-lg xl:prose-xl">
         {@html data.about}
     </div>
 </Overlay>
