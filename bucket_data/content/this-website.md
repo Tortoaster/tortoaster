@@ -25,8 +25,6 @@ I did end up learning a lot, and now I can easily add any features I like, which
 
 ## Lessons learned
 
-### Frontend
-
 Overall, I'm happy I tried this stack. A few days in, I was even convinced that using simple templates in combination
 with HTMX was far superior to using a frontend framework for the majority of websites. Maybe I still kind of am, but I
 do see some problems with it now.
@@ -50,46 +48,3 @@ and frontend are both in the same crate. For larger projects though, I think it 
 
 All in all, I think the *templates + HTMX* portion of the stack is awesome for relatively small projects, of which you
 know in advance how the end result should look. Otherwise, I'd opt for a frontend framework for its flexibility.
-
-### Authentication
-
-As an additional learning opportunity, I wanted to add OpenID Connect (OIDC) authentication to this website, "instead
-of" a common OAuth approach, because I read somewhere that it's better. This decision proceeded to consume about 90% of
-the available time I had.
-
-With OAuth, which stands for OAuth*orization* for a reason, users are redirected to an Authorization Server (AS), such
-as GitHub or Google or whatever. That server then asks the user to verify that they want to share certain data with the
-application. If they do so, they are redirected back to the application, and the application receives an access token
-that it may use to retrieve that data. The data can be anything, but many ASes provide at least a username and/or email
-address. And since GitHub and many other ASes authenticate users before they may authorize the application to use their
-data, the application may consider the user authenticated by proxy, and use the requested data to create a compatible
-account.
-
-This approach is simple, user-friendly, and ensures that applications don't write their own insecure username/password
-authentication logic. It really is great, but I read about OIDC and wanted to experience why exactly it was considered
-better for authentication, and why it was frowned upon to consider OAuth a proper way of authenticating users.
-
-I learned that OIDC is just an extension to OAuth, meant specifically for authentication. The main advantage it provides
-is that it standardizes the definition of an authenticated user (using fields like username, email, first name, last
-name, address, etc.), so that it doesn't really matter who the Authorizing Server is, as long as they can
-authenticate the user and fill in most of these fields.
-
-In hindsight, I should have been able to combine the information above and conclude that OAuth is indeed fine to use for
-authentication as long as the AS authenticates the user (and you trust the AS), and that it's even better that there is
-a standard definition of an authenticated user and that many ASes agreed to follow that standard. However, being a
-dumbass, I focussed on the part where basic OAuth was not fit for authentication, and therefore excluded all parties
-that didn't explicitly mention they support OpenID Connect in my search for a fitting Authorization Server, not
-realizing nearly all of them are OIDC compliant anyway. I was left with expensive paid options, or Google which I want
-nothing to do with. So I went down the rabbit hole to set up a self-hosted identity provider.
-
-I looked at KeyCloak, Zitadel, Authentik and Authelia. Fiddled around with each of them for a while, before ultimately
-deciding on KeyCloak as it seemed to be the only more or less complete implementation. KeyCloak works, but you get what
-you pay for. Getting it to run in Kubernetes and configuring it properly was not the smoothest experience. It failed to
-run on my Raspberry Pi, so I upgraded my cluster for the sole purpose of authenticating the few people that are going to
-leave a comment (please do :)). But, being able to assign custom `writer` roles to other users of this website does make
-me happy, so it was all somewhat worth it maybe eventually.
-
-## Thank you
-
-Thanks for reading! I'll open-source the project with a copyleft license as soon as companies learn that they cannot use
-copylefted works in their closed-source AI models.
