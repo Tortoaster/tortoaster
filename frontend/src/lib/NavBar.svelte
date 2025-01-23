@@ -10,6 +10,7 @@
     const pages = new Map([
         ['Projects', '/projects'],
         ['Experience', '/experience'],
+        ['Contact', '/contact'],
     ]);
 
     let button: HTMLButtonElement;
@@ -50,28 +51,6 @@
     ));
 </script>
 
-{#snippet navbar(underline)}
-    <nav id="nav" class="flex flex-col lg:flex-row lg:gap">
-        {#each pages as [page, href]}
-            <a onclick={() => popover?.hidePopover()}
-               class:text-white-bright={page !== activeRoute}
-               class:text-black-darkest={page === activeRoute}
-               class:hover:text-white-bright={page === activeRoute}
-               class:bg-white-bright={page === activeRoute}
-               class="p-half lg:p lg:rounded text-xl lg:text-white-bright font-bold lg:bg-transparent hover:bg-black-darker transition-colors relative group"
-               {href}>
-                {page}
-                {#if underline && page === activeRoute}
-                    <div
-                            in:receive={{ key: 0 }}
-                            out:send={{ key: 0 }}
-                            class="absolute bottom-half w-[calc(100%-2*var(--spacing))] h-border rounded bg-black-darker group-hover:bg-black transition-colors"></div>
-                {/if}
-            </a>
-        {/each}
-    </nav>
-{/snippet}
-
 <!-- Mobile -->
 <button bind:this={button}
         class:rounded-b={!open}
@@ -84,21 +63,39 @@
 
 <div bind:this={popover} ontoggle={(e) => open = e.newState === 'open'} id="menu"
      class="lg:hidden absolute m-0 p-0 bg-black-bright rounded-b" popover="auto">
-    {@render navbar(false)}
+    <nav id="nav" class="flex flex-col last:rounded-b">
+        {#each pages as [page, href]}
+            <a onclick={() => popover?.hidePopover()}
+               class:text-white-bright={page !== activeRoute}
+               class:text-black-darkest={page === activeRoute}
+               class:hover:text-white-bright={page === activeRoute}
+               class:bg-white-bright={page === activeRoute}
+               class="p-half text-xl font-bold hover:bg-black-darker transition-colors"
+               {href}>
+                {page}
+            </a>
+        {/each}
+    </nav>
 </div>
 
 <!-- Desktop -->
 <div class="hidden lg:block">
-    {@render navbar(true)}
+    <nav class="flex gap">
+        {#each pages as [page, href]}
+            <a onclick={() => popover?.hidePopover()} class="btn btn-black text-xl relative group" {href}>
+                {page}
+                {#if page === activeRoute}
+                    <hr in:receive={{ key: 0 }}
+                        out:send={{ key: 0 }}
+                        class="hr absolute bottom-half w-[calc(100%-2*var(--spacing))] group-hover:before:bg-black transition-colors"/>
+                {/if}
+            </a>
+        {/each}
+    </nav>
 </div>
 
 <style>
     .turn {
         transform: rotateY(180deg) rotateZ(90deg);
-    }
-
-    #nav a:last-child {
-        border-bottom-left-radius: var(--border-radius);
-        border-bottom-right-radius: var(--border-radius);
     }
 </style>
