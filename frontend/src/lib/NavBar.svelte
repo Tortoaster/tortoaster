@@ -9,8 +9,7 @@
 
     const pages = new Map([
         ['Projects', '/projects'],
-        ['Experience', '/experience'],
-        ['Contact', '/contact'],
+        ['About', '/about'],
     ]);
 
     let button: HTMLButtonElement;
@@ -54,7 +53,7 @@
 <!-- Mobile -->
 <button bind:this={button}
         class:rounded-b={!open}
-        class="lg:hidden p-half text-white-bright text-xl font-bold bg-black-bright hover:bg-black-darker transition-colors rounded-t flex items-center gap-half"
+        class="lg:hidden px py-half text-white-bright text-xl font-bold bg-black-bright hover:bg-black-darker transition-colors rounded-t flex items-center gap-half"
         popovertarget="menu">
     <svg class="text-white-bright w-spacing h-spacing transition-transform" class:turn={open}
          inline-src="arrow"/>
@@ -70,7 +69,7 @@
                class:text-black-darkest={page === activeRoute}
                class:hover:text-white-bright={page === activeRoute}
                class:bg-white-bright={page === activeRoute}
-               class="p-half text-xl font-bold hover:bg-black-darker transition-colors"
+               class="px py-half text-xl font-bold hover:bg-black-darker transition-colors"
                {href}>
                 {page}
             </a>

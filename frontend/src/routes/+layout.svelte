@@ -18,11 +18,12 @@
     <div class="container mx-auto sm:px">
         <Header mood={page.error ? 'sad' : 'happy'}/>
         <Card class="bg-black" extend>
-            <div class="flex justify-between items-center p">
-                <NavBar routeId={page.route.id ?? undefined}/>
+            <div class="flex flex-col gap sm:flex-row-reverse justify-between items-center p">
                 <a aria-label="Home" class="basis-1/2 sm:basis-1/3 lg:basis-1/4" href="/">
-                    <svg class="w-full text-black-darker" inline-src="logo"/>
+                    <svg class="hidden sm:block w-full text-black-darker" inline-src="logo"/>
+                    <svg class="sm:hidden w-full text-black-darker" inline-src="logo-text"/>
                 </a>
+                <NavBar routeId={page.route.id ?? undefined}/>
             </div>
             {@render children()}
         </Card>
