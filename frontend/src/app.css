@@ -75,11 +75,44 @@
 
     --spacing: 2rem;
 
-    interpolate-size: allow-keywords;
+    /* Animations / transitions */
+
+    --transition-easing: ease-out;
+    --transition-duration: 0.2s;
   }
 }
 
 body {
   font-family: "JetBrains Mono", monospace;
   color: var(--bright-white);
+}
+
+.hr {
+  border: none;
+  height: var(--border-thickness);
+}
+
+.hr::before {
+  content: "";
+  display: block;
+  height: var(--border-thickness);
+  border-radius: var(--border-radius);
+  background-color: var(--darker-black);
+}
+
+.btn {
+  display: block;
+  width: max-content;
+  padding: var(--spacing);
+  border-radius: var(--border-radius);
+  font-weight: bold;
+  transition: background-color var(--transition-duration) var(--transition-easing);
+}
+
+.btn-black {
+  color: var(--bright-white);
+}
+
+.btn-black:hover {
+  background-color: var(--darker-black);
 }

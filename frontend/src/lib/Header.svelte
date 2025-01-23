@@ -12,5 +12,5 @@
     {:else}
         <svg inline-src="turtle-sad" preserveAspectRatio="xMinYMin slice" class="absolute"/>
     {/if}
-    <svg inline-src="turtle-mouth" class="absolute z-50"/>
+    <svg inline-src="turtle-mouth" class="absolute z-50 pointer-events-none"/>
 </header>

@@ -18,14 +18,8 @@
 </svelte:head>
 
 <Overlay>
-    <div class="flex justify-between gap items-center">
+    <div class="flex justify-between items-center">
         <h1 class="text-4xl text-white-bright font-bold">{data.project.name}</h1>
-
-        {#if data.project.projectUrl}
-            <a class="text-white-bright text-lg font-bold p rounded hover:bg-white-bright hover:text-cyan transition-colors"
-               href={data.project.projectUrl}>Go to project</a>
-        {/if}
-
         <span class="text-white-bright italic">{data.project.datePosted}</span>
     </div>
 </Overlay>
@@ -34,6 +28,10 @@
     <Card class="max-w-fit m-auto">
         <img alt="Thumbnail" src="{PUBLIC_BUCKET_URL}/thumbnails/{data.project.thumbnailId}">
     </Card>
+
+    {#if data.project.projectUrl}
+        <a class="btn btn-black text-lg mx-auto" href={data.project.projectUrl}>Visit project page &#x2197;</a>
+    {/if}
 
     <div class="prose lg:prose-lg xl:prose-xl prose-invert mx-auto">
         {#await data.content}
