@@ -5,12 +5,15 @@
     import Throbber from "$lib/Throbber.svelte";
     import Overlay from "$lib/Overlay.svelte";
     import SpeechBubble from "$lib/SpeechBubble.svelte";
+    import {format} from "date-fns";
 
     interface Props {
         data: PageData;
     }
 
     const {data}: Props = $props();
+
+    let [day, date, year] = format(data.project.datePosted, 'PPPP').split(', ');
 </script>
 
 <svelte:head>
@@ -20,7 +23,11 @@
 <Overlay>
     <div class="flex justify-between items-center">
         <h1 class="text-4xl text-white-bright font-bold">{data.project.name}</h1>
-        <span class="text-white-bright italic">{data.project.datePosted}</span>
+        <div class="flex">
+            <span class="text-white italic hidden lg:block">{day},&nbsp;</span>
+            <span class="text-white italic">{date}</span>
+            <span class:hidden={+year !== new Date().getFullYear()} class="text-white italic">,&nbsp;{year}</span>
+        </div>
     </div>
 </Overlay>
 
