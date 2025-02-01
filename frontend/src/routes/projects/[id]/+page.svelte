@@ -31,7 +31,7 @@
     </div>
 </Overlay>
 
-<div class="flex flex-col gap p">
+<main class="flex flex-col gap p">
     <Card class="max-w-fit m-auto">
         <img alt="Thumbnail" src="{PUBLIC_BUCKET_URL}/thumbnails/{data.project.thumbnailId}">
     </Card>
@@ -47,7 +47,7 @@
             {@html content}
         {/await}
     </div>
-</div>
+</main>
 
 <Overlay>
     <h3 class="text-2xl text-white-bright font-bold">Comments</h3>
