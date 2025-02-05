@@ -19,7 +19,3 @@
         {@render children?.()}
     </Card>
 </div>
-
-<style>
-
-</style>

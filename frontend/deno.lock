@@ -2,6 +2,9 @@
   "version": "4",
   "specifiers": {
     "npm:@floating-ui/dom@^1.6.13": "1.6.13",
+    "npm:@iconify-json/fa6-brands@^1.2.5": "1.2.5",
+    "npm:@iconify-json/fa6-solid@^1.2.3": "1.2.3",
+    "npm:@iconify/tailwind@^1.2.0": "1.2.0",
     "npm:@svelte-put/inline-svg@4": "4.0.0_svelte@5.16.1__acorn@8.14.0_vite@5.4.11",
     "npm:@sveltejs/adapter-auto@3": "3.3.1_@sveltejs+kit@2.15.1__@sveltejs+vite-plugin-svelte@4.0.4___svelte@5.16.1____acorn@8.14.0___vite@5.4.11__svelte@5.16.1___acorn@8.14.0__vite@5.4.11_@sveltejs+vite-plugin-svelte@4.0.4__svelte@5.16.1___acorn@8.14.0__vite@5.4.11_svelte@5.16.1__acorn@8.14.0_vite@5.4.11",
     "npm:@sveltejs/kit@2": "2.15.1_@sveltejs+vite-plugin-svelte@4.0.4__svelte@5.16.1___acorn@8.14.0__vite@5.4.11_svelte@5.16.1__acorn@8.14.0_vite@5.4.11",
@@ -110,6 +113,27 @@
     },
     "@floating-ui/utils@0.2.9": {
       "integrity": "sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg=="
+    },
+    "@iconify-json/fa6-brands@1.2.5": {
+      "integrity": "sha512-U/iFfziz6jSN9zArOJZYTtoj2tQyh6MxPdI8M84DQ2kEulPaj8j+h9bqvjmzszNHmD7v+kmmKd/MLkMKk+3Zuw==",
+      "dependencies": [
+        "@iconify/types"
+      ]
+    },
+    "@iconify-json/fa6-solid@1.2.3": {
+      "integrity": "sha512-C5o8YJF+ekrS4wRb/6/0SE2KjRyJlCg++IOVC/fineiRinITivsmzFRNW1MQX2xfDZ1T7bxeKxLN6lcaTG3jGA==",
+      "dependencies": [
+        "@iconify/types"
+      ]
+    },
+    "@iconify/tailwind@1.2.0": {
+      "integrity": "sha512-KgpIHWOTcRYw1XcoUqyNSrmYyfLLqZYu3AmP8zdfLk0F5TqRO8YerhlvlQmGfn7rJXgPeZN569xPAJnJ53zZxA==",
+      "dependencies": [
+        "@iconify/types"
+      ]
+    },
+    "@iconify/types@2.0.0": {
+      "integrity": "sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg=="
     },
     "@isaacs/cliui@8.0.2": {
       "integrity": "sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==",
@@ -1273,6 +1297,9 @@
     "packageJson": {
       "dependencies": [
         "npm:@floating-ui/dom@^1.6.13",
+        "npm:@iconify-json/fa6-brands@^1.2.5",
+        "npm:@iconify-json/fa6-solid@^1.2.3",
+        "npm:@iconify/tailwind@^1.2.0",
         "npm:@svelte-put/inline-svg@4",
         "npm:@sveltejs/adapter-auto@3",
         "npm:@sveltejs/kit@2",
