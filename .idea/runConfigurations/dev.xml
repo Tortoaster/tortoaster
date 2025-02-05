@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="dev" type="DenoConfigurationType" inputPath="$PROJECT_DIR$/frontend" programParameters="task dev" workingDirectory="$PROJECT_DIR$/frontend">
+    <method v="2" />
+  </configuration>
+</component>
