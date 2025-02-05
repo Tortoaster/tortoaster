@@ -1,4 +1,5 @@
 import typography from "@tailwindcss/typography";
+import { addDynamicIconSelectors } from "@iconify/tailwind";
 import type { Config } from "tailwindcss";
 
 export default {
@@ -132,5 +133,8 @@ export default {
     },
   },
 
-  plugins: [typography],
+  plugins: [
+      typography,
+      addDynamicIconSelectors(),
+  ],
 } satisfies Config;
