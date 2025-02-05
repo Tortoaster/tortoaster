@@ -1,5 +1,6 @@
 <script lang="ts">
-    import '../app.css';
+    import '@unocss/reset/tailwind.css'
+    import 'virtual:uno.css'
     import Header from "$lib/Header.svelte";
     import Card from "$lib/Card.svelte";
     import Footer from "$lib/Footer.svelte";

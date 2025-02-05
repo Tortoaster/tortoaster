@@ -43,9 +43,9 @@
     <hr class="hr"/>
 
     <div class="flex gap justify-center">
-        <a class="p rounded text-black-darker hover:bg-black-darker hover:text-black transition-colors" href="https://github.com/Tortoaster">G</a>
-        <a class="p rounded text-black-darker hover:bg-black-darker hover:text-black transition-colors" href="https://www.linkedin.com/in/rick-van-der-wal/">L</a>
-        <a class="p rounded text-black-darker hover:bg-black-darker hover:text-black transition-colors" href="mailto:rick@tortoaster.com">E</a>
+        <a class="p rounded text-black-darker hover:bg-black-darker hover:text-black transition-colors" href="https://github.com/Tortoaster"><div class="i-simple-icons:github text-white-bright w-24px h-24px"></div></a>
+        <a class="p rounded text-black-darker hover:bg-black-darker hover:text-black transition-colors" href="https://www.linkedin.com/in/rick-van-der-wal/"><div class="i-simple-icons:linuxprofessionalinstitute text-white-bright w-24px h-24px"></div></a>
+        <a class="p rounded text-black-darker hover:bg-black-darker hover:text-black transition-colors" href="mailto:rick@tortoaster.com"><div class="i-simple-icons:protonmail text-white-bright w-24px h-24px"></div></a>
     </div>
 </main>
 
