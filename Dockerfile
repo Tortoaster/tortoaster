@@ -5,9 +5,9 @@ ARG TARGETARCH
 WORKDIR /app
 
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
-        curl -sL -o tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64; \
+        curl -sL -o tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-linux-x64; \
     elif [ "$TARGETARCH" = "arm64" ]; then \
-        curl -sL -o tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-arm64; \
+        curl -sL -o tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-linux-arm64; \
     else \
         echo "Unsupported architecture: $TARGETARCH"; \
         exit 1; \
