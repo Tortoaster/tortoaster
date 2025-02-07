@@ -7,10 +7,7 @@ use std::{
 use aws_sdk_s3::primitives::{ByteStream, SdkBody};
 use bytes::Bytes;
 use thiserror::Error;
-use tower_sessions_redis_store::fred::{
-    clients::RedisPool, interfaces::KeysInterface, prelude::Expiration,
-};
-use tracing::{error, trace};
+use tracing::error;
 
 use crate::{
     config::AppBucket,
@@ -20,12 +17,11 @@ use crate::{
 #[derive(Clone, Debug)]
 pub struct FileRepository {
     client: aws_sdk_s3::Client,
-    redis_pool: RedisPool,
 }
 
 impl FileRepository {
-    pub fn new(client: aws_sdk_s3::Client, redis_pool: RedisPool) -> Self {
-        Self { client, redis_pool }
+    pub fn new(client: aws_sdk_s3::Client) -> Self {
+        Self { client }
     }
 
     async fn store<T>(
@@ -78,8 +74,6 @@ impl FileRepository {
 
         self.store(&id, content, bucket, "text/markdown").await?;
 
-        self.store_in_cache(&id, bucket, content).await;
-
         Ok(())
     }
 
@@ -89,12 +83,6 @@ impl FileRepository {
         bucket: AppBucket,
     ) -> AppResult<String> {
         let id = format!("{id}.md");
-
-        if let Some(content) = self.retrieve_from_cache(&id, bucket).await {
-            trace!("found cached entry for {}/{id}", bucket.name());
-            return Ok(content);
-        }
-        trace!("no cached entry for {}/{id}", bucket.name());
 
         let content = String::from_utf8(
             self.client
@@ -111,39 +99,7 @@ impl FileRepository {
         )
         .map_err(|_| AppError::ObjectEncoding)?;
 
-        self.store_in_cache(&id, bucket, &content).await;
-
         Ok(content)
-    }
-
-    async fn store_in_cache(&self, id: &str, bucket: AppBucket, content: &str) {
-        if let Err(error) = self
-            .redis_pool
-            .set::<(), _, _>(
-                Self::cache_key(id, bucket),
-                content,
-                Some(Expiration::EX(24 * 3600)),
-                None,
-                false,
-            )
-            .await
-        {
-            error!("failed to store in cache: {error}")
-        }
-    }
-
-    async fn retrieve_from_cache(&self, id: &str, bucket: AppBucket) -> Option<String> {
-        self.redis_pool
-            .get::<Option<String>, _>(Self::cache_key(id, bucket))
-            .await
-            .unwrap_or_else(|error| {
-                error!("failed to retrieve from cache: {error}");
-                None
-            })
-    }
-
-    fn cache_key(id: &str, bucket: AppBucket) -> String {
-        format!("{}/{id}", bucket.name())
     }
 }
 

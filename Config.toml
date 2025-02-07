@@ -24,7 +24,3 @@ client_id = "tortoaster"
 client_secret = "UzuoAuMFtHuf4USSl2CVGmgXockttxxh" # default: None
 issuer_url = "http://localhost:8003/realms/tortoaster"
 redirect_url = "http://localhost:8000/projects"
-
-# [cache]
-# host = "localhost" # default: localhost
-# port = 6379 # default: 6379

@@ -12,10 +12,7 @@ use axum_prometheus::PrometheusMetricLayerBuilder;
 use tokio::{net::TcpListener, signal, task::AbortHandle};
 use tower::ServiceBuilder;
 use tower_http::services::ServeDir;
-use tower_sessions::{
-    cookie::SameSite, CachingSessionStore, ExpiredDeletion, Expiry, SessionManagerLayer,
-};
-use tower_sessions_redis_store::RedisStore;
+use tower_sessions::{cookie::SameSite, ExpiredDeletion, Expiry, SessionManagerLayer};
 use tower_sessions_sqlx_store::PostgresStore;
 use tracing::info;
 
@@ -49,19 +46,18 @@ async fn main() {
         .with_default_metrics()
         .build_pair();
 
-    let (state, oidc_auth_layer, abort_handle) = AppState::new().await;
+    let (state, oidc_auth_layer) = AppState::new().await;
 
-    let redis_session_store = RedisStore::new(state.redis_pool.clone());
-    let postgres_session_store = PostgresStore::new(state.pool.clone())
+    let session_store = PostgresStore::new(state.pool.clone())
         .with_schema_name("sessions")
         .unwrap()
         .with_table_name("sessions")
         .unwrap();
-    let session_store =
-        CachingSessionStore::new(redis_session_store, postgres_session_store.clone());
 
     let deletion_task = tokio::task::spawn(
-        postgres_session_store.continuously_delete_expired(Duration::from_secs(1800)),
+        session_store
+            .clone()
+            .continuously_delete_expired(Duration::from_secs(1800)),
     );
 
     let session_layer = SessionManagerLayer::new(session_store)
@@ -109,10 +105,7 @@ async fn main() {
 
     info!("listening on http://{addr}");
     axum::serve(listener, app)
-        .with_graceful_shutdown(graceful_shutdown([
-            abort_handle,
-            deletion_task.abort_handle(),
-        ]))
+        .with_graceful_shutdown(graceful_shutdown([deletion_task.abort_handle()]))
         .await
         .unwrap();
 }

@@ -19,7 +19,6 @@ services:
       OIDC__CLIENT_SECRET: "UzuoAuMFtHuf4USSl2CVGmgXockttxxh"
       OIDC__ISSUER_URL: "http://iam-provider:8003/realms/tortoaster"
       OIDC__REDIRECT_URL: "http://localhost:8000/projects"
-      CACHE__HOST: "cache"
     depends_on:
       db-migrate:
         condition: service_completed_successfully

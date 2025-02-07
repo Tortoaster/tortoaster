@@ -12,7 +12,6 @@ use serde::Deserialize;
 use serde_inline_default::serde_inline_default;
 use sqlx::postgres::PgConnectOptions;
 use strum::EnumIter;
-use tower_sessions_redis_store::fred::prelude::{RedisConfig, Server, ServerConfig};
 use tracing_subscriber::EnvFilter;
 
 #[serde_inline_default]
@@ -27,8 +26,6 @@ pub struct AppConfig {
     database: DatabaseConfig,
     s3: S3Config,
     pub oidc: OidcConfig,
-    #[serde(default)]
-    cache: CacheConfig,
 }
 
 impl AppConfig {
@@ -91,15 +88,6 @@ impl AppConfig {
     pub fn s3_thumbnail_bucket_url(&self) -> &str {
         &self.s3.thumbnail_bucket_url
     }
-
-    pub fn cache_config(&self) -> RedisConfig {
-        RedisConfig {
-            server: ServerConfig::Centralized {
-                server: Server::new(self.cache.host.to_string(), self.cache.port),
-            },
-            ..Default::default()
-        }
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -140,16 +128,6 @@ pub enum AppBucket {
     System,
 }
 
-impl AppBucket {
-    pub fn name(&self) -> &'static str {
-        match self {
-            AppBucket::Thumbnails => "thumbnails",
-            AppBucket::Content => "content",
-            AppBucket::System => "system",
-        }
-    }
-}
-
 impl Deref for AppBucket {
     type Target = str;
 
@@ -181,22 +159,4 @@ pub struct OidcConfig {
     pub client_secret: Option<String>,
     pub issuer_url: String,
     pub redirect_url: String,
-}
-
-#[serde_inline_default]
-#[derive(Debug, Deserialize)]
-struct CacheConfig {
-    #[serde_inline_default(Ipv4Addr::LOCALHOST.to_string())]
-    host: String,
-    #[serde_inline_default(6379)]
-    port: u16,
-}
-
-impl Default for CacheConfig {
-    fn default() -> Self {
-        Self {
-            host: Ipv4Addr::LOCALHOST.to_string(),
-            port: 6379,
-        }
-    }
 }

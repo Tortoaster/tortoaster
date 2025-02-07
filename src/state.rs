@@ -4,10 +4,7 @@ use axum::extract::FromRef;
 use axum_oidc::OidcAuthLayer;
 use backoff::{ExponentialBackoff, ExponentialBackoffBuilder};
 use sqlx::PgPool;
-use tokio::{join, task::AbortHandle};
-use tower_sessions_redis_store::fred::{
-    clients::RedisPool, interfaces::ClientLike, types::ConnectHandle,
-};
+use tokio::join;
 use tracing::{info, warn};
 
 use crate::{
@@ -23,25 +20,22 @@ use crate::{
 pub struct AppState {
     pub(super) pool: PgPool,
     pub(super) s3_client: aws_sdk_s3::Client,
-    pub(super) redis_pool: RedisPool,
 }
 
 impl AppState {
-    pub async fn new() -> (Self, OidcAuthLayer<AppClaims>, AbortHandle) {
+    pub async fn new() -> (Self, OidcAuthLayer<AppClaims>) {
         let config = AppConfig::get();
 
-        let (pool, s3_client, oidc_auth_layer, redis_pool) = join!(
+        let (pool, s3_client, oidc_auth_layer) = join!(
             init_pool(config),
             init_s3_client(config),
             init_oidc_auth_layer(config),
-            init_redis_pool(config)
         );
 
         let (pool_ok, pool_err) = split(pool);
         let (oidc_auth_layer_ok, oidc_auth_layer_err) = split(oidc_auth_layer);
-        let (redis_pool_ok, redis_pool_err) = split(redis_pool);
 
-        let errors = [pool_err, oidc_auth_layer_err, redis_pool_err]
+        let errors = [pool_err, oidc_auth_layer_err]
             .iter()
             .flatten()
             .copied()
@@ -54,15 +48,10 @@ impl AppState {
 
         let pool = pool_ok.unwrap();
         let oidc_auth_layer = oidc_auth_layer_ok.unwrap();
-        let (redis_pool, redis_handle) = redis_pool_ok.unwrap();
 
-        let state = AppState {
-            pool,
-            s3_client,
-            redis_pool,
-        };
+        let state = AppState { pool, s3_client };
 
-        (state, oidc_auth_layer, redis_handle.abort_handle())
+        (state, oidc_auth_layer)
     }
 }
 
@@ -130,27 +119,6 @@ async fn init_oidc_auth_layer(
     Ok(oidc_auth_layer)
 }
 
-async fn init_redis_pool(config: &AppConfig) -> Result<(RedisPool, ConnectHandle), &'static str> {
-    let (redis_pool, redis_handle) = backoff::future::retry_notify(
-        backoff_config(),
-        || async {
-            let redis_pool = RedisPool::new(config.cache_config(), None, None, None, 6)?;
-            let redis_handle = redis_pool.init().await?;
-            Ok((redis_pool, redis_handle))
-        },
-        |error, duration: Duration| {
-            warn!("failed to connect to redis: {error}");
-            warn!("retrying in {} seconds", duration.as_secs());
-        },
-    )
-    .await
-    .map_err(|_| "failed to connect to redis")?;
-
-    info!("connected to redis");
-
-    Ok((redis_pool, redis_handle))
-}
-
 fn backoff_config() -> ExponentialBackoff {
     ExponentialBackoffBuilder::new()
         .with_initial_interval(Duration::from_secs(1))
@@ -181,7 +149,7 @@ impl FromRef<AppState> for CommentRepository {
 
 impl FromRef<AppState> for FileRepository {
     fn from_ref(input: &AppState) -> Self {
-        Self::new(input.s3_client.clone(), input.redis_pool.clone())
+        Self::new(input.s3_client.clone())
     }
 }
 
