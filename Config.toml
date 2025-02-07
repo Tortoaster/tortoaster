@@ -3,7 +3,8 @@
 rust_log = "tortoaster=trace,warn" # default: info
 
 [database]
-url = "postgres://tortoaster:password@localhost/tortoaster"
+url = "postgres://tortoaster@localhost/tortoaster"
+password = "password"
 
 [s3]
 region = "eu-central-1"
