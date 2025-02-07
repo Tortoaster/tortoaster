@@ -66,7 +66,7 @@ impl AppConfig {
     }
 
     pub async fn s3_config(&self) -> aws_sdk_s3::Config {
-        let sdk_config = aws_config::defaults(BehaviorVersion::v2023_11_09())
+        let sdk_config = aws_config::defaults(BehaviorVersion::v2024_03_28())
             .region(Region::new(self.s3.region.clone()))
             .endpoint_url(&self.s3.endpoint_url)
             .credentials_provider(Credentials::new(
