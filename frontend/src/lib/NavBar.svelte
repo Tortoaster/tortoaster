@@ -1,6 +1,6 @@
 <script lang="ts">
     import {autoUpdate, computePosition} from "@floating-ui/dom";
-    import {crossfade, fly} from "svelte/transition";
+    import {crossfade} from "svelte/transition";
     import {elasticOut} from "svelte/easing";
 
     interface Props {
@@ -52,16 +52,16 @@
 
 <!-- Mobile -->
 <button bind:this={button}
-        class:rounded-b={!open}
-        class="lg:hidden px py-half text-white-bright text-xl font-bold bg-black-bright hover:bg-black-darker transition-colors rounded-t flex items-center gap-half"
+        class:rounded-b-normal={!open}
+        class="lg:hidden px-single py-half text-white-bright text-xl font-bold bg-black-bright hover:bg-black-darker rounded-t-normal flex items-center gap-half transition-colors duration-200 ease-out"
         popovertarget="menu">
-    <svg class="text-white-bright w-spacing h-spacing transition-transform" class:turn={open}
+    <svg class="text-white-bright w-single h-single transition-transform duration-200 ease-out" class:turn={open}
          inline-src="arrow"/>
     {activeRoute}
 </button>
 
 <div bind:this={popover} ontoggle={(e) => open = e.newState === 'open'} id="menu"
-     class="lg:hidden absolute m-0 p-0 bg-black-bright rounded-b" popover="auto">
+     class="lg:hidden absolute bg-black-bright rounded-b-normal" popover="auto">
     <nav id="nav" class="flex flex-col last:rounded-b">
         {#each pages as [page, href]}
             <a onclick={() => popover?.hidePopover()}
@@ -69,7 +69,7 @@
                class:text-black-darkest={page === activeRoute}
                class:hover:text-white-bright={page === activeRoute}
                class:bg-white-bright={page === activeRoute}
-               class="px py-half text-xl font-bold hover:bg-black-darker transition-colors"
+               class="px-single py-half text-xl font-bold hover:bg-black-darker transition-colors duration-200 ease-out"
                {href}>
                 {page}
             </a>
@@ -79,14 +79,14 @@
 
 <!-- Desktop -->
 <div class="hidden lg:block">
-    <nav class="flex gap">
+    <nav class="flex gap-single">
         {#each pages as [page, href]}
-            <a onclick={() => popover?.hidePopover()} class="btn btn-black text-xl relative group" {href}>
+            <a onclick={() => popover?.hidePopover()} class="btn text-xl group" {href}>
                 {page}
                 {#if page === activeRoute}
                     <hr in:receive={{ key: 0 }}
                         out:send={{ key: 0 }}
-                        class="hr absolute bottom-half w-[calc(100%-2*var(--spacing))] group-hover:before:bg-black transition-colors"/>
+                        class="bar mt-border -mb-[calc(2*var(--spacing-border))] w-full group-hover:before:bg-black before:transition-colors before:duration-200 before:ease-out"/>
                 {/if}
             </a>
         {/each}
