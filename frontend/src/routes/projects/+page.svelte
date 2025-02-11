@@ -17,7 +17,7 @@
 </svelte:head>
 
 <Overlay>
-    <div class="prose prose-white sm:prose-sm lg:prose-lg xl:prose-xl">
+    <div class="md">
         {@html data.about}
     </div>
 </Overlay>
@@ -31,7 +31,7 @@
                 <ProjectPreview {project} bucketUrl={PUBLIC_BUCKET_URL}/>
             </div>
         {:else}
-            <p class="text-black-darker text-lg font-bold p w-full text-center">Nothing here yet!</p>
+            <p class="text-black-darker text-lg font-bold p-single w-full text-center">Nothing here yet!</p>
         {/each}
     {/await}
 </main>

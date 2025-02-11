@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Card from "$lib/Card.svelte";
     import type {Snippet} from "svelte";
 
     interface Props {
@@ -9,6 +8,6 @@
     let {children}: Props = $props();
 </script>
 
-<Card class="sm:-mx bg-cyan px sm:px-double py z-10" extend>
+<div class="card-y sm:card sm:-mx-single bg-cyan px-single sm:px-double py-single z-10">
     {@render children?.()}
-</Card>
+</div>

@@ -1,3 +1,3 @@
 <main>
-    <p class="text-white-bright p">Something went wrong :(</p>
+    <p class="text-white-bright p-single">Something went wrong :(</p>
 </main>
