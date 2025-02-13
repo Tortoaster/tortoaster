@@ -1,16 +1,8 @@
 <svelte:head>
-    <title>About - Tortoaster</title>
+    <title>Contact - Tortoaster</title>
 </svelte:head>
 
-<main class="flex flex-col gap-half p-half">
-    <hr class="bar"/>
-
-    <blockquote>
-        I'm a developer with a passion for writing high quality, robust code that will stand the test of time. Using modern technologies and frameworks like Rust, TypeScript, OpenAPI, Docker and Kubernetes. From intuitive frontends to scalable backends, from future-proof documentation to extensive tests, and from cloud deployment to pro-active performance monitoring. I just enjoy making things you can rely on.
-    </blockquote>
-
-    <hr class="bar"/>
-
+<main class="p-single">
     <div class="flex gap-single justify-center">
         <a class="p-half rounded-normal hover:bg-black-darker text-black-darker hover:text-black transition-colors duration-200 ease-out" aria-label="GitHub" href="https://github.com/Tortoaster"><span class="icon-[fa6-brands--github] size-double block"></span></a>
         <a class="p-half rounded-normal hover:bg-black-darker text-black-darker hover:text-black transition-colors duration-200 ease-out" aria-label="LinkedIn" href="https://www.linkedin.com/in/rick-van-der-wal/"><span class="icon-[fa6-brands--linkedin] size-double block"></span></a>

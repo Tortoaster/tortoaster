@@ -3,7 +3,6 @@
     import type {PageData} from './$types';
     import Throbber from "$lib/Throbber.svelte";
     import Overlay from "$lib/Overlay.svelte";
-    import SpeechBubble from "$lib/SpeechBubble.svelte";
     import {format} from "date-fns";
 
     interface Props {
@@ -47,34 +46,3 @@
         {/await}
     </div>
 </main>
-
-<Overlay>
-    <h3 class="text-2xl text-white-bright font-bold">Comments</h3>
-</Overlay>
-
-{#await data.comments}
-    <Throbber class="text-black-darker"/>
-{:then comments}
-    <div>
-        <form class="flex flex-col gap-half">
-            <SpeechBubble class="bg-gray-bright hover:bg-foreground transition-colors duration-200 ease-out">
-                <textarea
-                        class="bg-gray-bright focus:bg-foreground text-black-darkest w-full outline-hidden p-single transition-colors duration-200 ease-out"></textarea>
-            </SpeechBubble>
-
-            <div class="flex justify-end">
-                <div class="card">
-                    <button class="px-single py-half bg-cyan text-white-bright hover:bg-white-bright hover:text-cyan transition-colors duration-200 ease-out"
-                            type="submit">Comment
-                    </button>
-                </div>
-            </div>
-        </form>
-
-        {#each comments as comment}
-            {JSON.stringify(comment)}
-        {:else}
-            <p class="text-black-darker text-lg font-bold w-full text-center">Nothing here yet!</p>
-        {/each}
-    </div>
-{/await}

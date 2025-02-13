@@ -9,7 +9,7 @@
 
     const pages = new Map([
         ['Projects', '/projects'],
-        ['About', '/about'],
+        ['Contact', '/contact'],
     ]);
 
     let button: HTMLButtonElement;
