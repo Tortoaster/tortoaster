@@ -4,12 +4,12 @@ import { PUBLIC_API_URL, PUBLIC_BUCKET_URL } from "$env/static/public";
 import type { IProject } from "$lib/types/projects";
 import type { ICommentWithUser } from "$lib/types/comments";
 
-export const load: PageLoad = async ({ params, fetch }) => {
-  const project: IProject = await fetch(
+export const load: PageLoad = ({ params, fetch }) => {
+  const project: Promise<IProject> = fetch(
     `${PUBLIC_API_URL}/projects/${params.id}`,
   ).then((response) => response.json());
 
-  const content = fetch(`${PUBLIC_BUCKET_URL}/content/${project.id}.md`)
+  const content = fetch(`${PUBLIC_BUCKET_URL}/content/${params.id}.md`)
     .then((response) => response.text())
     .then((md) => marked.parse(md));
 

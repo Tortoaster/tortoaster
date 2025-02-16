@@ -17,9 +17,19 @@
 </svelte:head>
 
 <Overlay>
-    <div class="md">
-        {@html data.about}
-    </div>
+    {#await data.about}
+        <Throbber class="text-white-brightest"/>
+    {:then about}
+        <div class="md">
+            {@html about}
+        </div>
+    {:catch _}
+        <div class="md">
+            <h1>Hello</h1>
+            <p>This is where I write about projects I work on in my spare time</p>
+            <p>Enjoy!</p>
+        </div>
+    {/await}
 </Overlay>
 
 <main class="flex flex-wrap p-half">
