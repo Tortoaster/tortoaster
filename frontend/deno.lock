@@ -11,6 +11,7 @@
     "npm:@sveltejs/vite-plugin-svelte@4": "4.0.4_svelte@5.16.1__acorn@8.14.0_vite@5.4.11",
     "npm:@tailwindcss/vite@^4.0.6": "4.0.6_vite@5.4.11_lightningcss@1.29.1",
     "npm:date-fns@^4.1.0": "4.1.0",
+    "npm:marked@^15.0.7": "15.0.7",
     "npm:svelte-check@4": "4.1.1_svelte@5.16.1__acorn@8.14.0_typescript@5.7.2",
     "npm:svelte@5": "5.16.1_acorn@8.14.0",
     "npm:tailwindcss@4": "4.0.6",
@@ -942,6 +943,9 @@
         "@jridgewell/sourcemap-codec"
       ]
     },
+    "marked@15.0.7": {
+      "integrity": "sha512-dgLIeKGLx5FwziAnsk4ONoGwHwGPJzselimvlVskE9XLN4Orv9u2VA3GWw/lYUqjfA0rUT/6fqKwfZJapP9BEg=="
+    },
     "mdast-util-to-hast@13.2.0": {
       "integrity": "sha512-QGYKEuUsYT9ykKBCMOEDLsU5JRObWQusAolFMeko/tYPufNkRffBAQjIE+99jbA87xv6FgmjLtwjh9wBWajwAA==",
       "dependencies": [
@@ -1413,6 +1417,7 @@
         "npm:@sveltejs/vite-plugin-svelte@4",
         "npm:@tailwindcss/vite@^4.0.6",
         "npm:date-fns@^4.1.0",
+        "npm:marked@^15.0.7",
         "npm:svelte-check@4",
         "npm:svelte@5",
         "npm:tailwindcss@4",
