@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="pgdump" type="ShConfigurationType">
-    <option name="SCRIPT_TEXT" value="pg_dump -d tortoaster- U tortoaster --data-only --inserts" />
+    <option name="SCRIPT_TEXT" value="pg_dump -d toast -U user --data-only --inserts" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />

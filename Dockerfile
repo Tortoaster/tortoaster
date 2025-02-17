@@ -9,7 +9,7 @@ RUN apt-get clean
 
 WORKDIR /app
 
-COPY . .
+COPY backend .
 
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
         wget https://musl.cc/aarch64-linux-musl-cross.tgz && \
