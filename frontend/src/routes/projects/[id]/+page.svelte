@@ -1,7 +1,6 @@
 <script lang="ts">
     import {PUBLIC_BUCKET_URL} from '$env/static/public';
     import type {PageData} from './$types';
-    import Throbber from "$lib/Throbber.svelte";
     import Overlay from "$lib/Overlay.svelte";
     import {format} from "date-fns";
 
@@ -39,10 +38,6 @@
     {/if}
 
     <div class="md lg:max-w-gratio lg:mx-auto">
-        {#await data.content}
-            <Throbber class="text-black-darker"/>
-        {:then content}
-            {@html content}
-        {/await}
+        {@html data.content}
     </div>
 </main>

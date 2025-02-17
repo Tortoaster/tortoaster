@@ -9,7 +9,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
     `${PUBLIC_API_URL}/projects/${params.id}`,
   ).then((response) => response.json());
 
-  const content = fetch(`${PUBLIC_BUCKET_URL}/content/${project.id}.md`)
+  const content = await fetch(`${PUBLIC_BUCKET_URL}/content/${project.id}.md`)
     .then((response) => response.text())
     .then((md) => marked.parse(md));
 

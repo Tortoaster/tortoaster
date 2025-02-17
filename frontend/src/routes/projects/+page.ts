@@ -9,7 +9,7 @@ export const load: PageLoad = async ({ fetch }) => {
     .then((response) => response.text())
     .then((md) => marked.parse(md));
 
-  const projects: Promise<Page<IProjectPreview>> = fetch(
+  const projects: Page<IProjectPreview> = await fetch(
     PUBLIC_API_URL + "/projects",
   ).then((response) => response.json());
 
