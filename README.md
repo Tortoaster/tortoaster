@@ -1,6 +1,8 @@
-# Tortoaster
+# Toast
 
 ![Logo](bucket_data/thumbnails/d410d185-f372-43e4-bc4b-888bada43d83)
+
+A blogging application to write about my hobby projects.
 
 ## Launch Project
 
@@ -67,7 +69,6 @@ pg_dump \
 
 ## License
 
-Tortoaster website\
 Copyright (C) 2025 Rick van der Wal
 
 This program is free software: you can redistribute it and/or modify
