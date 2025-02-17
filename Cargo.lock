@@ -3997,6 +3997,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
+name = "toast"
+version = "1.0.0"
+dependencies = [
+ "aws-config",
+ "aws-sdk-s3",
+ "axum 0.7.9",
+ "axum-extra",
+ "axum-oidc",
+ "axum-prometheus",
+ "axum-valid",
+ "backoff",
+ "bytes",
+ "config",
+ "openidconnect",
+ "pulldown-cmark",
+ "regex",
+ "serde",
+ "serde-inline-default",
+ "serde_with",
+ "sqlx",
+ "thiserror 2.0.11",
+ "time",
+ "time-humanize",
+ "tokio",
+ "toml",
+ "tower",
+ "tower-http",
+ "tower-sessions",
+ "tower-sessions-sqlx-store",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "tokio"
 version = "1.43.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4090,42 +4126,6 @@ dependencies = [
  "serde_spanned",
  "toml_datetime",
  "winnow",
-]
-
-[[package]]
-name = "tortoaster"
-version = "1.0.0"
-dependencies = [
- "aws-config",
- "aws-sdk-s3",
- "axum 0.7.9",
- "axum-extra",
- "axum-oidc",
- "axum-prometheus",
- "axum-valid",
- "backoff",
- "bytes",
- "config",
- "openidconnect",
- "pulldown-cmark",
- "regex",
- "serde",
- "serde-inline-default",
- "serde_with",
- "sqlx",
- "thiserror 2.0.11",
- "time",
- "time-humanize",
- "tokio",
- "toml",
- "tower",
- "tower-http",
- "tower-sessions",
- "tower-sessions-sqlx-store",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "validator",
 ]
 
 [[package]]

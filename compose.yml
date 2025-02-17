@@ -1,5 +1,5 @@
 services:
-  tortoaster:
+  backend:
     profiles: [ "full" ]
     build:
       dockerfile: "Dockerfile"
@@ -7,14 +7,13 @@ services:
     ports: [ "8000:8000" ]
     environment:
       HOST: "0.0.0.0"
-      RUST_LOG: "tortoaster=info,warn"
-      DATABASE__URL: "postgres://tortoaster@db/tortoaster"
+      RUST_LOG: "toast=info,warn"
+      DATABASE__URL: "postgres://user@db/toast"
       DATABASE__PASSWORD: "password"
       S3__REGION: "eu-central-1"
       S3__ENDPOINT_URL: "http://object-store:9000/"
-      S3__ACCESS_KEY_ID: "tortoaster"
+      S3__ACCESS_KEY_ID: "user"
       S3__SECRET_ACCESS_KEY: "password"
-      #      S3__BUCKET_URL: "http://object-store:9000/tortoaster"
       OIDC__CLIENT_ID: "tortoaster"
       OIDC__CLIENT_SECRET: "UzuoAuMFtHuf4USSl2CVGmgXockttxxh"
       OIDC__ISSUER_URL: "http://iam-provider:8003/realms/tortoaster"
@@ -30,8 +29,9 @@ services:
     ports: [ "5432:5432" ]
     volumes: [ "./postgres:/docker-entrypoint-initdb.d:ro" ]
     environment:
-      POSTGRES_USER: "tortoaster"
+      POSTGRES_USER: "user"
       POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "toast"
     healthcheck:
       test: "pg_isready"
       interval: 1s
@@ -46,7 +46,7 @@ services:
       - "./migrations:/app/migrations:ro"
       - "./fixtures:/app/fixtures:ro"
     environment:
-      DATABASE_URL: "postgres://tortoaster:password@db/tortoaster"
+      DATABASE_URL: "postgres://user:password@db/toast"
     depends_on:
       iam-provider:
         condition: service_healthy
@@ -59,7 +59,7 @@ services:
       - "8001:8001"
     environment:
       MINIO_HOST: "0.0.0.0"
-      MINIO_ROOT_USER: "tortoaster"
+      MINIO_ROOT_USER: "user"
       MINIO_ROOT_PASSWORD: "password"
       MINIO_IDENTITY_OPENID_CONFIG_URL: "http://iam-provider:8003/realms/master/.well-known/openid-configuration"
       MINIO_IDENTITY_OPENID_CLIENT_ID: "minio"
@@ -82,10 +82,10 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c " \
-        /usr/bin/mc alias set myminio http://object-store:9000 tortoaster password && \
-        /usr/bin/mc mb --ignore-existing --region "eu-central-1" --with-versioning myminio/tortoaster && \
-        /usr/bin/mc anonymous set download myminio/tortoaster && \
-        /usr/bin/mc mirror --overwrite /app myminio/tortoaster \
+        /usr/bin/mc alias set myminio http://object-store:9000 user password && \
+        /usr/bin/mc mb --ignore-existing --region "eu-central-1" --with-versioning myminio/toast && \
+        /usr/bin/mc anonymous set download myminio/toast && \
+        /usr/bin/mc mirror --overwrite /app myminio/toast \
       "
 
   smtp-server:
@@ -102,7 +102,7 @@ services:
     environment:
       KC_DB: "postgres"
       KC_DB_URL: "jdbc:postgresql://db/keycloak"
-      KC_DB_USERNAME: "tortoaster"
+      KC_DB_USERNAME: "user"
       KC_DB_PASSWORD: "password"
       KC_HTTP_PORT: "8003"
       KC_HEALTH_ENABLED: "true"

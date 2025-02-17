@@ -1,18 +1,18 @@
 # host = "127.0.0.1" # default: 127.0.0.1
 # port = 8000 # default: 8000
-rust_log = "tortoaster=trace,warn" # default: info
+rust_log = "toast=trace,warn" # default: info
 
 [database]
-url = "postgres://tortoaster@localhost/tortoaster"
+url = "postgres://user@localhost/toast"
 password = "password"
 
 [s3]
 region = "eu-central-1"
 endpoint_url = "http://localhost:9000"
-access_key_id = "tortoaster"
+access_key_id = "user"
 secret_access_key = "password"
 # session_token = "" # default: None
-# bucket_name = "tortoaster" # default: tortoaster
+# bucket_name = "toast" # default: toast
 
 [oidc]
 client_id = "tortoaster"

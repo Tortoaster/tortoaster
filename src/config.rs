@@ -72,7 +72,7 @@ impl AppConfig {
                 &self.s3.secret_access_key,
                 self.s3.session_token.clone(),
                 None,
-                "tortoaster-credential-provider",
+                "toast-credential-provider",
             ))
             .load()
             .await;
@@ -103,7 +103,7 @@ struct S3Config {
     secret_access_key: String,
     #[serde(default)]
     session_token: Option<String>,
-    #[serde_inline_default("tortoaster".to_owned())]
+    #[serde_inline_default("toast".to_owned())]
     bucket_name: String,
 }
 

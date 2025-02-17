@@ -51,7 +51,7 @@ Should be run when:
 * New database migrations are created
 
 ```shell
-export DATABASE_URL=postgres://tortoaster:password@localhost/tortoaster
+export DATABASE_URL=postgres://user:password@localhost/toast
 cargo sqlx prepare
 ```
 
@@ -61,8 +61,8 @@ Useful for creating fixtures. Run in the database container:
 
 ```shell
 pg_dump \
-	-d tortoaster \
-	-U tortoaster \
+	-d toast \
+	-U user \
 	--data-only \
 	--inserts
 ```

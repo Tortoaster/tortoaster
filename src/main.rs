@@ -30,7 +30,7 @@ async fn main() {
         .init();
 
     let (prometheus_layer, metric_handle) = PrometheusMetricLayerBuilder::new()
-        .with_prefix("tortoaster_backend")
+        .with_prefix("toast")
         .with_default_metrics()
         .build_pair();
 
@@ -53,15 +53,15 @@ async fn main() {
         .with_same_site(SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(time::Duration::minutes(30)));
 
-    let tortoaster_handle_error_layer =
+    let toast_handle_error_layer =
         HandleErrorLayer::new(|e: MiddlewareError| async { AppError::Session(e).into_response() });
 
     let oidc_login_service = ServiceBuilder::new()
-        .layer(tortoaster_handle_error_layer.clone())
+        .layer(toast_handle_error_layer.clone())
         .layer(OidcLoginLayer::<AppClaims>::new());
 
     let oidc_auth_service = ServiceBuilder::new()
-        .layer(tortoaster_handle_error_layer)
+        .layer(toast_handle_error_layer)
         .layer(oidc_auth_layer);
 
     let app = Router::new()

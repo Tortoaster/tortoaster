@@ -22,10 +22,10 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
     fi && \
     rustup target add $TARGET && \
     cargo build --release --target $TARGET && \
-    mv target/$TARGET/release/tortoaster target/release/tortoaster
+    mv target/$TARGET/release/toast target/release/toast
 
 FROM alpine:latest
 
-COPY --from=build /app/target/release/tortoaster /usr/local/bin
+COPY --from=build /app/target/release/toast /usr/local/bin
 
-ENTRYPOINT ["/usr/local/bin/tortoaster"]
+ENTRYPOINT ["/usr/local/bin/toast"]
